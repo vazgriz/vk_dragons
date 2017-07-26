@@ -3,7 +3,7 @@
 
 class Scene {
 public:
-	Scene();
+	Scene(GLFWwindow* window);
 
 private:
 	Renderer renderer;

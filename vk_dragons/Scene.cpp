@@ -1,4 +1,5 @@
 #include "Scene.h"
 
-Scene::Scene() {
+Scene::Scene(GLFWwindow* window) : renderer(window) {
+
 }

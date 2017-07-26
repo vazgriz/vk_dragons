@@ -11,7 +11,7 @@ int main() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(INITIAL_SIZE_WIDTH, INITIAL_SIZE_HEIGHT, "Here Be Dragons", nullptr, nullptr);
 
-	Scene scene;
+	Scene scene(window);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
