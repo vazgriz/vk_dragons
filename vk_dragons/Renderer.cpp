@@ -11,9 +11,12 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	createLogicalDevice();
 	createSwapChain();
 	createImageViews();
+	createSemaphores();
 }
 
 Renderer::~Renderer() {
+	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
+	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 	for (auto& imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
 	}
@@ -353,5 +356,15 @@ void Renderer::createImageViews() {
 		if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create image views!");
 		}
+	}
+}
+
+void Renderer::createSemaphores() {
+	VkSemaphoreCreateInfo semaphoreInfo = {};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create semaphores!");
 	}
 }
