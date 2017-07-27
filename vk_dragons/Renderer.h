@@ -41,6 +41,7 @@ private:
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
+	VkRenderPass renderPass;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
@@ -64,5 +65,6 @@ private:
 	void createSwapChain();
 	void createImageViews();
 	void createSemaphores();
+	void createRenderPass();
 };
 
