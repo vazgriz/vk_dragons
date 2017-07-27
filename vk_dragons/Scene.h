@@ -3,7 +3,7 @@
 
 class Scene {
 public:
-	Scene(GLFWwindow* window);
+	Scene(GLFWwindow* window, uint32_t width, uint32_t height);
 
 private:
 	Renderer renderer;
