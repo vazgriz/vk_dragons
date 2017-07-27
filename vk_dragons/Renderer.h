@@ -40,18 +40,18 @@ private:
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
-	void CreateInstance();
-	bool CheckValidationSupport(const std::vector<const char*>& layers);
-	void PickPhysicalDevice();
-	bool IsDeviceSuitable(VkPhysicalDevice device);
-	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
-	void CreateLogicalDevice();
-	void CreateSurface();
-	bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
-	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
-	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
-	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-	void CreateSwapChain();
+	void createInstance();
+	bool checkValidationSupport(const std::vector<const char*>& layers);
+	void pickPhysicalDevice();
+	bool isDeviceSuitable(VkPhysicalDevice device);
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	void createLogicalDevice();
+	void createSurface();
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	void createSwapChain();
 };
 
