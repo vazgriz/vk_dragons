@@ -23,6 +23,8 @@ public:
 	Renderer(GLFWwindow* window, uint32_t width, uint32_t height);
 	~Renderer();
 
+	void Render();
+
 private:
 	GLFWwindow* window;
 	uint32_t width;

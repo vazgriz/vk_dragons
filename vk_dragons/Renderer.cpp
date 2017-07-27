@@ -26,6 +26,21 @@ Renderer::~Renderer() {
 	vkDestroyInstance(instance, nullptr);
 }
 
+void Renderer::Render() {
+	uint32_t imageIndex;
+	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &imageAvailableSemaphore;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &swapChain;
+	presentInfo.pImageIndices = &imageIndex;
+
+	vkQueuePresentKHR(presentQueue, &presentInfo);
+}
+
 void Renderer::createInstance() {
 	const std::vector<const char*> validationLayers = {
 		"VK_LAYER_LUNARG_standard_validation",
@@ -258,9 +273,9 @@ VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentMode
 		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 			return availablePresentMode;
 		}
-		else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+		/*else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
 			bestMode = availablePresentMode;
-		}
+		}*/
 	}
 
 	return bestMode;
