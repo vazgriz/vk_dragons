@@ -354,5 +354,4 @@ void Renderer::createImageViews() {
 			throw std::runtime_error("Failed to create image views!");
 		}
 	}
-
 }
