@@ -421,7 +421,7 @@ void Renderer::createRenderPass() {
 	renderPassInfo.pSubpasses = &subpass;
 
 	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create render pass!");
+		throw std::runtime_error("Failed to create render pass!");
 	}
 }
 
@@ -443,7 +443,7 @@ void Renderer::createFramebuffers() {
 		framebufferInfo.layers = 1;
 
 		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create framebuffer!");
+			throw std::runtime_error("Failed to create framebuffer!");
 		}
 	}
 }
@@ -456,7 +456,7 @@ void Renderer::createCommandPool() {
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create command pool!");
+		throw std::runtime_error("Failed to create command pool!");
 	}
 }
 
