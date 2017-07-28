@@ -24,6 +24,7 @@ public:
 	~Renderer();
 
 	void Render();
+	void Resize(uint32_t width, uint32_t height);
 
 private:
 	GLFWwindow* window;
@@ -72,5 +73,7 @@ private:
 	void createFramebuffers();
 	void createCommandPool();
 	void createCommandBuffers();
+	void recreateSwapChain();
+	void cleanupSwapChain();
 };
 

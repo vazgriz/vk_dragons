@@ -9,28 +9,17 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
-	createSwapChain();
-	createImageViews();
-	createSemaphores();
-	createRenderPass();
-	createFramebuffers();
 	createCommandPool();
-	createCommandBuffers();
+	recreateSwapChain();
+	createSemaphores();
 }
 
 Renderer::~Renderer() {
 	vkDeviceWaitIdle(device);
+	cleanupSwapChain();
 	vkDestroyCommandPool(device, commandPool, nullptr);
-	for (auto& framebuffer : swapChainFramebuffers) {
-		vkDestroyFramebuffer(device, framebuffer, nullptr);
-	}
-	vkDestroyRenderPass(device, renderPass, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
-	for (auto& imageView : swapChainImageViews) {
-		vkDestroyImageView(device, imageView, nullptr);
-	}
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyDevice(device, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 	vkDestroyInstance(instance, nullptr);
@@ -68,6 +57,35 @@ void Renderer::Render() {
 	presentInfo.pImageIndices = &imageIndex;
 
 	vkQueuePresentKHR(presentQueue, &presentInfo);
+}
+
+void Renderer::Resize(uint32_t width, uint32_t height) {
+	this->width = width;
+	this->height = height;
+
+	cleanupSwapChain();
+	vkDeviceWaitIdle(device);
+	recreateSwapChain();
+}
+
+void Renderer::recreateSwapChain() {
+	createSwapChain();
+	createImageViews();
+	createRenderPass();
+	createFramebuffers();
+	createCommandBuffers();
+}
+
+void Renderer::cleanupSwapChain() {
+	for (auto& framebuffer : swapChainFramebuffers) {
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
+	vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	vkDestroyRenderPass(device, renderPass, nullptr);
+	for (auto& imageView : swapChainImageViews) {
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
 void Renderer::createInstance() {
