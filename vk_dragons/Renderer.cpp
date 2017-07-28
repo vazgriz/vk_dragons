@@ -56,7 +56,7 @@ void Renderer::Render() {
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
-		throw std::runtime_error("failed to submit draw command buffer!");
+		throw std::runtime_error("Failed to submit draw command buffer!");
 	}
 
 	VkPresentInfoKHR presentInfo = {};
@@ -224,7 +224,7 @@ void Renderer::createLogicalDevice() {
 
 void Renderer::createSurface() {
 	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create window surface!");
+		throw std::runtime_error("Failed to create window surface!");
 	}
 }
 
