@@ -43,6 +43,8 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 	VkRenderPass renderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
+	VkCommandPool commandPool;
+	std::vector<VkCommandBuffer> commandBuffers;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
@@ -68,5 +70,7 @@ private:
 	void createSemaphores();
 	void createRenderPass();
 	void createFramebuffers();
+	void createCommandPool();
+	void createCommandBuffers();
 };
 
