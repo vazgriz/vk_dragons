@@ -13,5 +13,5 @@ void Scene::Render() {
 }
 
 void Scene::Resize(uint32_t width, uint32_t height) {
-
+	renderer.Resize(width, height);
 }
