@@ -23,7 +23,7 @@ int main() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(INITIAL_SIZE_WIDTH, INITIAL_SIZE_HEIGHT, "Here Be Dragons", nullptr, nullptr);
 	int _width, _height;
-	glfwGetWindowSize(window, &_width, &_height);
+	glfwGetFramebufferSize(window, &_width, &_height);
 	width = static_cast<uint32_t>(_width);
 	height = static_cast<uint32_t>(_height);
 
