@@ -14,7 +14,17 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 void Scene::UploadResources() {
 	VkCommandBuffer commandBuffer = renderer.GetCommandBuffer();
 
+	dragon.UploadData(commandBuffer);
+	suzanne.UploadData(commandBuffer);
+	plane.UploadData(commandBuffer);
+
 	renderer.SubmitCommandBuffer(commandBuffer);
+
+	dragon.DestroyStaging();
+	suzanne.DestroyStaging();
+	plane.DestroyStaging();
+
+	renderer.memory->hostAllocator.reset();
 }
 
 void Scene::Update() {
