@@ -14,8 +14,8 @@ void Memory::Cleanup() {
 }
 
 void Memory::AllocMemory() {
-	uint32_t hostType = MatchStrict(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	if (hostType == ~0) hostType = Match(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	uint32_t hostType = MatchStrict(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	if (hostType == ~0) hostType = Match(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	if (hostType == ~0) throw std::runtime_error("Could not find suitable host memory");
 
 	uint32_t deviceType = MatchStrict(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
