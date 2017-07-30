@@ -68,6 +68,7 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 	vkDeviceWaitIdle(device);
 	cleanupSwapChain();
 	recreateSwapChain();
+	CreateCommandBuffers();
 }
 
 void Renderer::recreateSwapChain() {
@@ -81,7 +82,6 @@ void Renderer::cleanupSwapChain() {
 	for (auto& framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
-	if (commandBuffers.size() > 0) vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	vkDestroyRenderPass(device, mainRenderPass, nullptr);
 	for (auto& imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
