@@ -91,14 +91,7 @@ void Renderer::cleanupSwapChain() {
 }
 
 VkCommandBuffer Renderer::GetSingleUseCommandBuffer() {
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = commandPool;
-	allocInfo.commandBufferCount = 1;
-
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+	VkCommandBuffer commandBuffer = GetCommandBuffer();
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -121,6 +114,19 @@ void Renderer::SubmitCommandBuffer(VkCommandBuffer commandBuffer) {
 	vkQueueWaitIdle(graphicsQueue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
+VkCommandBuffer Renderer::GetCommandBuffer() {
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	return commandBuffer;
 }
 
 //From https://vulkan-tutorial.com/

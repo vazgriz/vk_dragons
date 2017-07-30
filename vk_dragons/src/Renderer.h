@@ -31,6 +31,8 @@ public:
 	VkCommandBuffer GetSingleUseCommandBuffer();
 	void SubmitCommandBuffer(VkCommandBuffer commandBuffer);
 
+	VkCommandBuffer GetCommandBuffer();
+
 	std::unique_ptr<Memory> memory;
 	VkDevice device;
 
