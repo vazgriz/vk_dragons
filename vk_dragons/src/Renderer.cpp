@@ -16,6 +16,7 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 }
 
 Renderer::~Renderer() {
+	memory->Cleanup();
 	vkDeviceWaitIdle(device);
 	cleanupSwapChain();
 	vkDestroyCommandPool(device, commandPool, nullptr);
