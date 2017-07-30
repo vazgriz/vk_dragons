@@ -15,6 +15,9 @@ void loadObj(const std::string & filename, mesh_t & mesh, LoadMode mode){
 		cerr << filename + " is not a valid file." << endl;
 		return;
 	}
+
+	cout << "OBJ: loading " << filename << endl;
+
 	//Init the mesh.
 	mesh.indices.clear();
 	mesh.positions.clear();
