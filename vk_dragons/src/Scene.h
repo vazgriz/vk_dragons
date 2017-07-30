@@ -1,5 +1,6 @@
 #pragma once
 #include "Renderer.h"
+#include "Model.h"
 
 class Scene {
 public:
@@ -11,5 +12,8 @@ public:
 
 private:
 	Renderer renderer;
+	Model dragon;
+	Model suzanne;
+	Model plane;
 };
 
