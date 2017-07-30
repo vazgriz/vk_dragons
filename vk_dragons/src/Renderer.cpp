@@ -123,6 +123,7 @@ void Renderer::SubmitCommandBuffer(VkCommandBuffer commandBuffer) {
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+//From https://vulkan-tutorial.com/
 void Renderer::createInstance() {
 	const std::vector<const char*> validationLayers = {
 		"VK_LAYER_LUNARG_standard_validation",
