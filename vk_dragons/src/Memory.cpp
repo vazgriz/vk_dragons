@@ -37,6 +37,8 @@ void Memory::AllocMemory() {
 
 	hostAllocator = std::make_unique<Allocator>(hostMemory, ALLOCATION_SIZE);
 	deviceAllocator = std::make_unique<Allocator>(deviceMemory, ALLOCATION_SIZE);
+
+	vkMapMemory(device, hostMemory, 0, ALLOCATION_SIZE, 0, &hostMapping);
 }
 
 uint32_t Memory::Match(VkMemoryPropertyFlags flags) {

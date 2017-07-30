@@ -15,6 +15,8 @@ public:
 	std::unique_ptr<Allocator> hostAllocator;
 	std::unique_ptr<Allocator> deviceAllocator;
 
+	void* hostMapping;
+
 private:
 	VkDevice device;
 	VkPhysicalDeviceMemoryProperties memoryProperties;
