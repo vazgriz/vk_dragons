@@ -9,7 +9,7 @@ bool resizedFlag = false;
 uint32_t width;
 uint32_t height;
 
-void OnWindowResized(GLFWwindow* window, int _width, int _height) {
+void OnFramebufferResized(GLFWwindow* window, int _width, int _height) {
 	if (_width == 0 || _height == 0) return;
 
 	resizedFlag = true;
@@ -30,7 +30,7 @@ int main() {
 	Scene scene(window, width, height);
 	glfwSetWindowUserPointer(window, &scene);
 
-	glfwSetWindowSizeCallback(window, OnWindowResized);
+	glfwSetFramebufferSizeCallback(window, OnFramebufferResized);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
