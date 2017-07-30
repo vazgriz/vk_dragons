@@ -28,6 +28,9 @@ public:
 	void Render();
 	void Resize(uint32_t width, uint32_t height);
 
+	VkCommandBuffer GetCommandBuffer();
+	void SubmitCommandBuffer(VkCommandBuffer commandBuffer);
+
 	std::unique_ptr<Memory> memory;
 
 private:
