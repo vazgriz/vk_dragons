@@ -11,6 +11,6 @@ std::string loadStringFromFile(const std::string & path);
 void flipImage(std::vector<unsigned char> & image, const int width, const int height);
 
 /// Load a file into a vector<char>. From https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Shader_modules
-static std::vector<char> readFile(const std::string& filename);
+static std::vector<char> loadFile(const std::string& filename);
 
 #endif
