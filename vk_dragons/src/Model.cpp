@@ -10,6 +10,7 @@ Model::~Model() {
 	vkDestroyBuffer(renderer.device, tangentsBuffer, nullptr);
 	vkDestroyBuffer(renderer.device, binormalsBuffer, nullptr);
 	vkDestroyBuffer(renderer.device, texcoordsBuffer, nullptr);
+	vkDestroyBuffer(renderer.device, indicesBuffer, nullptr);
 }
 
 void Model::Init(const std::string& fileName) {
@@ -39,6 +40,10 @@ void Model::CreateBuffers() {
 
 	texcoordsBuffer = CreateBuffer(mesh.texcoords.size() * sizeof(glm::vec2),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		*renderer.memory->deviceAllocator);
+
+	indicesBuffer = CreateBuffer(mesh.indices.size() * sizeof(uint32_t),
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		*renderer.memory->deviceAllocator);
 }
 
