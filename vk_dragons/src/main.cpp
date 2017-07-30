@@ -20,6 +20,7 @@ void OnFramebufferResized(GLFWwindow* window, int _width, int _height) {
 int main() {
 	glfwInit();
 
+	//we don't need an OpenGL context, so specify GLFW_NO_API
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* window = glfwCreateWindow(INITIAL_SIZE_WIDTH, INITIAL_SIZE_HEIGHT, "Here Be Dragons", nullptr, nullptr);
 
