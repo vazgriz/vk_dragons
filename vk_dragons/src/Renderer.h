@@ -32,6 +32,10 @@ public:
 	void SubmitCommandBuffer(VkCommandBuffer commandBuffer);
 
 	VkCommandBuffer GetCommandBuffer();
+	void CreateCommandBuffers();
+
+	void AddRenderCommands(VkCommandBuffer commandBuffer);
+	void AddMainRenderCommands(VkCommandBuffer commandBuffer);
 
 	std::unique_ptr<Memory> memory;
 	VkDevice device;
@@ -51,13 +55,16 @@ private:
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
-	VkRenderPass renderPass;
+	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
+
+	std::vector<VkCommandBuffer> renderCommands;
+	std::vector<VkCommandBuffer> mainRenderCommands;
 
 	const std::vector<const char*> deviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME

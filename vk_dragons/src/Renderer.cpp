@@ -75,15 +75,14 @@ void Renderer::recreateSwapChain() {
 	createImageViews();
 	createRenderPass();
 	createFramebuffers();
-	createCommandBuffers();
 }
 
 void Renderer::cleanupSwapChain() {
 	for (auto& framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
-	vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-	vkDestroyRenderPass(device, renderPass, nullptr);
+	if (commandBuffers.size() > 0) vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	vkDestroyRenderPass(device, mainRenderPass, nullptr);
 	for (auto& imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
 	}
@@ -91,7 +90,14 @@ void Renderer::cleanupSwapChain() {
 }
 
 VkCommandBuffer Renderer::GetSingleUseCommandBuffer() {
-	VkCommandBuffer commandBuffer = GetCommandBuffer();
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -119,7 +125,7 @@ void Renderer::SubmitCommandBuffer(VkCommandBuffer commandBuffer) {
 VkCommandBuffer Renderer::GetCommandBuffer() {
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 	allocInfo.commandPool = commandPool;
 	allocInfo.commandBufferCount = 1;
 
@@ -127,6 +133,19 @@ VkCommandBuffer Renderer::GetCommandBuffer() {
 	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
 
 	return commandBuffer;
+}
+
+void Renderer::CreateCommandBuffers() {
+	if (commandBuffers.size() > 0) vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	createCommandBuffers();
+}
+
+void Renderer::AddRenderCommands(VkCommandBuffer commandBuffer) {
+	renderCommands.push_back(commandBuffer);
+}
+
+void Renderer::AddMainRenderCommands(VkCommandBuffer commandBuffer) {
+	mainRenderCommands.push_back(commandBuffer);
 }
 
 //From https://vulkan-tutorial.com/
@@ -510,7 +529,7 @@ void Renderer::createRenderPass() {
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &mainRenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create render pass!");
 	}
 }
@@ -525,7 +544,7 @@ void Renderer::createFramebuffers() {
 
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.renderPass = mainRenderPass;
 		framebufferInfo.attachmentCount = 1;
 		framebufferInfo.pAttachments = attachments;
 		framebufferInfo.width = swapChainExtent.width;
@@ -551,6 +570,7 @@ void Renderer::createCommandPool() {
 }
 
 void Renderer::createCommandBuffers() {
+	commandBuffers.clear();
 	commandBuffers.resize(swapChainFramebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -570,9 +590,11 @@ void Renderer::createCommandBuffers() {
 
 		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
+		if (renderCommands.size() > 0) vkCmdExecuteCommands(commandBuffers[i], static_cast<uint32_t>(renderCommands.size()), renderCommands.data());
+
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.renderPass = mainRenderPass;
 		renderPassInfo.framebuffer = swapChainFramebuffers[i];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChainExtent;
@@ -581,7 +603,9 @@ void Renderer::createCommandBuffers() {
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+
+		if (mainRenderCommands.size() > 0) vkCmdExecuteCommands(commandBuffers[i], static_cast<uint32_t>(mainRenderCommands.size()), mainRenderCommands.data());
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 

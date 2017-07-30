@@ -9,6 +9,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
+
+	renderer.CreateCommandBuffers();
 }
 
 void Scene::UploadResources() {
