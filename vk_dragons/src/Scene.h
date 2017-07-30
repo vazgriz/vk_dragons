@@ -15,5 +15,7 @@ private:
 	Model dragon;
 	Model suzanne;
 	Model plane;
+
+	void UploadResources();
 };
 
