@@ -32,6 +32,7 @@ public:
 	void SubmitCommandBuffer(VkCommandBuffer commandBuffer);
 
 	std::unique_ptr<Memory> memory;
+	VkDevice device;
 
 private:
 	GLFWwindow* window;
@@ -40,7 +41,6 @@ private:
 
 	VkInstance instance;
 	VkPhysicalDevice physicalDevice;
-	VkDevice device;
 	VkQueue graphicsQueue;
 	VkSurfaceKHR surface;
 	VkQueue presentQueue;
