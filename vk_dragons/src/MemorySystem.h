@@ -12,9 +12,14 @@ public:
 	Memory(VkPhysicalDevice physicalDevice, VkDevice device);
 	void Cleanup();
 
+	//linear allocators are used because this application has simple memory requirements
+	//everything gets uploaded to the gpu at start up and nothing needs to be uploaded after that
+	//larger applications will have to use more sophisticated allocation schemes
 	std::unique_ptr<Allocator> hostAllocator;
 	std::unique_ptr<Allocator> deviceAllocator;
 
+	//the mapping for the host memory is kept alive for the entire application
+	//it is implicitly unmapped when the memory is freed in Cleanup()
 	void* hostMapping;
 
 private:
