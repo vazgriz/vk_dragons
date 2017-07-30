@@ -2,6 +2,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include<GLFW/glfw3.h>
 #include <vector>
+#include <memory>
+#include "MemorySystem.h"
 
 struct QueueFamilyIndices {
 	int graphicsFamily = -1;
@@ -25,6 +27,8 @@ public:
 
 	void Render();
 	void Resize(uint32_t width, uint32_t height);
+
+	std::unique_ptr<Memory> memory;
 
 private:
 	GLFWwindow* window;

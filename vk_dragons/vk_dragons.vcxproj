@@ -22,12 +22,14 @@
     <ClCompile Include="src\helpers\MeshUtilities.cpp" />
     <ClCompile Include="src\helpers\ProgramUtilities.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Memory.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\helpers\MeshUtilities.h" />
     <ClInclude Include="src\helpers\ProgramUtilities.h" />
+    <ClInclude Include="src\MemorySystem.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Scene.h" />
   </ItemGroup>

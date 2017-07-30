@@ -12,6 +12,7 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	createCommandPool();
 	recreateSwapChain();
 	createSemaphores();
+	memory = std::make_unique<Memory>(physicalDevice, device);
 }
 
 Renderer::~Renderer() {
