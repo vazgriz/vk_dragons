@@ -90,7 +90,7 @@ void Renderer::cleanupSwapChain() {
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
-VkCommandBuffer Renderer::GetCommandBuffer() {
+VkCommandBuffer Renderer::GetSingleUseCommandBuffer() {
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;

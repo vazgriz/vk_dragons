@@ -12,7 +12,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 }
 
 void Scene::UploadResources() {
-	VkCommandBuffer commandBuffer = renderer.GetCommandBuffer();
+	VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
 
 	dragon.UploadData(commandBuffer);
 	suzanne.UploadData(commandBuffer);
