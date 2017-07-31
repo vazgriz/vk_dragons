@@ -10,6 +10,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
 
+	UploadResources();
+
 	renderer.CreateCommandBuffers();
 }
 
