@@ -27,7 +27,7 @@ Renderer::~Renderer() {
 	vkDestroyInstance(instance, nullptr);
 }
 
-void Renderer::Render() {
+void Renderer::Render(const std::vector<VkCommandBuffer>& commandBuffers) {
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
@@ -68,7 +68,6 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 	vkDeviceWaitIdle(device);
 	cleanupSwapChain();
 	recreateSwapChain();
-	CreateCommandBuffers();
 }
 
 void Renderer::recreateSwapChain() {
@@ -120,32 +119,6 @@ void Renderer::SubmitCommandBuffer(VkCommandBuffer commandBuffer) {
 	vkQueueWaitIdle(graphicsQueue);
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
-}
-
-VkCommandBuffer Renderer::GetCommandBuffer() {
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-	allocInfo.commandPool = commandPool;
-	allocInfo.commandBufferCount = 1;
-
-	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
-
-	return commandBuffer;
-}
-
-void Renderer::CreateCommandBuffers() {
-	if (commandBuffers.size() > 0) vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-	createCommandBuffers();
-}
-
-void Renderer::AddRenderCommands(VkCommandBuffer commandBuffer) {
-	renderCommands.push_back(commandBuffer);
-}
-
-void Renderer::AddMainRenderCommands(VkCommandBuffer commandBuffer) {
-	mainRenderCommands.push_back(commandBuffer);
 }
 
 //From https://vulkan-tutorial.com/
@@ -566,51 +539,5 @@ void Renderer::createCommandPool() {
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create command pool!");
-	}
-}
-
-void Renderer::createCommandBuffers() {
-	commandBuffers.clear();
-	commandBuffers.resize(swapChainFramebuffers.size());
-
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = commandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-
-	if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate command buffers!");
-	}
-
-	for (size_t i = 0; i < commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
-
-		if (renderCommands.size() > 0) vkCmdExecuteCommands(commandBuffers[i], static_cast<uint32_t>(renderCommands.size()), renderCommands.data());
-
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = mainRenderPass;
-		renderPassInfo.framebuffer = swapChainFramebuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = swapChainExtent;
-
-		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-
-		if (mainRenderCommands.size() > 0) vkCmdExecuteCommands(commandBuffers[i], static_cast<uint32_t>(mainRenderCommands.size()), mainRenderCommands.data());
-
-		vkCmdEndRenderPass(commandBuffers[i]);
-
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to record command buffer!");
-		}
 	}
 }

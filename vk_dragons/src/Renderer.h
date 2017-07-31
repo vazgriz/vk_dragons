@@ -25,20 +25,18 @@ public:
 	Renderer(GLFWwindow* window, uint32_t width, uint32_t height);
 	~Renderer();
 
-	void Render();
+	void Render(const std::vector<VkCommandBuffer>& commandBuffers);
 	void Resize(uint32_t width, uint32_t height);
 
 	VkCommandBuffer GetSingleUseCommandBuffer();
 	void SubmitCommandBuffer(VkCommandBuffer commandBuffer);
 
-	VkCommandBuffer GetCommandBuffer();
-	void CreateCommandBuffers();
-
-	void AddRenderCommands(VkCommandBuffer commandBuffer);
-	void AddMainRenderCommands(VkCommandBuffer commandBuffer);
-
 	std::unique_ptr<Memory> memory;
 	VkDevice device;
+	VkExtent2D swapChainExtent;
+	VkRenderPass mainRenderPass;
+	std::vector<VkFramebuffer> swapChainFramebuffers;
+	VkCommandPool commandPool;
 
 private:
 	GLFWwindow* window;
@@ -53,18 +51,10 @@ private:
 	VkSwapchainKHR swapChain;
 	std::vector<VkImage> swapChainImages;
 	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
-	VkRenderPass mainRenderPass;
-	std::vector<VkFramebuffer> swapChainFramebuffers;
-	VkCommandPool commandPool;
-	std::vector<VkCommandBuffer> commandBuffers;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
-
-	std::vector<VkCommandBuffer> renderCommands;
-	std::vector<VkCommandBuffer> mainRenderCommands;
 
 	const std::vector<const char*> deviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -88,7 +78,6 @@ private:
 	void createRenderPass();
 	void createFramebuffers();
 	void createCommandPool();
-	void createCommandBuffers();
 	void recreateSwapChain();
 	void cleanupSwapChain();
 };

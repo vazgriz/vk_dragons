@@ -16,6 +16,9 @@ private:
 	Model suzanne;
 	Model plane;
 
+	std::vector<VkCommandBuffer> commandBuffers;
+
 	void UploadResources();
+	void CreateCommandBuffers();
 };
 
