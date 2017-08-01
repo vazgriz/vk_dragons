@@ -66,7 +66,7 @@ Buffer Model::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, Allocato
 	VkBuffer buffer;
 
 	if (vkCreateBuffer(renderer.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create buffer!");
+		throw std::runtime_error("Failed to create buffer!");
 	}
 
 	VkMemoryRequirements memRequirements;
