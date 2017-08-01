@@ -28,6 +28,8 @@ void Texture::Init(const std::string& filename) {
 }
 
 void Texture::InitCubemap(const std::string& filenameRoot) {
+	//to create a cubemap, there must 6 layers in an image
+	//the layers correspond to +X, -X, +Y, -Y, +Z, -Z
 	std::vector<std::string> filenames = {
 		filenameRoot + "_r.png",
 		filenameRoot + "_l.png",
@@ -200,8 +202,9 @@ void Texture::Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout,
 void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
 	if (mipChain.size() == 1) return;
 
-	//start from 1, blit level (n - 1) to (n)
+	//start from i == 1, blit level (i - 1) to (i)
 	for (size_t i = 1; i < mipChain.size(); i++) {
+		//blit each layer separately
 		for (size_t j = 0; j < data.size(); j++) {
 			glm::vec2 src = mipChain[i - 1];
 			glm::vec2 dst = mipChain[i];
