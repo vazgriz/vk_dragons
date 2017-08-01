@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "Model.h"
 #include "Texture.h"
+#include "Camera.h"
 
 class Scene {
 public:
@@ -13,6 +14,7 @@ public:
 
 private:
 	Renderer renderer;
+	Camera camera;
 	Model dragon;
 	Model suzanne;
 	Model plane;

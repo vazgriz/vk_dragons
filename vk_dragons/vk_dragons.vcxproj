@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Allocator.cpp" />
+    <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\helpers\lodepng\lodepng.cpp" />
     <ClCompile Include="src\helpers\MeshUtilities.cpp" />
     <ClCompile Include="src\helpers\ProgramUtilities.cpp" />
@@ -32,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Allocator.h" />
+    <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\helpers\MeshUtilities.h" />
     <ClInclude Include="src\helpers\ProgramUtilities.h" />
     <ClInclude Include="src\MemorySystem.h" />

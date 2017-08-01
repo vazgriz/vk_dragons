@@ -6,7 +6,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	suzanne(renderer),
 	plane(renderer),
 	dragonColor(renderer),
-	skybox(renderer) {
+	skybox(renderer),
+	camera(45.0f) {
 
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
