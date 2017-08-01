@@ -4,11 +4,14 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	: renderer(window, width, height),
 	dragon(renderer),
 	suzanne(renderer),
-	plane(renderer) {
+	plane(renderer),
+	dragonColor(renderer) {
 
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
+
+	dragonColor.Init("resources/dragon_texture_color.png");
 
 	UploadResources();
 

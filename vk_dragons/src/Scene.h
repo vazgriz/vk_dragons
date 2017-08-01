@@ -1,6 +1,7 @@
 #pragma once
 #include "Renderer.h"
 #include "Model.h"
+#include "Texture.h"
 
 class Scene {
 public:
@@ -15,6 +16,7 @@ private:
 	Model dragon;
 	Model suzanne;
 	Model plane;
+	Texture dragonColor;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
