@@ -4,9 +4,14 @@
 #include "Texture.h"
 #include "Camera.h"
 
+struct Uniform {
+	glm::mat4 camera;
+};
+
 class Scene {
 public:
 	Scene(GLFWwindow* window, uint32_t width, uint32_t height);
+	~Scene();
 
 	void Update();
 	void Render();
@@ -22,8 +27,13 @@ private:
 	Texture skybox;
 
 	std::vector<VkCommandBuffer> commandBuffers;
+	VkDescriptorSetLayout descriptorSetLayout;
+	Buffer uniformBuffer;
 
 	void UploadResources();
+	void UpdateUniform();
 	void CreateCommandBuffers();
+	void CreateDescriptorSetLayout();
+	void CreateUniformBuffer();
 };
 

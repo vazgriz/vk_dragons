@@ -19,6 +19,13 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	UploadResources();
 
 	CreateCommandBuffers();
+	CreateDescriptorSetLayout();
+	CreateUniformBuffer();
+}
+
+Scene::~Scene() {
+	vkDestroyDescriptorSetLayout(renderer.device, descriptorSetLayout, nullptr);
+	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 }
 
 void Scene::UploadResources() {
@@ -41,8 +48,14 @@ void Scene::UploadResources() {
 	renderer.memory->hostAllocator->Reset();
 }
 
-void Scene::Update() {
+void Scene::UpdateUniform() {
+	char* ptr = reinterpret_cast<char*>(renderer.memory->hostMapping) + uniformBuffer.offset;
+	Uniform& uniform = *(reinterpret_cast<Uniform*>(ptr));
+	uniform.camera = camera.GetView() * camera.GetProjection();
+}
 
+void Scene::Update() {
+	UpdateUniform();
 }
 
 void Scene::Render() {
@@ -95,4 +108,26 @@ void Scene::CreateCommandBuffers() {
 			throw std::runtime_error("Failed to record command buffer!");
 		}
 	}
+}
+
+void Scene::CreateDescriptorSetLayout() {
+	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
+
+	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create descriptor set layout!");
+	}
+}
+
+void Scene::CreateUniformBuffer() {
+	VkDeviceSize size = sizeof(Uniform);
+	uniformBuffer = CreateBuffer(renderer.device, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, *renderer.memory->hostAllocator);
 }
