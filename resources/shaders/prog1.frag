@@ -1,10 +1,11 @@
-#version 330
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
 // Input: UV coordinates coming from the vertex shader
 in vec2 uv; 
 
 // Uniform: texture sampler
-uniform sampler2D texture1;
+layout(binding = 1) uniform sampler2D texture1;
 
 // Output: the fragment color
 out vec3 fragColor;
