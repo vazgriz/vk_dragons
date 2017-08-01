@@ -23,4 +23,6 @@ std::vector<char> loadFile(const std::string& filename);
 
 Buffer CreateBuffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, Allocator& allocator);
 
+VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename);
+
 #endif
