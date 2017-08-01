@@ -47,6 +47,12 @@ void Texture::CreateImage() {
 		throw std::runtime_error("Failed to create image!");
 	}
 
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(renderer.device, image, &memRequirements);
+
+	Allocation alloc = renderer.memory->deviceAllocator->Alloc(memRequirements.size, memRequirements.alignment);
+
+	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
