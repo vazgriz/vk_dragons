@@ -39,7 +39,7 @@ void Texture::CreateImage() {
 	info.arrayLayers = 1;
 	info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-	info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	info.samples = VK_SAMPLE_COUNT_1_BIT;
 
@@ -56,7 +56,7 @@ void Texture::CreateImage() {
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
-	Transition(commandBuffer, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	Transition(commandBuffer, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_GENERAL);
 
 	stagingBuffer = CreateBuffer(renderer.device, data.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, *renderer.memory->hostAllocator);
 	char* dest = static_cast<char*>(renderer.memory->hostMapping) + stagingBuffer.offset;
@@ -79,7 +79,9 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 
 	vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 
-	Transition(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	GenerateMipChain(commandBuffer);
+
+	Transition(commandBuffer, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void Texture::CalulateMipChain() {
@@ -127,4 +129,39 @@ void Texture::Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout,
 		0, nullptr,
 		1, &barrier
 	);
+}
+
+void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
+	if (mipChain.size() == 1) return;
+
+	//start from 1, blit level (n - 1) to (n)
+	for (size_t i = 1; i < mipChain.size(); i++) {
+		glm::vec2 src = mipChain[i - 1];
+		glm::vec2 dst = mipChain[i];
+		int32_t srcW = static_cast<int32_t>(src.x);
+		int32_t srcH = static_cast<int32_t>(src.y);
+		int32_t dstW = static_cast<int32_t>(dst.x);
+		int32_t dstH = static_cast<int32_t>(dst.y);
+
+		VkImageBlit blit = {};
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource.layerCount = 1;
+		blit.srcSubresource.mipLevel = static_cast<uint32_t>(i - 1);
+		blit.srcOffsets[0] = { 0, 0, 0 };
+		blit.srcOffsets[1] = { srcW, srcH, 0 };
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource.layerCount = 1;
+		blit.dstSubresource.mipLevel = static_cast<uint32_t>(i);
+		blit.dstOffsets[0] = { 0, 0, 0 };
+		blit.dstOffsets[1] = { dstW, dstH, 0 };
+
+		vkCmdBlitImage(commandBuffer,
+			image, VK_IMAGE_LAYOUT_GENERAL,
+			image, VK_IMAGE_LAYOUT_GENERAL,
+			1, &blit,
+			VK_FILTER_LINEAR
+		);
+	}
 }

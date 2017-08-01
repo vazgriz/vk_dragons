@@ -25,4 +25,5 @@ private:
 	void CreateImage();
 	void CalulateMipChain();
 	void Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
+	void GenerateMipChain(VkCommandBuffer commandBuffer);
 };
