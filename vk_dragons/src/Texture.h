@@ -3,6 +3,7 @@
 #include <vector>
 #include "Renderer.h"
 #include "glm/glm.hpp"
+#include "ProgramUtilities.h"
 
 class Texture {
 public:
@@ -19,7 +20,9 @@ private:
 	uint32_t height;
 	std::vector<unsigned char> data;
 	std::vector<glm::vec2> mipChain;
+	Buffer stagingBuffer;
 
 	void CreateImage();
 	void CalulateMipChain();
+	void Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 };
