@@ -38,7 +38,7 @@ void Scene::UploadResources() {
 
 	dragonColor.DestroyStaging();
 
-	renderer.memory->hostAllocator.reset();
+	renderer.memory->hostAllocator->Reset();
 }
 
 void Scene::Update() {
