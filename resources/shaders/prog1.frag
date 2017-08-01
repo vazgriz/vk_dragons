@@ -3,8 +3,6 @@
 // Input: UV coordinates coming from the vertex shader
 in vec2 uv; 
 
-// Uniform: time
-uniform float time;
 // Uniform: texture sampler
 uniform sampler2D texture1;
 
