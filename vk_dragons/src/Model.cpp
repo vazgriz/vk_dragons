@@ -31,56 +31,33 @@ void Model::Init(const std::string& fileName) {
 }
 
 void Model::CreateBuffers() {
-	positionsBuffer = CreateBuffer(mesh.positions.size() * sizeof(glm::vec3),
+	positionsBuffer = CreateBuffer(renderer.device, mesh.positions.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		*renderer.memory->deviceAllocator);
 
-	normalsBuffer = CreateBuffer(mesh.normals.size() * sizeof(glm::vec3),
+	normalsBuffer = CreateBuffer(renderer.device, mesh.normals.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		*renderer.memory->deviceAllocator);
 
-	tangentsBuffer = CreateBuffer(mesh.tangents.size() * sizeof(glm::vec3),
+	tangentsBuffer = CreateBuffer(renderer.device, mesh.tangents.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		*renderer.memory->deviceAllocator);
 
-	binormalsBuffer = CreateBuffer(mesh.binormals.size() * sizeof(glm::vec3),
+	binormalsBuffer = CreateBuffer(renderer.device, mesh.binormals.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		*renderer.memory->deviceAllocator);
 
-	texcoordsBuffer = CreateBuffer(mesh.texcoords.size() * sizeof(glm::vec2),
+	texcoordsBuffer = CreateBuffer(renderer.device, mesh.texcoords.size() * sizeof(glm::vec2),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		*renderer.memory->deviceAllocator);
 
-	indicesBuffer = CreateBuffer(mesh.indices.size() * sizeof(uint32_t),
+	indicesBuffer = CreateBuffer(renderer.device, mesh.indices.size() * sizeof(uint32_t),
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		*renderer.memory->deviceAllocator);
 }
 
-Buffer Model::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, Allocator& allocator) {
-	VkBufferCreateInfo bufferInfo = {};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = size;
-	bufferInfo.usage = usage;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-	VkBuffer buffer;
-
-	if (vkCreateBuffer(renderer.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create buffer!");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
-
-	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
-
-	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
-
-	return { buffer, alloc.size, alloc.offset };
-}
-
 Buffer Model::CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer destBuffer, void* source, size_t size) {
-	Buffer buffer = CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, *renderer.memory->hostAllocator);
+	Buffer buffer = CreateBuffer(renderer.device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, *renderer.memory->hostAllocator);
 	char* dest = static_cast<char*>(renderer.memory->hostMapping) + buffer.offset;
 	memcpy(dest, source, size);
 

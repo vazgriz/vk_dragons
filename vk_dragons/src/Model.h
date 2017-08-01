@@ -5,12 +5,7 @@
 #include "Renderer.h"
 #include "MemorySystem.h"
 #include "Allocator.h"
-
-struct Buffer {
-	VkBuffer buffer;
-	size_t size;
-	size_t offset;
-};
+#include "ProgramUtilities.h"
 
 class Model {
 public:
@@ -38,6 +33,5 @@ private:
 	Buffer indicesStagingBuffer;
 
 	void CreateBuffers();
-	Buffer CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, Allocator& allocator);
 	Buffer CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer destBuffer, void* source, size_t size);
 };

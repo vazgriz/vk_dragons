@@ -52,3 +52,26 @@ static std::vector<char> loadFile(const std::string& filename) {
 
 	return buffer;
 }
+
+Buffer CreateBuffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, Allocator& allocator) {
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VkBuffer buffer;
+
+	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create buffer!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
+
+	vkBindBufferMemory(device, buffer, alloc.memory, alloc.offset);
+
+	return { buffer, alloc.size, alloc.offset };
+}
