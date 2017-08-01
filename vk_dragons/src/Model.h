@@ -38,6 +38,6 @@ private:
 	Buffer indicesStagingBuffer;
 
 	void CreateBuffers();
-	Buffer CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, Allocator allocator);
+	Buffer CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, Allocator& allocator);
 	Buffer CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer destBuffer, void* source, size_t size);
 };
