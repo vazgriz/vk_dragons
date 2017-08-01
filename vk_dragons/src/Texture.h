@@ -14,9 +14,10 @@ public:
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 
+	VkImage image;
+
 private:
 	Renderer& renderer;
-	VkImage image;
 	uint32_t width;
 	uint32_t height;
 	std::vector<unsigned char> data;
