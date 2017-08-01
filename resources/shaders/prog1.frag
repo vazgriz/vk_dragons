@@ -8,9 +8,9 @@ in vec2 uv;
 layout(binding = 1) uniform sampler2D texture1;
 
 // Output: the fragment color
-out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 void main(){
 	// The output color is read from the texture, suing the UV coordinates.
-	fragColor = texture(texture1, uv).rgb;
+	fragColor = texture(texture1, uv);
 }
