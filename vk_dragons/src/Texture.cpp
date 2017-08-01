@@ -10,6 +10,7 @@ Texture::Texture(Renderer& renderer) : renderer(renderer) {
 
 Texture::~Texture() {
 	vkDestroyImage(renderer.device, image, nullptr);
+	vkDestroyImageView(renderer.device, imageView, nullptr);
 }
 
 void Texture::DestroyStaging() {
@@ -29,6 +30,7 @@ void Texture::Init(const std::string& filename) {
 
 	CalulateMipChain();
 	CreateImage();
+	CreateImageView();
 }
 
 void Texture::CreateImage() {
@@ -57,6 +59,27 @@ void Texture::CreateImage() {
 	Allocation alloc = renderer.memory->deviceAllocator->Alloc(memRequirements.size, memRequirements.alignment);
 
 	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
+}
+
+void Texture::CreateImageView() {
+	VkImageViewCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	info.image = image;
+	info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	info.format = VK_FORMAT_R8G8B8A8_UNORM;
+	info.components.r = VK_COMPONENT_SWIZZLE_R;
+	info.components.g = VK_COMPONENT_SWIZZLE_G;
+	info.components.b = VK_COMPONENT_SWIZZLE_B;
+	info.components.a = VK_COMPONENT_SWIZZLE_A;
+	info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	info.subresourceRange.baseArrayLayer = 0;
+	info.subresourceRange.layerCount = 1;
+	info.subresourceRange.baseMipLevel = 0;
+	info.subresourceRange.levelCount = static_cast<uint32_t>(mipChain.size());
+
+	if (vkCreateImageView(renderer.device, &info, nullptr, &imageView) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create image view!");
+	}
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {

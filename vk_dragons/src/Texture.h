@@ -15,6 +15,7 @@ public:
 	void DestroyStaging();
 
 	VkImage image;
+	VkImageView imageView;
 
 private:
 	Renderer& renderer;
@@ -28,4 +29,5 @@ private:
 	void CalulateMipChain();
 	void Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void GenerateMipChain(VkCommandBuffer commandBuffer);
+	void CreateImageView();
 };
