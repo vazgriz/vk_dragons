@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Allocator.cpp" />
+    <ClCompile Include="src\helpers\lodepng\lodepng.cpp" />
     <ClCompile Include="src\helpers\MeshUtilities.cpp" />
     <ClCompile Include="src\helpers\ProgramUtilities.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -27,6 +28,7 @@
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
     <ClCompile Include="src\Scene.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Allocator.h" />
@@ -36,6 +38,7 @@
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Scene.h" />
+    <ClInclude Include="src\Texture.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

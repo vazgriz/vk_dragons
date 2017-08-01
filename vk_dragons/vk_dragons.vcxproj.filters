@@ -19,6 +19,9 @@
     <Filter Include="Header Files\Helpers">
       <UniqueIdentifier>{e70a80de-d2a1-40e8-89c3-2fed3d45299e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Helpers\lodepng">
+      <UniqueIdentifier>{eb39d8c7-da2d-4ecd-9b3e-4904669687b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -45,6 +48,12 @@
     <ClCompile Include="src\Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\helpers\lodepng\lodepng.cpp">
+      <Filter>Source Files\Helpers\lodepng</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Renderer.h">
@@ -66,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
