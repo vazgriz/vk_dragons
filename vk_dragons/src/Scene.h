@@ -29,11 +29,15 @@ private:
 	std::vector<VkCommandBuffer> commandBuffers;
 	VkDescriptorSetLayout descriptorSetLayout;
 	Buffer uniformBuffer;
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSet descriptorSet;
 
 	void UploadResources();
 	void UpdateUniform();
 	void CreateCommandBuffers();
 	void CreateDescriptorSetLayout();
 	void CreateUniformBuffer();
+	void CreateDescriptorPool();
+	void CreateDescriptorSet();
 };
 
