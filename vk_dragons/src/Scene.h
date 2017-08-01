@@ -17,6 +17,7 @@ private:
 	Model suzanne;
 	Model plane;
 	Texture dragonColor;
+	Texture skybox;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 

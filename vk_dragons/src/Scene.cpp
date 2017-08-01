@@ -5,13 +5,15 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragon(renderer),
 	suzanne(renderer),
 	plane(renderer),
-	dragonColor(renderer) {
+	dragonColor(renderer),
+	skybox(renderer) {
 
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
 
 	dragonColor.Init("resources/dragon_texture_color.png");
+	skybox.InitCubemap("resources/cubemap/cubemap");
 
 	UploadResources();
 
