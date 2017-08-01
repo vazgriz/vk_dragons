@@ -12,6 +12,10 @@ Texture::~Texture() {
 	vkDestroyImage(renderer.device, image, nullptr);
 }
 
+void Texture::DestroyStaging() {
+	vkDestroyBuffer(renderer.device, stagingBuffer.buffer, nullptr);
+}
+
 void Texture::Init(const std::string& filename) {
 	unsigned int width, height;
 	unsigned int error = lodepng::decode(data, width, height, filename);

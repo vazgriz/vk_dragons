@@ -12,6 +12,7 @@ public:
 
 	void Init(const std::string& filename);
 	void UploadData(VkCommandBuffer commandBuffer);
+	void DestroyStaging();
 
 private:
 	Renderer& renderer;
