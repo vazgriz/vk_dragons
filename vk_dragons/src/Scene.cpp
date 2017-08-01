@@ -25,11 +25,15 @@ void Scene::UploadResources() {
 	suzanne.UploadData(commandBuffer);
 	plane.UploadData(commandBuffer);
 
+	dragonColor.UploadData(commandBuffer);
+
 	renderer.SubmitCommandBuffer(commandBuffer);
 
 	dragon.DestroyStaging();
 	suzanne.DestroyStaging();
 	plane.DestroyStaging();
+
+	dragonColor.DestroyStaging();
 
 	renderer.memory->hostAllocator.reset();
 }
