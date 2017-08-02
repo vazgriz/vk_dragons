@@ -5,7 +5,10 @@
 #include "Camera.h"
 
 struct Uniform {
-	glm::mat4 camera;
+	struct Camera {
+		glm::mat4 projection;
+		glm::mat4 view;
+	} camera;
 };
 
 class Scene {
@@ -27,6 +30,7 @@ private:
 	Texture skybox;
 
 	std::vector<VkCommandBuffer> commandBuffers;
+	VkSampler sampler;
 	VkDescriptorSetLayout descriptorSetLayout;
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
@@ -35,9 +39,17 @@ private:
 	void UploadResources();
 	void UpdateUniform();
 	void CreateCommandBuffers();
+	void CreateSampler();
 	void CreateDescriptorSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateDescriptorSet();
+
+	//defined in Scene_pipelines.cpp
+	VkPipelineLayout pipelineLayout;
+	VkPipeline dragonPipeline;
+	void CreatePipelines();
+	void DestroyPipelines();
+	void CreateDragonPipeline();
 };
 
