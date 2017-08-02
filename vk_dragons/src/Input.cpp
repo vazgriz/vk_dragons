@@ -1,5 +1,4 @@
 #include "Input.h"
-#include <iostream>
 
 Input::Input(GLFWwindow* window, Camera& camera) : camera(camera) {
 	this->window = window;
