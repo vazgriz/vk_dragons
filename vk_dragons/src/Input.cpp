@@ -44,8 +44,8 @@ void Input::HandleMouse(double xpos, double ypos) {
 	float deltaX = newMouseX - mouseX;
 	float deltaY = newMouseY - mouseY;
 
-	lookX += deltaX;
-	lookY += deltaY;
+	lookX += deltaX / 4.0f;
+	lookY += deltaY / 4.0f;
 	lookY = std::min(std::max(lookY, -90.0f), 90.0f);
 
 	mouseX = newMouseX;
