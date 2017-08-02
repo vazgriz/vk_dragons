@@ -3,6 +3,7 @@
 #include "Model.h"
 #include "Texture.h"
 #include "Camera.h"
+#include "Input.h"
 
 struct Uniform {
 	struct Camera {
@@ -16,13 +17,15 @@ public:
 	Scene(GLFWwindow* window, uint32_t width, uint32_t height);
 	~Scene();
 
-	void Update();
+	void Update(double elapsed);
 	void Render();
 	void Resize(uint32_t width, uint32_t height);
 
 private:
 	Renderer renderer;
 	Camera camera;
+	Input input;
+
 	Model dragon;
 	Model suzanne;
 	Model plane;

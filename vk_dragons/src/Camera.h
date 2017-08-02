@@ -6,7 +6,9 @@ class Camera {
 public:
 	Camera(float fov, uint32_t width, uint32_t height);
 	void SetPosition(glm::vec3 position);
-	void SetRotation(float x, float y, float z);
+	void SetRotation(glm::quat rotation);
+	glm::vec3 GetPosition();
+	glm::quat GetRotation();
 	void SetSize(uint32_t width, uint32_t height);
 	void Update();
 	glm::mat4 GetProjection();

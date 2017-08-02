@@ -35,6 +35,7 @@ int main() {
 	Scene scene(window, width, height);
 
 	glfwShowWindow(window);
+	double lastTime = 0.0;
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -44,7 +45,11 @@ int main() {
 			scene.Resize(width, height);
 		}
 
-		scene.Update();
+		double now = glfwGetTime();
+		double elapsed = now - lastTime;
+		lastTime = now;
+
+		scene.Update(elapsed);
 		scene.Render();
 	}
 

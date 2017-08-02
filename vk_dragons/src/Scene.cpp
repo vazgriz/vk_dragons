@@ -7,7 +7,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane(renderer),
 	dragonColor(renderer),
 	skybox(renderer),
-	camera(45.0f, width, height) {
+	camera(45.0f, width, height),
+	input(window, camera) {
 
 	camera.SetPosition(glm::vec3(0, 0, 2.5f));
 
@@ -67,7 +68,8 @@ void Scene::UpdateUniform() {
 	uniform->camera.view = camera.GetView();
 }
 
-void Scene::Update() {
+void Scene::Update(double elapsed) {
+	input.Update(elapsed);
 	camera.Update();
 	UpdateUniform();
 }
