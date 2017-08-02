@@ -4,7 +4,7 @@
 // First attribute: vertex position
 layout(location = 0) in vec3 v;
 // Second attribute: uv coordinates
-layout(location = 1) in vec2 t;
+layout(location = 4) in vec2 t;
 
 // Uniform: the camera matrix
 layout(binding = 0) uniform Camera {
