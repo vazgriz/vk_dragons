@@ -25,7 +25,7 @@ Allocation Allocator::Alloc(size_t size, size_t alignment) {
 	return result;
 }
 
-void Allocator::Free(Allocation allocation) {
+void Allocator::Pop() {
 	pointer = stack.top();
 	stack.pop();
 }

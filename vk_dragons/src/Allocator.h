@@ -14,7 +14,7 @@ class Allocator {
 public:
 	Allocator(VkDeviceMemory memory, size_t totalSize);
 	Allocation Alloc(size_t size, size_t alignment);
-	void Free(Allocation allocation);
+	void Pop();
 	void Reset();
 
 private:
