@@ -3,6 +3,7 @@
 #include "Model.h"
 #include "Texture.h"
 #include "Camera.h"
+#include "Input.h"
 
 struct Uniform {
 	struct Camera {
@@ -23,6 +24,8 @@ public:
 private:
 	Renderer renderer;
 	Camera camera;
+	Input input;
+
 	Model dragon;
 	Model suzanne;
 	Model plane;

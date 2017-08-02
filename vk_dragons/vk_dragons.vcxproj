@@ -24,6 +24,7 @@
     <ClCompile Include="src\helpers\lodepng\lodepng.cpp" />
     <ClCompile Include="src\helpers\MeshUtilities.cpp" />
     <ClCompile Include="src\helpers\ProgramUtilities.cpp" />
+    <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Memory.cpp" />
     <ClCompile Include="src\Model.cpp" />
@@ -35,6 +36,7 @@
   <ItemGroup>
     <ClInclude Include="src\Allocator.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\helpers\MeshUtilities.h" />
     <ClInclude Include="src\helpers\ProgramUtilities.h" />
     <ClInclude Include="src\MemorySystem.h" />
