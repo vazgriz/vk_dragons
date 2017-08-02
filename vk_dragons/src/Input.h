@@ -19,6 +19,9 @@ private:
 	void HandleMouse(double xpos, double ypos);
 	static void MouseCallback(GLFWwindow* window, double xpos, double ypos);
 
+	void HandleMouseButton(int button, int action, int mods);
+	static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+
 	bool forward;
 	bool back;
 	bool right;

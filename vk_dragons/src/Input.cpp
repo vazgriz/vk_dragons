@@ -7,6 +7,7 @@ Input::Input(GLFWwindow* window, Camera& camera) : camera(camera) {
 	glfwSetWindowUserPointer(window, this);
 	glfwSetKeyCallback(window, &KeyCallback);
 	glfwSetCursorPosCallback(window, &MouseCallback);
+	glfwSetMouseButtonCallback(window, &MouseButtonCallback);
 
 	forward = false;
 	back = false;
@@ -25,6 +26,10 @@ void Input::HandleKey(int key, int scancode, int action, int mods) {
 	Toggle(left, GLFW_KEY_A, key, action);
 	Toggle(up, GLFW_KEY_E, key, action);
 	Toggle(down, GLFW_KEY_Q, key, action);
+
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
 }
 
 void Input::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -50,6 +55,17 @@ void Input::HandleMouse(double xpos, double ypos) {
 void Input::MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	Input* input = static_cast<Input*>(glfwGetWindowUserPointer(window));
 	input->HandleMouse(xpos, ypos);
+}
+
+void Input::HandleMouseButton(int button, int action, int mods) {
+	if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
+}
+
+void Input::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+	Input* input = static_cast<Input*>(glfwGetWindowUserPointer(window));
+	input->HandleMouseButton(button, action, mods);
 }
 
 void Input::Update(double elapsed) {
