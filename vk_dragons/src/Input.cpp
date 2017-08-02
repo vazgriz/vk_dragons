@@ -111,7 +111,7 @@ void Input::UpdateRot(double elapsed) {
 	float radX = glm::radians(lookX);
 	float radY = glm::radians(lookY);
 
-	glm::quat rot = glm::quat(glm::vec3(-radY, 0, 0)) * glm::quat(glm::vec3(0, -radX, 0));
+	glm::quat rot = glm::quat(glm::vec3(0, -radX, 0)) * glm::quat(glm::vec3(-radY, 0, 0));
 	camera.SetRotation(rot);
 }
 
