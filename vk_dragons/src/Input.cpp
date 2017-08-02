@@ -1,10 +1,12 @@
 #include "Input.h"
+#include <algorithm>
 
 Input::Input(GLFWwindow* window, Camera& camera) : camera(camera) {
 	this->window = window;
 
 	glfwSetWindowUserPointer(window, this);
-	glfwSetKeyCallback(window, &InputCallback);
+	glfwSetKeyCallback(window, &KeyCallback);
+	glfwSetCursorPosCallback(window, &MouseCallback);
 
 	forward = false;
 	back = false;
@@ -12,9 +14,11 @@ Input::Input(GLFWwindow* window, Camera& camera) : camera(camera) {
 	left = false;
 	up = false;
 	down = false;
+	lookX = 0;
+	lookY = 0;
 }
 
-void Input::HandleInput(int key, int scancode, int action, int mods) {
+void Input::HandleKey(int key, int scancode, int action, int mods) {
 	Toggle(forward, GLFW_KEY_W, key, action);
 	Toggle(back, GLFW_KEY_S, key, action);
 	Toggle(right, GLFW_KEY_D, key, action);
@@ -23,12 +27,37 @@ void Input::HandleInput(int key, int scancode, int action, int mods) {
 	Toggle(down, GLFW_KEY_Q, key, action);
 }
 
-void Input::InputCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void Input::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	Input* input = static_cast<Input*>(glfwGetWindowUserPointer(window));
-	input->HandleInput(key, scancode, action, mods);
+	input->HandleKey(key, scancode, action, mods);
+}
+
+void Input::HandleMouse(double xpos, double ypos) {
+	float newMouseX = static_cast<float>(xpos);
+	float newMouseY = static_cast<float>(ypos);
+
+	float deltaX = newMouseX - mouseX;
+	float deltaY = newMouseY - mouseY;
+
+	lookX += deltaX;
+	lookY += deltaY;
+	lookY = std::min(std::max(lookY, -90.0f), 90.0f);
+
+	mouseX = newMouseX;
+	mouseY = newMouseY;
+}
+
+void Input::MouseCallback(GLFWwindow* window, double xpos, double ypos) {
+	Input* input = static_cast<Input*>(glfwGetWindowUserPointer(window));
+	input->HandleMouse(xpos, ypos);
 }
 
 void Input::Update(double elapsed) {
+	UpdatePos(elapsed);
+	UpdateRot(elapsed);
+}
+
+void Input::UpdatePos(double elapsed) {
 	float x = 0;
 	float y = 0;
 	float z = 0;
@@ -60,6 +89,14 @@ void Input::Update(double elapsed) {
 	pos += static_cast<float>(elapsed) * z * camForward;
 
 	camera.SetPosition(pos);
+}
+
+void Input::UpdateRot(double elapsed) {
+	float radX = glm::radians(lookX);
+	float radY = glm::radians(lookY);
+
+	glm::quat rot = glm::quat(glm::vec3(-radY, 0, 0)) * glm::quat(glm::vec3(0, -radX, 0));
+	camera.SetRotation(rot);
 }
 
 void Input::Toggle(bool& state, int keycode, int key, int action) {

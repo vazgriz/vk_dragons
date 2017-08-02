@@ -13,8 +13,11 @@ private:
 	GLFWwindow* window;
 	Camera& camera;
 
-	void HandleInput(int key, int scancode, int action, int mods);
-	static void InputCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void HandleKey(int key, int scancode, int action, int mods);
+	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+	void HandleMouse(double xpos, double ypos);
+	static void MouseCallback(GLFWwindow* window, double xpos, double ypos);
 
 	bool forward;
 	bool back;
@@ -24,6 +27,11 @@ private:
 	bool down;
 	float mouseX;
 	float mouseY;
+	float lookX;
+	float lookY;
+
+	void UpdatePos(double elapsed);
+	void UpdateRot(double elapsed);
 
 	void Toggle(bool& state, int keycode, int key, int action);
 };
