@@ -68,7 +68,8 @@ void Scene::UpdateUniform() {
 	uniform->camera.view = camera.GetView();
 }
 
-void Scene::Update() {
+void Scene::Update(double elapsed) {
+	input.Update(elapsed);
 	camera.Update();
 	UpdateUniform();
 }

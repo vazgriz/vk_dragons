@@ -16,3 +16,7 @@ void Input::InputCallback(GLFWwindow* window, int key, int scancode, int action,
 	Input* input = static_cast<Input*>(glfwGetWindowUserPointer(window));
 	input->HandleInput(key, scancode, action, mods);
 }
+
+void Input::Update(double elapsed) {
+
+}

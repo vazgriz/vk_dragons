@@ -17,7 +17,7 @@ public:
 	Scene(GLFWwindow* window, uint32_t width, uint32_t height);
 	~Scene();
 
-	void Update();
+	void Update(double elapsed);
 	void Render();
 	void Resize(uint32_t width, uint32_t height);
 

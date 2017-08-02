@@ -6,6 +6,9 @@
 class Input {
 public:
 	Input(GLFWwindow* window, Camera& camera);
+
+	void Update(double elapsed);
+
 private:
 	GLFWwindow* window;
 	Camera& camera;
