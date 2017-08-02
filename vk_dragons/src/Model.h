@@ -14,6 +14,8 @@ public:
 	void Init(const std::string& fileName);
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
+	void Bind(VkCommandBuffer commandBuffer);
+	void Draw(VkCommandBuffer commandBuffer);
 	static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 
