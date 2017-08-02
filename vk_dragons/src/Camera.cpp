@@ -15,6 +15,14 @@ void Camera::SetRotation(float x, float y, float z) {
 	rotation = glm::quat(glm::vec3(x, y, z));
 }
 
+glm::vec3 Camera::GetPosition() {
+	return position;
+}
+
+glm::quat Camera::GetRotation() {
+	return rotation;
+}
+
 void Camera::SetSize(uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;

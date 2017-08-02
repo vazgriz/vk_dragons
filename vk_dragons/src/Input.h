@@ -15,4 +15,15 @@ private:
 
 	void HandleInput(int key, int scancode, int action, int mods);
 	static void InputCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+	bool forward;
+	bool back;
+	bool right;
+	bool left;
+	bool up;
+	bool down;
+	float mouseX;
+	float mouseY;
+
+	void Toggle(bool& state, int keycode, int key, int action);
 };
