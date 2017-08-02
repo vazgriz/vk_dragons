@@ -30,6 +30,25 @@ void Model::Init(const std::string& fileName) {
 	CreateBuffers();
 }
 
+void Model::Bind(VkCommandBuffer commandBuffer) {
+	VkBuffer buffers[] = {
+		positionsBuffer.buffer,
+		normalsBuffer.buffer,
+		tangentsBuffer.buffer,
+		binormalsBuffer.buffer,
+		texcoordsBuffer.buffer
+	};
+	VkDeviceSize offsets[] = {
+		0, 0, 0, 0, 0
+	};
+	vkCmdBindVertexBuffers(commandBuffer, 0, 5, buffers, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+}
+
+void Model::Draw(VkCommandBuffer commandBuffer) {
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+}
+
 void Model::CreateBuffers() {
 	positionsBuffer = CreateBuffer(renderer.device, mesh.positions.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -78,4 +97,24 @@ void Model::UploadData(VkCommandBuffer commandBuffer) {
 	binormalsStagingBuffer = CopyBuffer(commandBuffer, binormalsBuffer.buffer, mesh.binormals.data(), mesh.binormals.size() * sizeof(glm::vec3));
 	texcoordsStagingBuffer = CopyBuffer(commandBuffer, texcoordsBuffer.buffer, mesh.texcoords.data(), mesh.texcoords.size() * sizeof(glm::vec2));
 	indicesStagingBuffer = CopyBuffer(commandBuffer, indicesBuffer.buffer, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t));
+}
+
+std::vector<VkVertexInputBindingDescription> Model::GetBindingDescriptions() {
+	return std::vector<VkVertexInputBindingDescription>({
+		{ 0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//position
+		{ 1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//normal
+		{ 2, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//tangent
+		{ 3, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//binormal
+		{ 4, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX },	//texcoord
+	});
+}
+
+std::vector<VkVertexInputAttributeDescription> Model::GetAttributeDescriptions() {
+	return std::vector<VkVertexInputAttributeDescription>({
+		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//position
+		{ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//normal
+		{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//tangent
+		{ 3, 3, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//binormal
+		{ 4, 4, VK_FORMAT_R32G32_SFLOAT, 0 },		//texcoord
+	});
 }

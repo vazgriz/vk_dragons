@@ -257,6 +257,8 @@ void Renderer::createLogicalDevice() {
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceFeatures.shaderClipDistance = VK_TRUE;
+	deviceFeatures.shaderCullDistance = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

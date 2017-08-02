@@ -4,9 +4,17 @@
 #include "Texture.h"
 #include "Camera.h"
 
+struct Uniform {
+	struct Camera {
+		glm::mat4 projection;
+		glm::mat4 view;
+	} camera;
+};
+
 class Scene {
 public:
 	Scene(GLFWwindow* window, uint32_t width, uint32_t height);
+	~Scene();
 
 	void Update();
 	void Render();
@@ -22,8 +30,26 @@ private:
 	Texture skybox;
 
 	std::vector<VkCommandBuffer> commandBuffers;
+	VkSampler sampler;
+	VkDescriptorSetLayout descriptorSetLayout;
+	Buffer uniformBuffer;
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSet descriptorSet;
 
 	void UploadResources();
+	void UpdateUniform();
 	void CreateCommandBuffers();
+	void CreateSampler();
+	void CreateDescriptorSetLayout();
+	void CreateUniformBuffer();
+	void CreateDescriptorPool();
+	void CreateDescriptorSet();
+
+	//defined in Scene_pipelines.cpp
+	VkPipelineLayout pipelineLayout;
+	VkPipeline dragonPipeline;
+	void CreatePipelines();
+	void DestroyPipelines();
+	void CreateDragonPipeline();
 };
 
