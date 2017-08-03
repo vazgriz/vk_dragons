@@ -25,7 +25,6 @@ private:
 	std::vector<std::vector<unsigned char>> data;
 	std::vector<glm::vec2> mipChain;
 	std::vector<Buffer> stagingBuffers;
-	bool isCubemap;
 
 	void LoadImages(std::vector<std::string>& filenames);
 	void CalulateMipChain();

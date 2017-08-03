@@ -20,7 +20,6 @@ void Texture::DestroyStaging() {
 }
 
 void Texture::Init(const std::string& filename) {
-	isCubemap = false;
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
 
@@ -45,7 +44,6 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 		filenameRoot + "_b.png",
 		filenameRoot + "_f.png",
 	};
-	isCubemap = true;
 
 	LoadImages(filenames);
 	CalulateMipChain();
