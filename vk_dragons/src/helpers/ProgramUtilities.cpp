@@ -103,7 +103,7 @@ Image CreateImage(VkDevice device, Allocator& allocator, VkFormat format, uint32
 	info.mipLevels = mipLevels;
 	info.arrayLayers = arrayLevels;
 	info.tiling = VK_IMAGE_TILING_OPTIMAL;
-	info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+	info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	info.samples = VK_SAMPLE_COUNT_1_BIT;
 	info.usage = usage;
@@ -162,7 +162,7 @@ void Transition(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldL
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = arrayLayers;
 
-	if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || newLayout == VK_IMAGE_LAYOUT_GENERAL)) {
+	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || newLayout == VK_IMAGE_LAYOUT_GENERAL)) {
 		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
