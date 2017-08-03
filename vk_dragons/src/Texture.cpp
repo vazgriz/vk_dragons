@@ -72,10 +72,11 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 
 	this->width = static_cast<uint32_t>(width);
 	this->height = static_cast<uint32_t>(height);
+	arrayLayers = static_cast<uint32_t>(data.size());
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
-	Transition(commandBuffer, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_GENERAL);
+	Transition(commandBuffer, image, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
 
 	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
@@ -103,7 +104,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 
 	GenerateMipChain(commandBuffer);
 
-	Transition(commandBuffer, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	Transition(commandBuffer, image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels, arrayLayers);
 }
 
 void Texture::CalulateMipChain() {
@@ -115,42 +116,8 @@ void Texture::CalulateMipChain() {
 		if (w > 1) w /= 2;
 		if (h > 1) h /= 2;
 	}
-}
 
-void Texture::Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout) {
-	VkImageMemoryBarrier barrier = {};
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.oldLayout = oldLayout;
-	barrier.newLayout = newLayout;
-	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.image = image;
-	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	barrier.subresourceRange.baseMipLevel = 0;
-	barrier.subresourceRange.levelCount = static_cast<uint32_t>(mipChain.size());
-	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = static_cast<uint32_t>(data.size());
-
-	if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || newLayout == VK_IMAGE_LAYOUT_GENERAL)) {
-		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	}
-	else if ((oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || oldLayout == VK_IMAGE_LAYOUT_GENERAL) && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	}
-	else {
-		throw std::invalid_argument("Unsupported layout transition!");
-	}
-
-	vkCmdPipelineBarrier(
-		commandBuffer,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &barrier
-	);
+	mipLevels = static_cast<uint32_t>(mipChain.size());
 }
 
 void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
