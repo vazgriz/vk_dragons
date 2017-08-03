@@ -106,7 +106,7 @@ void Scene::CreateDragonPipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = renderer.mainRenderPass;
+	pipelineInfo.renderPass = mainRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &dragonPipeline) != VK_SUCCESS) {

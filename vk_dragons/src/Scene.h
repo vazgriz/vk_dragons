@@ -32,6 +32,8 @@ private:
 	Texture dragonColor;
 	Texture skybox;
 
+	VkRenderPass mainRenderPass;
+	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
 	VkSampler sampler;
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -41,12 +43,18 @@ private:
 
 	void UploadResources();
 	void UpdateUniform();
+
+	void createRenderPass();
+	void createFramebuffers();
 	void CreateCommandBuffers();
 	void CreateSampler();
 	void CreateDescriptorSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateDescriptorSet();
+
+	void createSwapchainResources();
+	void CleanupSwapchainResources();
 
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout pipelineLayout;

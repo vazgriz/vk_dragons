@@ -34,9 +34,10 @@ public:
 	std::unique_ptr<Memory> memory;
 	VkDevice device;
 	VkExtent2D swapChainExtent;
-	VkRenderPass mainRenderPass;
-	std::vector<VkFramebuffer> swapChainFramebuffers;
 	VkCommandPool commandPool;
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	std::vector<VkImageView> swapChainImageViews;
 
 private:
 	GLFWwindow* window;
@@ -49,9 +50,6 @@ private:
 	VkSurfaceKHR surface;
 	VkQueue presentQueue;
 	VkSwapchainKHR swapChain;
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	std::vector<VkImageView> swapChainImageViews;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
@@ -75,8 +73,6 @@ private:
 	void createSwapChain();
 	void createImageViews();
 	void createSemaphores();
-	void createRenderPass();
-	void createFramebuffers();
 	void createCommandPool();
 	void recreateSwapChain();
 	void cleanupSwapChain();

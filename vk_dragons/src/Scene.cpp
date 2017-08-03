@@ -21,6 +21,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	UploadResources();
 
+	createSwapchainResources();
+
 	CreateSampler();
 	CreateDescriptorSetLayout();
 	CreateUniformBuffer();
@@ -34,11 +36,19 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
+	CleanupSwapchainResources();
 	vkDestroyDescriptorSetLayout(renderer.device, descriptorSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
 	vkDestroySampler(renderer.device, sampler, nullptr);
 	DestroyPipelines();
+}
+
+void Scene::CleanupSwapchainResources() {
+	for (auto& framebuffer : swapChainFramebuffers) {
+		vkDestroyFramebuffer(renderer.device, framebuffer, nullptr);
+	}
+	vkDestroyRenderPass(renderer.device, mainRenderPass, nullptr);
 }
 
 void Scene::UploadResources() {
@@ -81,15 +91,22 @@ void Scene::Render() {
 void Scene::Resize(uint32_t width, uint32_t height) {
 	renderer.Resize(width, height);
 	camera.SetSize(width, height);
+	CleanupSwapchainResources();
+	createSwapchainResources();
 	DestroyPipelines();
 	CreatePipelines();
 	CreateCommandBuffers();
 }
 
+void Scene::createSwapchainResources() {
+	createRenderPass();
+	createFramebuffers();
+}
+
 void Scene::CreateCommandBuffers() {
 	if (commandBuffers.size() > 0) vkFreeCommandBuffers(renderer.device, renderer.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	commandBuffers.clear();
-	commandBuffers.resize(renderer.swapChainFramebuffers.size());
+	commandBuffers.resize(swapChainFramebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -110,8 +127,8 @@ void Scene::CreateCommandBuffers() {
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderer.mainRenderPass;
-		renderPassInfo.framebuffer = renderer.swapChainFramebuffers[i];
+		renderPassInfo.renderPass = mainRenderPass;
+		renderPassInfo.framebuffer = swapChainFramebuffers[i];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
@@ -130,6 +147,71 @@ void Scene::CreateCommandBuffers() {
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to record command buffer!");
+		}
+	}
+}
+
+void Scene::createRenderPass() {
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = renderer.swapChainImageFormat;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
+
+	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &mainRenderPass) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create render pass!");
+	}
+}
+
+void Scene::createFramebuffers() {
+	swapChainFramebuffers.resize(renderer.swapChainImageViews.size());
+
+	for (size_t i = 0; i < renderer.swapChainImageViews.size(); i++) {
+		VkImageView attachments[] = {
+			renderer.swapChainImageViews[i]
+		};
+
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = mainRenderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = renderer.swapChainExtent.width;
+		framebufferInfo.height = renderer.swapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create framebuffer!");
 		}
 	}
 }
