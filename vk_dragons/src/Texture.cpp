@@ -222,13 +222,13 @@ void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
 			blit.srcSubresource.layerCount = 1;
 			blit.srcSubresource.mipLevel = static_cast<uint32_t>(i - 1);
 			blit.srcOffsets[0] = { 0, 0, 0 };
-			blit.srcOffsets[1] = { srcW, srcH, 0 };
+			blit.srcOffsets[1] = { srcW, srcH, 1 };
 			blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			blit.dstSubresource.baseArrayLayer = static_cast<uint32_t>(j);
 			blit.dstSubresource.layerCount = 1;
 			blit.dstSubresource.mipLevel = static_cast<uint32_t>(i);
 			blit.dstOffsets[0] = { 0, 0, 0 };
-			blit.dstOffsets[1] = { dstW, dstH, 0 };
+			blit.dstOffsets[1] = { dstW, dstH, 1 };
 
 			vkCmdBlitImage(commandBuffer,
 				image, VK_IMAGE_LAYOUT_GENERAL,
