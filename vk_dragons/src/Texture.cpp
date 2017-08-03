@@ -23,8 +23,13 @@ void Texture::Init(const std::string& filename) {
 	isCubemap = false;
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
-	CreateImage();
-	CreateImageView();
+
+	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
+	CreateImage(VK_FORMAT_R8G8B8A8_UNORM,
+		mipLevels, 1,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		0);
+	CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1);
 }
 
 void Texture::InitCubemap(const std::string& filenameRoot) {
@@ -42,8 +47,13 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 
 	LoadImages(filenames);
 	CalulateMipChain();
-	CreateImage();
-	CreateImageView();
+
+	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
+	CreateImage(VK_FORMAT_R8G8B8A8_UNORM,
+		mipLevels, 6,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+	CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6);
 }
 
 void Texture::LoadImages(std::vector<std::string>& filenames) {
@@ -63,24 +73,22 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 }
 
 
-void Texture::CreateImage() {
+void Texture::CreateImage(VkFormat format, uint32_t mipLevels, uint32_t arrayLevels, VkImageUsageFlags usage, VkImageCreateFlags flags) {
 	VkImageCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	info.imageType = VK_IMAGE_TYPE_2D;
-	info.format = VK_FORMAT_R8G8B8A8_UNORM;
+	info.format = format;
 	info.extent.width = width;
 	info.extent.height = height;
 	info.extent.depth = 1;
-	info.mipLevels = static_cast<uint32_t>(mipChain.size());
-	info.arrayLayers = static_cast<uint32_t>(data.size());
+	info.mipLevels = mipLevels;
+	info.arrayLayers = arrayLevels;
 	info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-	info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	info.samples = VK_SAMPLE_COUNT_1_BIT;
-	if (isCubemap) {
-		info.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-	}
+	info.usage = usage;
+	info.flags = flags;
 
 	if (vkCreateImage(renderer.device, &info, nullptr, &image) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create image!");
@@ -94,26 +102,21 @@ void Texture::CreateImage() {
 	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
 }
 
-void Texture::CreateImageView() {
+void Texture::CreateImageView(VkFormat format, VkImageAspectFlags aspect, VkImageViewType viewType, uint32_t mipLevels, uint32_t arrayLayers) {
 	VkImageViewCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	info.image = image;
-	if (isCubemap) {
-		info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-	}
-	else {
-		info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	}
-	info.format = VK_FORMAT_R8G8B8A8_UNORM;
+	info.format = format;
+	info.viewType = viewType;
 	info.components.r = VK_COMPONENT_SWIZZLE_R;
 	info.components.g = VK_COMPONENT_SWIZZLE_G;
 	info.components.b = VK_COMPONENT_SWIZZLE_B;
 	info.components.a = VK_COMPONENT_SWIZZLE_A;
-	info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	info.subresourceRange.aspectMask = aspect;
 	info.subresourceRange.baseArrayLayer = 0;
-	info.subresourceRange.layerCount = static_cast<uint32_t>(data.size());
+	info.subresourceRange.layerCount = arrayLayers;
 	info.subresourceRange.baseMipLevel = 0;
-	info.subresourceRange.levelCount = static_cast<uint32_t>(mipChain.size());
+	info.subresourceRange.levelCount = mipLevels;
 
 	if (vkCreateImageView(renderer.device, &info, nullptr, &imageView) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create image view!");

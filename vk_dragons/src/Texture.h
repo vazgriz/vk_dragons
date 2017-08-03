@@ -28,9 +28,9 @@ private:
 	bool isCubemap;
 
 	void LoadImages(std::vector<std::string>& filenames);
-	void CreateImage();
+	void CreateImage(VkFormat format, uint32_t mipLevels, uint32_t arrayLevels, VkImageUsageFlags usage, VkImageCreateFlags flags);
 	void CalulateMipChain();
 	void Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void GenerateMipChain(VkCommandBuffer commandBuffer);
-	void CreateImageView();
+	void CreateImageView(VkFormat format, VkImageAspectFlags aspect, VkImageViewType viewType, uint32_t mipLevels, uint32_t arrayLayers);
 };
