@@ -91,3 +91,59 @@ VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename) 
 
 	return shaderModule;
 }
+
+Image CreateImage(VkDevice device, Allocator& allocator, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, uint32_t arrayLevels, VkImageUsageFlags usage, VkImageCreateFlags flags) {
+	VkImageCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	info.imageType = VK_IMAGE_TYPE_2D;
+	info.format = format;
+	info.extent.width = width;
+	info.extent.height = height;
+	info.extent.depth = 1;
+	info.mipLevels = mipLevels;
+	info.arrayLayers = arrayLevels;
+	info.tiling = VK_IMAGE_TILING_OPTIMAL;
+	info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	info.samples = VK_SAMPLE_COUNT_1_BIT;
+	info.usage = usage;
+	info.flags = flags;
+
+	VkImage image;
+	if (vkCreateImage(device, &info, nullptr, &image) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create image!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+	Allocation alloc = allocator.Alloc(memRequirements.size, memRequirements.alignment);
+
+	vkBindImageMemory(device, image, alloc.memory, alloc.offset);
+
+	return { image, alloc.size, alloc.offset };
+}
+
+VkImageView CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspect, VkImageViewType viewType, uint32_t mipLevels, uint32_t arrayLayers) {
+	VkImageViewCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	info.image = image;
+	info.format = format;
+	info.viewType = viewType;
+	info.components.r = VK_COMPONENT_SWIZZLE_R;
+	info.components.g = VK_COMPONENT_SWIZZLE_G;
+	info.components.b = VK_COMPONENT_SWIZZLE_B;
+	info.components.a = VK_COMPONENT_SWIZZLE_A;
+	info.subresourceRange.aspectMask = aspect;
+	info.subresourceRange.baseArrayLayer = 0;
+	info.subresourceRange.layerCount = arrayLayers;
+	info.subresourceRange.baseMipLevel = 0;
+	info.subresourceRange.levelCount = mipLevels;
+
+	VkImageView imageView;
+	if (vkCreateImageView(device, &info, nullptr, &imageView) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create image view!");
+	}
+
+	return imageView;
+}

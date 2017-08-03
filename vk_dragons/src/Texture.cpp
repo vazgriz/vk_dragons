@@ -25,11 +25,13 @@ void Texture::Init(const std::string& filename) {
 	CalulateMipChain();
 
 	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
-	CreateImage(VK_FORMAT_R8G8B8A8_UNORM,
+	image = CreateImage(renderer.device, *renderer.memory->deviceAllocator,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		width, height,
 		mipLevels, 1,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		0);
-	CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1);
+		0).image;
+	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1);
 }
 
 void Texture::InitCubemap(const std::string& filenameRoot) {
@@ -49,11 +51,13 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 	CalulateMipChain();
 
 	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
-	CreateImage(VK_FORMAT_R8G8B8A8_UNORM,
+	image = CreateImage(renderer.device, *renderer.memory->deviceAllocator,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		width, height,
 		mipLevels, 6,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
-	CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6);
+		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT).image;
+	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6);
 }
 
 void Texture::LoadImages(std::vector<std::string>& filenames) {
@@ -70,57 +74,6 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 
 	this->width = static_cast<uint32_t>(width);
 	this->height = static_cast<uint32_t>(height);
-}
-
-
-void Texture::CreateImage(VkFormat format, uint32_t mipLevels, uint32_t arrayLevels, VkImageUsageFlags usage, VkImageCreateFlags flags) {
-	VkImageCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	info.imageType = VK_IMAGE_TYPE_2D;
-	info.format = format;
-	info.extent.width = width;
-	info.extent.height = height;
-	info.extent.depth = 1;
-	info.mipLevels = mipLevels;
-	info.arrayLayers = arrayLevels;
-	info.tiling = VK_IMAGE_TILING_OPTIMAL;
-	info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	info.samples = VK_SAMPLE_COUNT_1_BIT;
-	info.usage = usage;
-	info.flags = flags;
-
-	if (vkCreateImage(renderer.device, &info, nullptr, &image) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create image!");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(renderer.device, image, &memRequirements);
-
-	Allocation alloc = renderer.memory->deviceAllocator->Alloc(memRequirements.size, memRequirements.alignment);
-
-	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
-}
-
-void Texture::CreateImageView(VkFormat format, VkImageAspectFlags aspect, VkImageViewType viewType, uint32_t mipLevels, uint32_t arrayLayers) {
-	VkImageViewCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	info.image = image;
-	info.format = format;
-	info.viewType = viewType;
-	info.components.r = VK_COMPONENT_SWIZZLE_R;
-	info.components.g = VK_COMPONENT_SWIZZLE_G;
-	info.components.b = VK_COMPONENT_SWIZZLE_B;
-	info.components.a = VK_COMPONENT_SWIZZLE_A;
-	info.subresourceRange.aspectMask = aspect;
-	info.subresourceRange.baseArrayLayer = 0;
-	info.subresourceRange.layerCount = arrayLayers;
-	info.subresourceRange.baseMipLevel = 0;
-	info.subresourceRange.levelCount = mipLevels;
-
-	if (vkCreateImageView(renderer.device, &info, nullptr, &imageView) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create image view!");
-	}
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
