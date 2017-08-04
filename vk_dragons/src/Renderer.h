@@ -59,6 +59,7 @@ private:
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
 	uint32_t imageIndex;
+	std::vector<VkFence> fences;
 
 	const std::vector<const char*> deviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -78,6 +79,7 @@ private:
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	void createSwapChain();
 	void createImageViews();
+	void createFences();
 	void createSemaphores();
 	void createCommandPool();
 	void recreateSwapChain();

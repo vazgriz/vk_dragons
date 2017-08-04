@@ -50,7 +50,8 @@ private:
 
 	void createRenderPass();
 	void createFramebuffers();
-	void CreateCommandBuffers();
+	void AllocateCommandBuffers();
+	void RecordCommandBuffer(uint32_t imageIndex);
 	void CreateSampler();
 	void CreateDescriptorSetLayout();
 	void CreateUniformBuffer();

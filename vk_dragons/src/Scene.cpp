@@ -35,7 +35,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	CreatePipelines();
 
-	CreateCommandBuffers();
+	AllocateCommandBuffers();
 }
 
 Scene::~Scene() {
@@ -93,6 +93,7 @@ void Scene::Update(double elapsed) {
 void Scene::Render() {
 	renderer.Acquire();
 	uint32_t index = renderer.GetImageIndex();
+	RecordCommandBuffer(index);
 	renderer.Render(commandBuffers[index]);
 	renderer.Present();
 }
@@ -105,7 +106,7 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 	createSwapchainResources(width, height);
 	DestroyPipelines();
 	CreatePipelines();
-	CreateCommandBuffers();
+	AllocateCommandBuffers();
 }
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
@@ -119,7 +120,7 @@ void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	createFramebuffers();
 }
 
-void Scene::CreateCommandBuffers() {
+void Scene::AllocateCommandBuffers() {
 	if (commandBuffers.size() > 0) vkFreeCommandBuffers(renderer.device, renderer.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	commandBuffers.clear();
 	commandBuffers.resize(swapChainFramebuffers.size());
@@ -133,39 +134,43 @@ void Scene::CreateCommandBuffers() {
 	if (vkAllocateCommandBuffers(renderer.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to allocate command buffers!");
 	}
+}
 
-	for (size_t i = 0; i < commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+void Scene::RecordCommandBuffer(uint32_t imageIndex) {
+	VkCommandBuffer commandBuffer = commandBuffers[imageIndex];
 
-		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
+	vkResetCommandBuffer(commandBuffer, 0);
 
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = mainRenderPass;
-		renderPassInfo.framebuffer = swapChainFramebuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-		VkClearValue clearColors[2];
-		clearColors[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-		clearColors[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = 2;
-		renderPassInfo.pClearValues = clearColors;
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = mainRenderPass;
+	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, dragonPipeline);
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
-		dragon.Bind(commandBuffers[i]);
-		dragon.Draw(commandBuffers[i]);
+	VkClearValue clearColors[2];
+	clearColors[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clearColors[1].depthStencil = { 1.0f, 0 };
+	renderPassInfo.clearValueCount = 2;
+	renderPassInfo.pClearValues = clearColors;
 
-		vkCmdEndRenderPass(commandBuffers[i]);
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to record command buffer!");
-		}
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, dragonPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+	dragon.Bind(commandBuffer);
+	dragon.Draw(commandBuffer);
+
+	vkCmdEndRenderPass(commandBuffer);
+
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to record command buffer!");
 	}
 }
 
