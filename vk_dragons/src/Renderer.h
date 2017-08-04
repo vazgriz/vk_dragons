@@ -32,6 +32,8 @@ public:
 	void SubmitCommandBuffer(VkCommandBuffer commandBuffer);
 
 	std::unique_ptr<Memory> memory;
+
+	VkPhysicalDevice physicalDevice;
 	VkDevice device;
 	VkExtent2D swapChainExtent;
 	VkCommandPool commandPool;
@@ -45,7 +47,6 @@ private:
 	uint32_t height;
 
 	VkInstance instance;
-	VkPhysicalDevice physicalDevice;
 	VkQueue graphicsQueue;
 	VkSurfaceKHR surface;
 	VkQueue presentQueue;

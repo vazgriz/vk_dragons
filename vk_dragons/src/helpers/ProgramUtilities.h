@@ -35,7 +35,9 @@ Image CreateImage(VkDevice device, Allocator& allocator, VkFormat format, uint32
 
 VkImageView CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspect, VkImageViewType viewType, uint32_t mipLevels, uint32_t arrayLayers);
 
-void Transition(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t arrayLayers);
+bool hasStencilComponent(VkFormat format);
+
+void Transition(VkCommandBuffer commandBuffer, VkFormat format, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t arrayLayers);
 
 
 #endif

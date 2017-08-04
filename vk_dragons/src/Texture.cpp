@@ -76,7 +76,7 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
-	Transition(commandBuffer, image, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
+	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
 
 	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
@@ -104,7 +104,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 
 	GenerateMipChain(commandBuffer);
 
-	Transition(commandBuffer, image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels, arrayLayers);
+	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels, arrayLayers);
 }
 
 void Texture::CalulateMipChain() {
