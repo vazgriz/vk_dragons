@@ -295,7 +295,7 @@ void Scene::CreateDescriptorSetLayout() {
 
 void Scene::CreateUniformBuffer() {
 	VkDeviceSize size = sizeof(Uniform);
-	uniformBuffer = CreateBuffer(renderer.device, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, *renderer.memory->hostAllocator);
+	uniformBuffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 }
 
 void Scene::CreateDescriptorPool() {

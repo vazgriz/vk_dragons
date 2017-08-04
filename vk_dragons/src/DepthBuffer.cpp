@@ -6,18 +6,18 @@ DepthBuffer::DepthBuffer(Renderer& renderer) : renderer(renderer) {
 
 void DepthBuffer::Init(uint32_t width, uint32_t height) {
 	format = findDepthFormat();
-	image = CreateImage(renderer.device, *renderer.memory->deviceAllocator,
+	image = CreateImage(renderer,
 		format, width, height,
 		1, 1,
-		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0).image;
-	imageView = CreateImageView(renderer.device, image,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0);
+	imageView = CreateImageView(renderer.device, image.image,
 		format, VK_IMAGE_ASPECT_DEPTH_BIT,
 		VK_IMAGE_VIEW_TYPE_2D, 1, 1);
 }
 
 void DepthBuffer::Cleanup() {
-	renderer.memory->deviceAllocator->Pop();
-	vkDestroyImage(renderer.device, image, nullptr);
+	renderer.memory->GetDeviceAllocator(image.type).Pop();
+	vkDestroyImage(renderer.device, image.image, nullptr);
 	vkDestroyImageView(renderer.device, imageView, nullptr);
 }
 

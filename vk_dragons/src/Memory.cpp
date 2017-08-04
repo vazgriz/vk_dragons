@@ -5,69 +5,107 @@ Memory::Memory(VkPhysicalDevice physicalDevice, VkDevice device) {
 	this->device = device;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 
-	AllocMemory();
+	//host memory is allocated once
+	//device memory is allocated as needed
+	AllocHostMemory();
 }
 
 void Memory::Cleanup() {
 	vkFreeMemory(device, hostMemory, nullptr);
-	vkFreeMemory(device, deviceMemory, nullptr);
+	for (auto& memory : deviceMemories) {
+		vkFreeMemory(device, memory, nullptr);
+	}
 }
 
-void Memory::AllocMemory() {
+VkDeviceMemory Memory::Alloc(uint32_t type) {
+	VkMemoryAllocateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	info.memoryTypeIndex = type;
+	info.allocationSize = ALLOCATION_SIZE;
+
+	VkDeviceMemory memory;
+	vkAllocateMemory(device, &info, nullptr, &memory);
+
+	return memory;
+}
+
+void Memory::AllocHostMemory() {
+	uint32_t type;
+	bool found = false;
+
 	//try to find a memory type that is only HOST_VISIBLE and HOST_COHERENT
+	VkMemoryPropertyFlags desiredProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+		if (memoryProperties.memoryTypes[i].propertyFlags == desiredProperties) {
+			type = i;
+			found = true;
+			break;
+		}
+	}
+
 	//if that fails, try to find any memory with those flags
-	//if that fails, raise an exception
-	uint32_t hostType = MatchStrict(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	if (hostType == ~0) hostType = Match(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	if (hostType == ~0) throw std::runtime_error("Could not find suitable host memory");
+	if (!found) {
+		for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+			if ((memoryProperties.memoryTypes[i].propertyFlags & desiredProperties) != 0) {
+				type = i;
+				found = true;
+				break;
+			}
+		}
+	}
 
-	//same as above, try to find a memory type that exactly matches first
-	uint32_t deviceType = MatchStrict(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	if (deviceType == ~0) deviceType = Match(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	if (deviceType == ~0) throw std::runtime_error("Could not find suitable device memory");
+	if (!found) throw std::runtime_error("Could not find suitable host memory");
 
-	//the Vulkan spec requires that both of the above types of memory are present, so the exception should never be thrown in this application
+	hostMemory = Alloc(type);
 
-	VkMemoryAllocateInfo hostAlloc = {};
-	hostAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	hostAlloc.memoryTypeIndex = hostType;
-	hostAlloc.allocationSize = ALLOCATION_SIZE;
-
-	VkMemoryAllocateInfo deviceAlloc = {};
-	deviceAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	deviceAlloc.memoryTypeIndex = deviceType;
-	deviceAlloc.allocationSize = ALLOCATION_SIZE;
-
-	vkAllocateMemory(device, &hostAlloc, nullptr, &hostMemory);
-	vkAllocateMemory(device, &deviceAlloc, nullptr, &deviceMemory);
-	//these are the only vulkan allocations made in this application
-
-	hostAllocator = std::make_unique<Allocator>(hostMemory, ALLOCATION_SIZE);
-	deviceAllocator = std::make_unique<Allocator>(deviceMemory, ALLOCATION_SIZE);
+	hostAllocator = std::make_unique<Allocator>(hostMemory, type, ALLOCATION_SIZE);
 
 	vkMapMemory(device, hostMemory, 0, ALLOCATION_SIZE, 0, &hostMapping);
 }
 
-//finds a memory type that has at least the requested flags
-uint32_t Memory::Match(VkMemoryPropertyFlags flags) {
-	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
-		auto& type = memoryProperties.memoryTypes[i];
-		if ((type.propertyFlags & flags) != 0) {
-			return i;
-		}
-	}
-
-	return ~0;
+Allocator& Memory::AllocDevice(uint32_t type) {
+	VkDeviceMemory memory = Alloc(type);
+	deviceMemories.push_back(memory);
+	deviceAllocators.emplace_back(memory, type, ALLOCATION_SIZE);
+	return deviceAllocators[deviceAllocators.size() - 1];
 }
 
-//finds a memory type that matches the requested flags exactly
-uint32_t Memory::MatchStrict(VkMemoryPropertyFlags flags) {
-	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
-		auto& type = memoryProperties.memoryTypes[i];
-		if ((type.propertyFlags & flags) == flags) {
-			return i;
+Allocator& Memory::GetDeviceAllocator(VkMemoryRequirements requirements) {
+	//check if an Allocator that matches the requirements has already been created
+	for (Allocator& allocator : deviceAllocators) {
+		uint32_t type = allocator.GetType();
+		uint32_t test = 1 << type;
+		uint32_t bits = requirements.memoryTypeBits & test;
+		if (bits != 0) {
+			return allocator;
 		}
 	}
 
-	return ~0;
+	//if that fails, create Allocator that matches the requirements and is device local
+	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+		uint32_t test = 1 << i;
+		if ((requirements.memoryTypeBits << test) != 0 && memoryProperties.memoryTypes[i].propertyFlags == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
+			return AllocDevice(i);
+		}
+	}
+
+	//if that fails, create Allocator that matches requirements
+	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+		uint32_t test = 1 << i;
+		if ((requirements.memoryTypeBits << test) != 0) {
+			return AllocDevice(i);
+		}
+	}
+
+	throw std::runtime_error("Could not find suitable device memory");
+}
+
+Allocator& Memory::GetDeviceAllocator(uint32_t type) {
+	for (Allocator& allocator : deviceAllocators) {
+		if (allocator.GetType() == type) {
+			return allocator;
+		}
+	}
+
+	throw std::runtime_error("Could not find requested allocator");
 }

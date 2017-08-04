@@ -50,33 +50,27 @@ void Model::Draw(VkCommandBuffer commandBuffer) {
 }
 
 void Model::CreateBuffers() {
-	positionsBuffer = CreateBuffer(renderer.device, mesh.positions.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		*renderer.memory->deviceAllocator);
+	positionsBuffer = CreateBuffer(renderer, mesh.positions.size() * sizeof(glm::vec3),
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	normalsBuffer = CreateBuffer(renderer.device, mesh.normals.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		*renderer.memory->deviceAllocator);
+	normalsBuffer = CreateBuffer(renderer, mesh.normals.size() * sizeof(glm::vec3),
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	tangentsBuffer = CreateBuffer(renderer.device, mesh.tangents.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		*renderer.memory->deviceAllocator);
+	tangentsBuffer = CreateBuffer(renderer, mesh.tangents.size() * sizeof(glm::vec3),
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	binormalsBuffer = CreateBuffer(renderer.device, mesh.binormals.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		*renderer.memory->deviceAllocator);
+	binormalsBuffer = CreateBuffer(renderer, mesh.binormals.size() * sizeof(glm::vec3),
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	texcoordsBuffer = CreateBuffer(renderer.device, mesh.texcoords.size() * sizeof(glm::vec2),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		*renderer.memory->deviceAllocator);
+	texcoordsBuffer = CreateBuffer(renderer, mesh.texcoords.size() * sizeof(glm::vec2),
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	indicesBuffer = CreateBuffer(renderer.device, mesh.indices.size() * sizeof(uint32_t),
-		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		*renderer.memory->deviceAllocator);
+	indicesBuffer = CreateBuffer(renderer, mesh.indices.size() * sizeof(uint32_t),
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 }
 
 Buffer Model::CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer destBuffer, void* source, size_t size) {
-	Buffer buffer = CreateBuffer(renderer.device, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, *renderer.memory->hostAllocator);
+	Buffer buffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 	char* dest = static_cast<char*>(renderer.memory->hostMapping) + buffer.offset;
 	memcpy(dest, source, size);
 
