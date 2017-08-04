@@ -20,11 +20,17 @@ void Texture::DestroyStaging() {
 }
 
 void Texture::Init(const std::string& filename) {
-	isCubemap = false;
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
-	CreateImage();
-	CreateImageView();
+
+	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
+	image = CreateImage(renderer.device, *renderer.memory->deviceAllocator,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		width, height,
+		mipLevels, 1,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		0).image;
+	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1);
 }
 
 void Texture::InitCubemap(const std::string& filenameRoot) {
@@ -38,12 +44,18 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 		filenameRoot + "_b.png",
 		filenameRoot + "_f.png",
 	};
-	isCubemap = true;
 
 	LoadImages(filenames);
 	CalulateMipChain();
-	CreateImage();
-	CreateImageView();
+
+	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
+	image = CreateImage(renderer.device, *renderer.memory->deviceAllocator,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		width, height,
+		mipLevels, 6,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT).image;
+	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6);
 }
 
 void Texture::LoadImages(std::vector<std::string>& filenames) {
@@ -60,68 +72,11 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 
 	this->width = static_cast<uint32_t>(width);
 	this->height = static_cast<uint32_t>(height);
-}
-
-
-void Texture::CreateImage() {
-	VkImageCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	info.imageType = VK_IMAGE_TYPE_2D;
-	info.format = VK_FORMAT_R8G8B8A8_UNORM;
-	info.extent.width = width;
-	info.extent.height = height;
-	info.extent.depth = 1;
-	info.mipLevels = static_cast<uint32_t>(mipChain.size());
-	info.arrayLayers = static_cast<uint32_t>(data.size());
-	info.tiling = VK_IMAGE_TILING_OPTIMAL;
-	info.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-	info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	info.samples = VK_SAMPLE_COUNT_1_BIT;
-	if (isCubemap) {
-		info.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-	}
-
-	if (vkCreateImage(renderer.device, &info, nullptr, &image) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create image!");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(renderer.device, image, &memRequirements);
-
-	Allocation alloc = renderer.memory->deviceAllocator->Alloc(memRequirements.size, memRequirements.alignment);
-
-	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
-}
-
-void Texture::CreateImageView() {
-	VkImageViewCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	info.image = image;
-	if (isCubemap) {
-		info.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-	}
-	else {
-		info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	}
-	info.format = VK_FORMAT_R8G8B8A8_UNORM;
-	info.components.r = VK_COMPONENT_SWIZZLE_R;
-	info.components.g = VK_COMPONENT_SWIZZLE_G;
-	info.components.b = VK_COMPONENT_SWIZZLE_B;
-	info.components.a = VK_COMPONENT_SWIZZLE_A;
-	info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	info.subresourceRange.baseArrayLayer = 0;
-	info.subresourceRange.layerCount = static_cast<uint32_t>(data.size());
-	info.subresourceRange.baseMipLevel = 0;
-	info.subresourceRange.levelCount = static_cast<uint32_t>(mipChain.size());
-
-	if (vkCreateImageView(renderer.device, &info, nullptr, &imageView) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create image view!");
-	}
+	arrayLayers = static_cast<uint32_t>(data.size());
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
-	Transition(commandBuffer, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_GENERAL);
+	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
 
 	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
@@ -149,7 +104,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 
 	GenerateMipChain(commandBuffer);
 
-	Transition(commandBuffer, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels, arrayLayers);
 }
 
 void Texture::CalulateMipChain() {
@@ -161,42 +116,8 @@ void Texture::CalulateMipChain() {
 		if (w > 1) w /= 2;
 		if (h > 1) h /= 2;
 	}
-}
 
-void Texture::Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout) {
-	VkImageMemoryBarrier barrier = {};
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.oldLayout = oldLayout;
-	barrier.newLayout = newLayout;
-	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.image = image;
-	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	barrier.subresourceRange.baseMipLevel = 0;
-	barrier.subresourceRange.levelCount = static_cast<uint32_t>(mipChain.size());
-	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = static_cast<uint32_t>(data.size());
-
-	if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || newLayout == VK_IMAGE_LAYOUT_GENERAL)) {
-		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	}
-	else if ((oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || oldLayout == VK_IMAGE_LAYOUT_GENERAL) && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	}
-	else {
-		throw std::invalid_argument("Unsupported layout transition!");
-	}
-
-	vkCmdPipelineBarrier(
-		commandBuffer,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &barrier
-	);
+	mipLevels = static_cast<uint32_t>(mipChain.size());
 }
 
 void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
@@ -219,13 +140,13 @@ void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
 			blit.srcSubresource.layerCount = 1;
 			blit.srcSubresource.mipLevel = static_cast<uint32_t>(i - 1);
 			blit.srcOffsets[0] = { 0, 0, 0 };
-			blit.srcOffsets[1] = { srcW, srcH, 0 };
+			blit.srcOffsets[1] = { srcW, srcH, 1 };
 			blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 			blit.dstSubresource.baseArrayLayer = static_cast<uint32_t>(j);
 			blit.dstSubresource.layerCount = 1;
 			blit.dstSubresource.mipLevel = static_cast<uint32_t>(i);
 			blit.dstOffsets[0] = { 0, 0, 0 };
-			blit.dstOffsets[1] = { dstW, dstH, 0 };
+			blit.dstOffsets[1] = { dstW, dstH, 1 };
 
 			vkCmdBlitImage(commandBuffer,
 				image, VK_IMAGE_LAYOUT_GENERAL,

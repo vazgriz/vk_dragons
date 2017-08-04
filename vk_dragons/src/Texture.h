@@ -25,12 +25,10 @@ private:
 	std::vector<std::vector<unsigned char>> data;
 	std::vector<glm::vec2> mipChain;
 	std::vector<Buffer> stagingBuffers;
-	bool isCubemap;
+	uint32_t mipLevels;
+	uint32_t arrayLayers;
 
 	void LoadImages(std::vector<std::string>& filenames);
-	void CreateImage();
 	void CalulateMipChain();
-	void Transition(VkCommandBuffer commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void GenerateMipChain(VkCommandBuffer commandBuffer);
-	void CreateImageView();
 };

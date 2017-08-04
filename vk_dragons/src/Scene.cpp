@@ -8,7 +8,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragonColor(renderer),
 	skybox(renderer),
 	camera(45.0f, width, height),
-	input(window, camera) {
+	input(window, camera),
+	depth(renderer) {
 
 	camera.SetPosition(glm::vec3(0, 0, 2.5f));
 
@@ -20,6 +21,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	skybox.InitCubemap("resources/cubemap/cubemap");
 
 	UploadResources();
+
+	createSwapchainResources(width, height);
 
 	CreateSampler();
 	CreateDescriptorSetLayout();
@@ -34,11 +37,20 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
+	CleanupSwapchainResources();
 	vkDestroyDescriptorSetLayout(renderer.device, descriptorSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
 	vkDestroySampler(renderer.device, sampler, nullptr);
 	DestroyPipelines();
+}
+
+void Scene::CleanupSwapchainResources() {
+	depth.Cleanup();
+	for (auto& framebuffer : swapChainFramebuffers) {
+		vkDestroyFramebuffer(renderer.device, framebuffer, nullptr);
+	}
+	vkDestroyRenderPass(renderer.device, mainRenderPass, nullptr);
 }
 
 void Scene::UploadResources() {
@@ -81,15 +93,29 @@ void Scene::Render() {
 void Scene::Resize(uint32_t width, uint32_t height) {
 	renderer.Resize(width, height);
 	camera.SetSize(width, height);
+	CleanupSwapchainResources();
+
+	createSwapchainResources(width, height);
 	DestroyPipelines();
 	CreatePipelines();
 	CreateCommandBuffers();
 }
 
+void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
+	depth.Init(width, height);
+
+	/*VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
+	TransitionImages(commandBuffer);
+	renderer.SubmitCommandBuffer(commandBuffer);*/
+
+	createRenderPass();
+	createFramebuffers();
+}
+
 void Scene::CreateCommandBuffers() {
 	if (commandBuffers.size() > 0) vkFreeCommandBuffers(renderer.device, renderer.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	commandBuffers.clear();
-	commandBuffers.resize(renderer.swapChainFramebuffers.size());
+	commandBuffers.resize(swapChainFramebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -110,14 +136,16 @@ void Scene::CreateCommandBuffers() {
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderer.mainRenderPass;
-		renderPassInfo.framebuffer = renderer.swapChainFramebuffers[i];
+		renderPassInfo.renderPass = mainRenderPass;
+		renderPassInfo.framebuffer = swapChainFramebuffers[i];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
-		VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		VkClearValue clearColors[2];
+		clearColors[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		clearColors[1].depthStencil = { 1.0f, 0 };
+		renderPassInfo.clearValueCount = 2;
+		renderPassInfo.pClearValues = clearColors;
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -130,6 +158,88 @@ void Scene::CreateCommandBuffers() {
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to record command buffer!");
+		}
+	}
+}
+
+void Scene::createRenderPass() {
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = renderer.swapChainImageFormat;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentDescription depthAttachment = {};
+	depthAttachment.format = depth.format;
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthAttachmentRef = {};
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 2;
+	renderPassInfo.pAttachments = attachments;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
+
+	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &mainRenderPass) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create render pass!");
+	}
+}
+
+void Scene::createFramebuffers() {
+	swapChainFramebuffers.resize(renderer.swapChainImageViews.size());
+
+	for (size_t i = 0; i < renderer.swapChainImageViews.size(); i++) {
+		VkImageView attachments[] = {
+			renderer.swapChainImageViews[i],
+			depth.imageView
+		};
+
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = mainRenderPass;
+		framebufferInfo.attachmentCount = 2;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = renderer.swapChainExtent.width;
+		framebufferInfo.height = renderer.swapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create framebuffer!");
 		}
 	}
 }
@@ -151,7 +261,7 @@ void Scene::CreateSampler() {
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 0.0f;
+	samplerInfo.maxLod = 4.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");

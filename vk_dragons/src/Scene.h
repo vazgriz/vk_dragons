@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include "Camera.h"
 #include "Input.h"
+#include "DepthBuffer.h"
 
 struct Uniform {
 	struct Camera {
@@ -32,6 +33,10 @@ private:
 	Texture dragonColor;
 	Texture skybox;
 
+	DepthBuffer depth;
+
+	VkRenderPass mainRenderPass;
+	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
 	VkSampler sampler;
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -41,12 +46,18 @@ private:
 
 	void UploadResources();
 	void UpdateUniform();
+
+	void createRenderPass();
+	void createFramebuffers();
 	void CreateCommandBuffers();
 	void CreateSampler();
 	void CreateDescriptorSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateDescriptorSet();
+
+	void createSwapchainResources(uint32_t width, uint32_t height);
+	void CleanupSwapchainResources();
 
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout pipelineLayout;
