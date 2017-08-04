@@ -30,7 +30,7 @@ void Model::Init(const std::string& fileName) {
 	CreateBuffers();
 }
 
-void Model::Bind(VkCommandBuffer commandBuffer) {
+void Model::Draw(VkCommandBuffer commandBuffer) {
 	VkBuffer buffers[] = {
 		positionsBuffer.buffer,
 		normalsBuffer.buffer,
@@ -43,9 +43,7 @@ void Model::Bind(VkCommandBuffer commandBuffer) {
 	};
 	vkCmdBindVertexBuffers(commandBuffer, 0, 5, buffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-}
 
-void Model::Draw(VkCommandBuffer commandBuffer) {
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
 }
 
