@@ -30,7 +30,7 @@ void Model::Init(const std::string& fileName) {
 	CreateBuffers();
 }
 
-void Model::Bind(VkCommandBuffer commandBuffer) {
+void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
 	VkBuffer buffers[] = {
 		positionsBuffer.buffer,
 		normalsBuffer.buffer,
@@ -43,9 +43,8 @@ void Model::Bind(VkCommandBuffer commandBuffer) {
 	};
 	vkCmdBindVertexBuffers(commandBuffer, 0, 5, buffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-}
+	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
-void Model::Draw(VkCommandBuffer commandBuffer) {
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
 }
 
@@ -111,4 +110,8 @@ std::vector<VkVertexInputAttributeDescription> Model::GetAttributeDescriptions()
 		{ 3, 3, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//binormal
 		{ 4, 4, VK_FORMAT_R32G32_SFLOAT, 0 },		//texcoord
 	});
+}
+
+Transform& Model::GetTransform() {
+	return transform;
 }

@@ -26,44 +26,55 @@ private:
 	Renderer renderer;
 	Camera camera;
 	Input input;
+	float time;
 
 	Model dragon;
 	Model suzanne;
 	Model plane;
 	Texture dragonColor;
+	Texture suzanneColor;
 	Texture skybox;
 
+	DepthBuffer lightDepth;
 	DepthBuffer depth;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
 	VkSampler sampler;
-	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorSetLayout uniformSetLayout;
+	VkDescriptorSetLayout textureSetLayout;
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
-	VkDescriptorSet descriptorSet;
+	VkDescriptorSet uniformSet;
+	VkDescriptorSet dragonTextureSet;
+	VkDescriptorSet suzanneTextureSet;
 
 	void UploadResources();
 	void UpdateUniform();
 
 	void createRenderPass();
 	void createFramebuffers();
-	void CreateCommandBuffers();
+	void AllocateCommandBuffers();
+	void RecordCommandBuffer(uint32_t imageIndex);
 	void CreateSampler();
-	void CreateDescriptorSetLayout();
+	void CreateUniformSetLayout();
+	void CreateTextureSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
-	void CreateDescriptorSet();
+	void CreateUniformSet();
+	void CreateDragonTextureSet();
+	void CreateSuzanneTextureSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
 
 	//defined in Scene_pipelines.cpp
-	VkPipelineLayout pipelineLayout;
+	VkPipelineLayout modelPipelineLayout;
 	VkPipeline dragonPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
+	void CreateModelPipelineLayout();
 	void CreateDragonPipeline();
 };
 

@@ -27,10 +27,18 @@ Renderer::~Renderer() {
 	vkDestroyInstance(instance, nullptr);
 }
 
-void Renderer::Render(const std::vector<VkCommandBuffer>& commandBuffers) {
-	uint32_t imageIndex;
+void Renderer::Acquire() {
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
+	vkWaitForFences(device, 1, &fences[imageIndex], VK_TRUE, ~0U);
+	vkResetFences(device, 1, &fences[imageIndex]);
+}
+
+uint32_t Renderer::GetImageIndex() {
+	return imageIndex;
+}
+
+void Renderer::Render(VkCommandBuffer commandBuffer) {
 	VkSemaphore waitSemaphores[] = { imageAvailableSemaphore };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
@@ -40,20 +48,20 @@ void Renderer::Render(const std::vector<VkCommandBuffer>& commandBuffers) {
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
-
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphore };
+	submitInfo.pCommandBuffers = &commandBuffer;
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = signalSemaphores;
+	submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
-	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fences[imageIndex]) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to submit draw command buffer!");
 	}
+}
 
+void Renderer::Present() {
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = signalSemaphores;
+	presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = &swapChain;
 	presentInfo.pImageIndices = &imageIndex;
@@ -73,11 +81,15 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 void Renderer::recreateSwapChain() {
 	createSwapChain();
 	createImageViews();
+	createFences();
 }
 
 void Renderer::cleanupSwapChain() {
 	for (auto& imageView : swapChainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
+	}
+	for (auto& fence : fences) {
+		vkDestroyFence(device, fence, nullptr);
 	}
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
@@ -451,6 +463,20 @@ void Renderer::createImageViews() {
 	}
 }
 
+void Renderer::createFences() {
+	fences.resize(swapChainImages.size());
+
+	for (size_t i = 0; i < swapChainImages.size(); i++) {
+		VkFenceCreateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		if (vkCreateFence(device, &info, nullptr, &fences[i]) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to create fences!");
+		}
+	}
+}
+
 void Renderer::createSemaphores() {
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -467,6 +493,7 @@ void Renderer::createCommandPool() {
 	VkCommandPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create command pool!");

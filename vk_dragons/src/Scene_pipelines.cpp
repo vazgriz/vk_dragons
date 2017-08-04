@@ -1,12 +1,33 @@
 #include "Scene.h"
 
 void Scene::CreatePipelines() {
+	CreateModelPipelineLayout();
 	CreateDragonPipeline();
 }
 
 void Scene::DestroyPipelines() {
-	vkDestroyPipelineLayout(renderer.device, pipelineLayout, nullptr);
+	vkDestroyPipelineLayout(renderer.device, modelPipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, dragonPipeline, nullptr);
+}
+
+void Scene::CreateModelPipelineLayout() {
+	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, textureSetLayout };
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 2;
+	pipelineLayoutInfo.pSetLayouts = setLayouts;
+
+	VkPushConstantRange pushConstantInfo = {};
+	pushConstantInfo.offset = 0;
+	pushConstantInfo.size = sizeof(glm::mat4);
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	pipelineLayoutInfo.pushConstantRangeCount = 1;
+	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
+
+	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &modelPipelineLayout) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create pipeline layout!");
+	}
 }
 
 void Scene::CreateDragonPipeline() {
@@ -94,15 +115,6 @@ void Scene::CreateDragonPipeline() {
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = VK_FALSE;
 
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-
-	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
-	}
-
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -114,7 +126,7 @@ void Scene::CreateDragonPipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.layout = pipelineLayout;
+	pipelineInfo.layout = modelPipelineLayout;
 	pipelineInfo.renderPass = mainRenderPass;
 	pipelineInfo.subpass = 0;
 

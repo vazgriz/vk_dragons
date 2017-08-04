@@ -28,6 +28,7 @@ private:
 	bool left;
 	bool up;
 	bool down;
+	bool looking;
 	float mouseX;
 	float mouseY;
 	float lookX;

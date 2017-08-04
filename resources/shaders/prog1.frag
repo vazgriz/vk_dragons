@@ -5,7 +5,7 @@
 in vec2 uv; 
 
 // Uniform: texture sampler
-layout(binding = 1) uniform sampler2D texture1;
+layout(set = 1, binding = 0) uniform sampler2D texture1;
 
 // Output: the fragment color
 layout(location = 0) out vec4 fragColor;

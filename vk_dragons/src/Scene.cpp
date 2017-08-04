@@ -6,39 +6,56 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	suzanne(renderer),
 	plane(renderer),
 	dragonColor(renderer),
+	suzanneColor(renderer),
 	skybox(renderer),
 	camera(45.0f, width, height),
 	input(window, camera),
+	lightDepth(renderer),
 	depth(renderer) {
 
-	camera.SetPosition(glm::vec3(0, 0, 2.5f));
+	time = 0.0f;
+	camera.SetPosition(glm::vec3(0, 0, 1.0f));
 
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
 
+	dragon.GetTransform().SetScale(glm::vec3(0.5f));
+	dragon.GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
+
+	suzanne.GetTransform().SetScale(glm::vec3(0.25f));
+	suzanne.GetTransform().SetPosition(glm::vec3(0.2f, 0, 0));
+
 	dragonColor.Init("resources/dragon_texture_color.png");
+	suzanneColor.Init("resources/suzanne_texture_color.png");
 	skybox.InitCubemap("resources/cubemap/cubemap");
 
 	UploadResources();
 
+	lightDepth.Init(512, 512);
+
 	createSwapchainResources(width, height);
 
 	CreateSampler();
-	CreateDescriptorSetLayout();
+	CreateUniformSetLayout();
+	CreateTextureSetLayout();
 	CreateUniformBuffer();
 	CreateDescriptorPool();
-	CreateDescriptorSet();
+	CreateUniformSet();
+	CreateDragonTextureSet();
+	CreateSuzanneTextureSet();
 
 	CreatePipelines();
 
-	CreateCommandBuffers();
+	AllocateCommandBuffers();
 }
 
 Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
+	lightDepth.Cleanup();
 	CleanupSwapchainResources();
-	vkDestroyDescriptorSetLayout(renderer.device, descriptorSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
 	vkDestroySampler(renderer.device, sampler, nullptr);
@@ -61,6 +78,7 @@ void Scene::UploadResources() {
 	plane.UploadData(commandBuffer);
 
 	dragonColor.UploadData(commandBuffer);
+	suzanneColor.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
 
@@ -69,6 +87,7 @@ void Scene::UploadResources() {
 	plane.DestroyStaging();
 
 	dragonColor.DestroyStaging();
+	suzanneColor.DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }
@@ -81,13 +100,20 @@ void Scene::UpdateUniform() {
 }
 
 void Scene::Update(double elapsed) {
+	time += static_cast<float>(elapsed);
 	input.Update(elapsed);
 	camera.Update();
 	UpdateUniform();
+
+	suzanne.GetTransform().SetRotation(time, glm::vec3(0, 1, 0));
 }
 
 void Scene::Render() {
-	renderer.Render(commandBuffers);
+	renderer.Acquire();
+	uint32_t index = renderer.GetImageIndex();
+	RecordCommandBuffer(index);
+	renderer.Render(commandBuffers[index]);
+	renderer.Present();
 }
 
 void Scene::Resize(uint32_t width, uint32_t height) {
@@ -98,7 +124,7 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 	createSwapchainResources(width, height);
 	DestroyPipelines();
 	CreatePipelines();
-	CreateCommandBuffers();
+	AllocateCommandBuffers();
 }
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
@@ -112,7 +138,7 @@ void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	createFramebuffers();
 }
 
-void Scene::CreateCommandBuffers() {
+void Scene::AllocateCommandBuffers() {
 	if (commandBuffers.size() > 0) vkFreeCommandBuffers(renderer.device, renderer.commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	commandBuffers.clear();
 	commandBuffers.resize(swapChainFramebuffers.size());
@@ -126,39 +152,47 @@ void Scene::CreateCommandBuffers() {
 	if (vkAllocateCommandBuffers(renderer.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to allocate command buffers!");
 	}
+}
 
-	for (size_t i = 0; i < commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+void Scene::RecordCommandBuffer(uint32_t imageIndex) {
+	VkCommandBuffer commandBuffer = commandBuffers[imageIndex];
 
-		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
+	vkResetCommandBuffer(commandBuffer, 0);
 
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = mainRenderPass;
-		renderPassInfo.framebuffer = swapChainFramebuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-		VkClearValue clearColors[2];
-		clearColors[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-		clearColors[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = 2;
-		renderPassInfo.pClearValues = clearColors;
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = mainRenderPass;
+	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, dragonPipeline);
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
-		dragon.Bind(commandBuffers[i]);
-		dragon.Draw(commandBuffers[i]);
+	VkClearValue clearColors[2];
+	clearColors[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clearColors[1].depthStencil = { 1.0f, 0 };
+	renderPassInfo.clearValueCount = 2;
+	renderPassInfo.pClearValues = clearColors;
 
-		vkCmdEndRenderPass(commandBuffers[i]);
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to record command buffer!");
-		}
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, dragonPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &dragonTextureSet, 0, nullptr);
+	dragon.Draw(commandBuffer, modelPipelineLayout);
+
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &suzanneTextureSet, 0, nullptr);
+	suzanne.Draw(commandBuffer, modelPipelineLayout);
+
+	vkCmdEndRenderPass(commandBuffer);
+
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to record command buffer!");
 	}
 }
 
@@ -268,28 +302,37 @@ void Scene::CreateSampler() {
 	}
 }
 
-void Scene::CreateDescriptorSetLayout() {
+void Scene::CreateUniformSetLayout() {
 	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
 	uboLayoutBinding.binding = 0;
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.descriptorCount = 1;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	std::vector<VkDescriptorSetLayoutBinding> bindings = { uboLayoutBinding, samplerLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
 
-	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create descriptor set layout!");
+	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &uniformSetLayout) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create uniform set layout!");
+	}
+}
+
+void Scene::CreateTextureSetLayout() {
+	VkDescriptorSetLayoutBinding textureLayoutBinding = {};
+	textureLayoutBinding.binding = 0;
+	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	textureLayoutBinding.descriptorCount = 1;
+	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &textureLayoutBinding;
+
+	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create texture set layout!");
 	}
 }
 
@@ -301,30 +344,30 @@ void Scene::CreateUniformBuffer() {
 void Scene::CreateDescriptorPool() {
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 1;
+	poolInfo.maxSets = 3;
 
 	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create descriptor pool!");
 	}
 }
 
-void Scene::CreateDescriptorSet() {
-	VkDescriptorSetLayout layouts[] = { descriptorSetLayout };
+void Scene::CreateUniformSet() {
+	VkDescriptorSetLayout layouts[] = { uniformSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = layouts;
 
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate descriptor set!");
+	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &uniformSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate uniform set!");
 	}
 
 	VkDescriptorBufferInfo bufferInfo = {};
@@ -332,29 +375,73 @@ void Scene::CreateDescriptorSet() {
 	bufferInfo.offset = offsetof(Uniform, camera);
 	bufferInfo.range = sizeof(Uniform::Camera);
 
+	VkWriteDescriptorSet descriptorWrite;
+
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = uniformSet;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pBufferInfo = &bufferInfo;
+
+	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
+}
+
+void Scene::CreateDragonTextureSet() {
+	VkDescriptorSetLayout layouts[] = { textureSetLayout };
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = layouts;
+
+	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &dragonTextureSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate texture set!");
+	}
+
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo.imageView = dragonColor.imageView;
 	imageInfo.sampler = sampler;
 
-	std::vector<VkWriteDescriptorSet> descriptorWrites;
-	descriptorWrites.resize(2);
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = dragonTextureSet;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pImageInfo = &imageInfo;
 
-	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[0].dstSet = descriptorSet;
-	descriptorWrites[0].dstBinding = 0;
-	descriptorWrites[0].dstArrayElement = 0;
-	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[0].descriptorCount = 1;
-	descriptorWrites[0].pBufferInfo = &bufferInfo;
+	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
+}
 
-	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[1].dstSet = descriptorSet;
-	descriptorWrites[1].dstBinding = 1;
-	descriptorWrites[1].dstArrayElement = 0;
-	descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[1].descriptorCount = 1;
-	descriptorWrites[1].pImageInfo = &imageInfo;
+void Scene::CreateSuzanneTextureSet() {
+	VkDescriptorSetLayout layouts[] = { textureSetLayout };
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = layouts;
 
-	vkUpdateDescriptorSets(renderer.device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &suzanneTextureSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate texture set!");
+	}
+
+	VkDescriptorImageInfo imageInfo = {};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = suzanneColor.imageView;
+	imageInfo.sampler = sampler;
+
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = suzanneTextureSet;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pImageInfo = &imageInfo;
+
+	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }
