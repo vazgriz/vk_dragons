@@ -16,6 +16,14 @@ void Scene::CreateModelPipelineLayout() {
 	pipelineLayoutInfo.setLayoutCount = 1;
 	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
+	VkPushConstantRange pushConstantInfo = {};
+	pushConstantInfo.offset = 0;
+	pushConstantInfo.size = sizeof(glm::mat4);
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	pipelineLayoutInfo.pushConstantRangeCount = 1;
+	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
+
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &modelPipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create pipeline layout!");
 	}

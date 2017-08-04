@@ -1,6 +1,10 @@
 #include "Transform.h"
 #include <glm/gtc/matrix_transform.hpp>
 
+Transform::Transform() {
+	scale = glm::vec3(1, 1, 1);
+}
+
 void Transform::SetPosition(glm::vec3 position) {
 	this->position = position;
 	Apply();
@@ -23,7 +27,7 @@ glm::mat4 Transform::GetWorldMatrix() {
 
 void Transform::Apply() {
 	transform = glm::mat4();
-	glm::scale(transform, scale);
-	glm::rotate(transform, angle, rotation);
-	glm::translate(transform, position);
+	transform = glm::translate(transform, position);
+	transform = glm::rotate(transform, angle, rotation);
+	transform = glm::scale(transform, scale);
 }
