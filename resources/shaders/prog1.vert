@@ -7,7 +7,7 @@ layout(location = 0) in vec3 v;
 layout(location = 4) in vec2 t;
 
 // Uniform: the camera matrix
-layout(binding = 0) uniform Camera {
+layout(set = 0, binding = 0) uniform Camera {
     mat4 projection;
     mat4 view;
 } camera;

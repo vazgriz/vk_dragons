@@ -40,10 +40,12 @@ private:
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
 	VkSampler sampler;
-	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorSetLayout uniformSetLayout;
+	VkDescriptorSetLayout textureSetLayout;
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
-	VkDescriptorSet descriptorSet;
+	VkDescriptorSet uniformSet;
+	VkDescriptorSet dragonTextureSet;
 
 	void UploadResources();
 	void UpdateUniform();
@@ -53,10 +55,12 @@ private:
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void CreateSampler();
-	void CreateDescriptorSetLayout();
+	void CreateUniformSetLayout();
+	void CreateTextureSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
-	void CreateDescriptorSet();
+	void CreateUniformSet();
+	void CreateDragonTextureSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
