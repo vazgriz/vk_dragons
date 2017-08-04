@@ -26,6 +26,7 @@ private:
 	Renderer renderer;
 	Camera camera;
 	Input input;
+	float time;
 
 	Model dragon;
 	Model suzanne;

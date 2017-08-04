@@ -13,6 +13,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	depth(renderer) {
 
 	camera.SetPosition(glm::vec3(0, 0, 2.5f));
+	time = 0.0f;
 
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
@@ -88,6 +89,7 @@ void Scene::UpdateUniform() {
 }
 
 void Scene::Update(double elapsed) {
+	time += static_cast<float>(elapsed);
 	input.Update(elapsed);
 	camera.Update();
 	UpdateUniform();
