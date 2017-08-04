@@ -17,7 +17,7 @@ void Transform::SetScale(glm::vec3 scale) {
 	Apply();
 }
 
-glm::mat4 Transform::GetTransform() {
+glm::mat4 Transform::GetWorldMatrix() {
 	return transform;
 }
 
