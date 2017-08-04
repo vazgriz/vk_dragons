@@ -15,6 +15,7 @@ Input::Input(GLFWwindow* window, Camera& camera) : camera(camera) {
 	left = false;
 	up = false;
 	down = false;
+	looking = false;
 	lookX = 0;
 	lookY = 0;
 }
@@ -26,10 +27,6 @@ void Input::HandleKey(int key, int scancode, int action, int mods) {
 	Toggle(left, GLFW_KEY_A, key, action);
 	Toggle(up, GLFW_KEY_E, key, action);
 	Toggle(down, GLFW_KEY_Q, key, action);
-
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	}
 }
 
 void Input::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -38,14 +35,15 @@ void Input::KeyCallback(GLFWwindow* window, int key, int scancode, int action, i
 }
 
 void Input::HandleMouse(double xpos, double ypos) {
+	if (!looking) return;
 	float newMouseX = static_cast<float>(xpos);
 	float newMouseY = static_cast<float>(ypos);
 
 	float deltaX = newMouseX - mouseX;
 	float deltaY = newMouseY - mouseY;
 
-	lookX += deltaX / 4.0f;
-	lookY += deltaY / 4.0f;
+	lookX += deltaX / 8.0f;
+	lookY += deltaY / 8.0f;
 	lookY = std::min(std::max(lookY, -90.0f), 90.0f);
 
 	mouseX = newMouseX;
@@ -58,8 +56,20 @@ void Input::MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 void Input::HandleMouseButton(int button, int action, int mods) {
-	if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	if (button == GLFW_MOUSE_BUTTON_1) {
+		if (action == GLFW_PRESS) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			looking = true;
+			double x;
+			double y;
+			glfwGetCursorPos(window, &x, &y);
+			mouseX = static_cast<float>(x);
+			mouseY = static_cast<float>(y);
+		}
+		else if (action == GLFW_RELEASE) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			looking = false;
+		}
 	}
 }
 
