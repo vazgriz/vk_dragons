@@ -9,6 +9,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	skybox(renderer),
 	camera(45.0f, width, height),
 	input(window, camera),
+	lightDepth(renderer),
 	depth(renderer) {
 
 	camera.SetPosition(glm::vec3(0, 0, 2.5f));
@@ -21,6 +22,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	skybox.InitCubemap("resources/cubemap/cubemap");
 
 	UploadResources();
+
+	lightDepth.Init(512, 512);
 
 	createSwapchainResources(width, height);
 
@@ -37,6 +40,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
+	lightDepth.Cleanup();
 	CleanupSwapchainResources();
 	vkDestroyDescriptorSetLayout(renderer.device, descriptorSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);

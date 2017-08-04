@@ -33,6 +33,7 @@ private:
 	Texture dragonColor;
 	Texture skybox;
 
+	DepthBuffer lightDepth;
 	DepthBuffer depth;
 
 	VkRenderPass mainRenderPass;
