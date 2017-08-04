@@ -62,10 +62,11 @@ private:
 	void CleanupSwapchainResources();
 
 	//defined in Scene_pipelines.cpp
-	VkPipelineLayout pipelineLayout;
+	VkPipelineLayout modelPipelineLayout;
 	VkPipeline dragonPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
+	void CreateModelPipelineLayout();
 	void CreateDragonPipeline();
 };
 
