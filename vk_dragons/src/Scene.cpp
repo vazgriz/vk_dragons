@@ -91,7 +91,10 @@ void Scene::Update(double elapsed) {
 }
 
 void Scene::Render() {
-	renderer.Render(commandBuffers);
+	renderer.Acquire();
+	uint32_t index = renderer.GetImageIndex();
+	renderer.Render(commandBuffers[index]);
+	renderer.Present();
 }
 
 void Scene::Resize(uint32_t width, uint32_t height) {

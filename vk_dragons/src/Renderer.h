@@ -25,7 +25,11 @@ public:
 	Renderer(GLFWwindow* window, uint32_t width, uint32_t height);
 	~Renderer();
 
-	void Render(const std::vector<VkCommandBuffer>& commandBuffers);
+	void Acquire();
+	uint32_t GetImageIndex();
+	void Render(VkCommandBuffer commandBuffer);
+	void Present();
+
 	void Resize(uint32_t width, uint32_t height);
 
 	VkCommandBuffer GetSingleUseCommandBuffer();
@@ -54,6 +58,7 @@ private:
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
+	uint32_t imageIndex;
 
 	const std::vector<const char*> deviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
