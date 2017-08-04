@@ -33,6 +33,7 @@
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Scene_pipelines.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Allocator.h" />
@@ -46,6 +47,7 @@
     <ClInclude Include="src\Renderer.h" />
     <ClInclude Include="src\Scene.h" />
     <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\Transform.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
