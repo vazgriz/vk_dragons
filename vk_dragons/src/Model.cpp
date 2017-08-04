@@ -112,3 +112,7 @@ std::vector<VkVertexInputAttributeDescription> Model::GetAttributeDescriptions()
 		{ 4, 4, VK_FORMAT_R32G32_SFLOAT, 0 },		//texcoord
 	});
 }
+
+Transform& Model::GetTransform() {
+	return transform;
+}

@@ -6,6 +6,7 @@
 #include "MemorySystem.h"
 #include "Allocator.h"
 #include "ProgramUtilities.h"
+#include "Transform.h"
 
 class Model {
 public:
@@ -18,6 +19,8 @@ public:
 	void Draw(VkCommandBuffer commandBuffer);
 	static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
+
+	Transform& GetTransform();
 
 private:
 	Renderer& renderer;
@@ -35,6 +38,8 @@ private:
 	Buffer binormalsStagingBuffer;
 	Buffer texcoordsStagingBuffer;
 	Buffer indicesStagingBuffer;
+
+	Transform transform;
 
 	void CreateBuffers();
 	Buffer CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer destBuffer, void* source, size_t size);
