@@ -84,7 +84,7 @@ Allocator& Memory::GetDeviceAllocator(VkMemoryRequirements requirements) {
 	//if that fails, create Allocator that matches the requirements and is device local
 	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
 		uint32_t test = 1 << i;
-		if ((requirements.memoryTypeBits << test) != 0 && memoryProperties.memoryTypes[i].propertyFlags == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
+		if ((requirements.memoryTypeBits & test) != 0 && memoryProperties.memoryTypes[i].propertyFlags == VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
 			return AllocDevice(i);
 		}
 	}
@@ -92,7 +92,7 @@ Allocator& Memory::GetDeviceAllocator(VkMemoryRequirements requirements) {
 	//if that fails, create Allocator that matches requirements
 	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
 		uint32_t test = 1 << i;
-		if ((requirements.memoryTypeBits << test) != 0) {
+		if ((requirements.memoryTypeBits & test) != 0) {
 			return AllocDevice(i);
 		}
 	}
