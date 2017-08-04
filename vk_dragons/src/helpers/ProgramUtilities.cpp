@@ -53,7 +53,7 @@ std::vector<char> loadFile(const std::string& filename) {
 	return buffer;
 }
 
-Buffer CreateBuffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, Allocator& allocator) {
+Buffer CreateBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags usage) {
 	VkBufferCreateInfo bufferInfo = {};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
@@ -62,16 +62,41 @@ Buffer CreateBuffer(VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage
 
 	VkBuffer buffer;
 
-	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+	if (vkCreateBuffer(renderer.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create buffer!");
 	}
 
 	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
 
+	Allocator& allocator = renderer.memory->GetDeviceAllocator(memRequirements);
 	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
 
-	vkBindBufferMemory(device, buffer, alloc.memory, alloc.offset);
+	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
+
+	return { buffer, alloc.size, alloc.offset };
+}
+
+Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags usage) {
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VkBuffer buffer;
+
+	if (vkCreateBuffer(renderer.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create buffer!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
+
+	Allocator& allocator = *renderer.memory->hostAllocator;
+	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
+
+	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
 	return { buffer, alloc.size, alloc.offset };
 }
@@ -92,7 +117,7 @@ VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename) 
 	return shaderModule;
 }
 
-Image CreateImage(VkDevice device, Allocator& allocator, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, uint32_t arrayLevels, VkImageUsageFlags usage, VkImageCreateFlags flags) {
+Image CreateImage(Renderer& renderer, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, uint32_t arrayLevels, VkImageUsageFlags usage, VkImageCreateFlags flags) {
 	VkImageCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	info.imageType = VK_IMAGE_TYPE_2D;
@@ -110,18 +135,19 @@ Image CreateImage(VkDevice device, Allocator& allocator, VkFormat format, uint32
 	info.flags = flags;
 
 	VkImage image;
-	if (vkCreateImage(device, &info, nullptr, &image) != VK_SUCCESS) {
+	if (vkCreateImage(renderer.device, &info, nullptr, &image) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create image!");
 	}
 
 	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(device, image, &memRequirements);
+	vkGetImageMemoryRequirements(renderer.device, image, &memRequirements);
 
+	Allocator& allocator = renderer.memory->GetDeviceAllocator(memRequirements);
 	Allocation alloc = allocator.Alloc(memRequirements.size, memRequirements.alignment);
 
-	vkBindImageMemory(device, image, alloc.memory, alloc.offset);
+	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
 
-	return { image, alloc.size, alloc.offset };
+	return { image, alloc.size, alloc.offset, allocator.GetType() };
 }
 
 VkImageView CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspect, VkImageViewType viewType, uint32_t mipLevels, uint32_t arrayLayers) {

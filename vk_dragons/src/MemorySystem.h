@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.h>
 #include "Allocator.h"
 #include <memory>
+#include <vector>
 
 //file is named "MemorySystem.h" because "Memory.h" conflicts with included headers in visual studio
 
@@ -12,11 +13,12 @@ public:
 	Memory(VkPhysicalDevice physicalDevice, VkDevice device);
 	void Cleanup();
 
-	//linear allocators are used because this application has simple memory requirements
-	//everything gets uploaded to the gpu at start up and nothing needs to be uploaded after that
+	//stack allocators are used because this application has simple memory requirements
+	//every resource gets allocated at start up and only full screen buffers need to be allocated after that
 	//larger applications will have to use more sophisticated allocation schemes
 	std::unique_ptr<Allocator> hostAllocator;
-	std::unique_ptr<Allocator> deviceAllocator;
+	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
+	Allocator& GetDeviceAllocator(uint32_t);
 
 	//the mapping for the host memory is kept alive for the entire application
 	//it is implicitly unmapped when the memory is freed in Cleanup()
@@ -27,10 +29,11 @@ private:
 	VkPhysicalDeviceMemoryProperties memoryProperties;
 
 	VkDeviceMemory hostMemory;
-	VkDeviceMemory deviceMemory;
+	std::vector<VkDeviceMemory> deviceMemories;
+	std::vector<Allocator> deviceAllocators;
 
-	void AllocMemory();
-	uint32_t Match(VkMemoryPropertyFlags flags);
-	uint32_t MatchStrict(VkMemoryPropertyFlags flags);
+	void AllocHostMemory();
+	VkDeviceMemory Alloc(uint32_t type);
+	Allocator& AllocDevice(uint32_t type);
 };
 

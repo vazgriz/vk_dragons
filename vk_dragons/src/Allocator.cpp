@@ -1,8 +1,9 @@
 #include "Allocator.h"
 
-Allocator::Allocator(VkDeviceMemory memory, size_t totalSize) {
+Allocator::Allocator(VkDeviceMemory memory, uint32_t type, size_t totalSize) {
 	this->memory = memory;
 	this->totalSize = totalSize;
+	this->type = type;
 	pointer = 0;
 }
 
@@ -33,4 +34,8 @@ void Allocator::Pop() {
 void Allocator::Reset() {
 	pointer = 0;
 	while (!stack.empty()) stack.pop();
+}
+
+uint32_t Allocator::GetType() {
+	return type;
 }

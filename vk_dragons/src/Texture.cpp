@@ -24,7 +24,7 @@ void Texture::Init(const std::string& filename) {
 	CalulateMipChain();
 
 	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
-	image = CreateImage(renderer.device, *renderer.memory->deviceAllocator,
+	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
 		mipLevels, 1,
@@ -49,7 +49,7 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 	CalulateMipChain();
 
 	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
-	image = CreateImage(renderer.device, *renderer.memory->deviceAllocator,
+	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
 		mipLevels, 6,
@@ -80,7 +80,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 
 	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
-		stagingBuffers[i] = CreateBuffer(renderer.device, data[i].size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, *renderer.memory->hostAllocator);
+		stagingBuffers[i] = CreateHostBuffer(renderer, data[i].size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 		char* dest = static_cast<char*>(renderer.memory->hostMapping) + stagingBuffers[i].offset;
 		memcpy(dest, data[i].data(), data[i].size());
 
