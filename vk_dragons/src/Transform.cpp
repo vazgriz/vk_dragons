@@ -3,6 +3,8 @@
 
 Transform::Transform() {
 	scale = glm::vec3(1, 1, 1);
+	rotation = glm::vec3(1, 0, 0);
+	angle = 0.0f;
 }
 
 void Transform::SetPosition(glm::vec3 position) {
@@ -21,7 +23,7 @@ void Transform::SetScale(glm::vec3 scale) {
 	Apply();
 }
 
-glm::mat4 Transform::GetWorldMatrix() {
+glm::mat4& Transform::GetWorldMatrix() {
 	return transform;
 }
 
