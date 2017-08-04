@@ -32,6 +32,7 @@ private:
 	Model suzanne;
 	Model plane;
 	Texture dragonColor;
+	Texture suzanneColor;
 	Texture skybox;
 
 	DepthBuffer lightDepth;
@@ -47,6 +48,7 @@ private:
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet uniformSet;
 	VkDescriptorSet dragonTextureSet;
+	VkDescriptorSet suzanneTextureSet;
 
 	void UploadResources();
 	void UpdateUniform();
@@ -62,6 +64,7 @@ private:
 	void CreateDescriptorPool();
 	void CreateUniformSet();
 	void CreateDragonTextureSet();
+	void CreateSuzanneTextureSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
