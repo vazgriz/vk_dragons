@@ -23,6 +23,8 @@ Allocation Allocator::Alloc(size_t size, size_t alignment) {
 
 	pointer += size;
 
+	if (pointer > totalSize) throw std::runtime_error("Out of memory");
+
 	return result;
 }
 
