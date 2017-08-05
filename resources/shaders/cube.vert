@@ -11,14 +11,12 @@ layout(set = 0, binding = 0) uniform Camera {
 } camera;
 
 // Output: position in model space
-out INTERFACE {
-	vec3 position;
-} Out ;
+out vec3 position;
 
 
 void main(){
 	// We multiply the coordinates by the MV matrix, and ouput the result.
 	gl_Position = camera.projection * camera.view * vec4(v, 1.0);
 
-	Out.position = v;
+	position = v;
 }
