@@ -2,12 +2,12 @@
 
 void Scene::CreatePipelines() {
 	CreateModelPipelineLayout();
-	CreateDragonPipeline();
+	CreateModelPipeline();
 }
 
 void Scene::DestroyPipelines() {
 	vkDestroyPipelineLayout(renderer.device, modelPipelineLayout, nullptr);
-	vkDestroyPipeline(renderer.device, dragonPipeline, nullptr);
+	vkDestroyPipeline(renderer.device, modelPipeline, nullptr);
 }
 
 void Scene::CreateModelPipelineLayout() {
@@ -30,7 +30,7 @@ void Scene::CreateModelPipelineLayout() {
 	}
 }
 
-void Scene::CreateDragonPipeline() {
+void Scene::CreateModelPipeline() {
 	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/prog1.vert.spv");
 	VkShaderModule frag = CreateShaderModule(renderer.device, "resources/shaders/prog1.frag.spv");
 
@@ -130,7 +130,7 @@ void Scene::CreateDragonPipeline() {
 	pipelineInfo.renderPass = mainRenderPass;
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &dragonPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &modelPipeline) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create graphics pipeline!");
 	}
 

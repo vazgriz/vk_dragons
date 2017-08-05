@@ -71,10 +71,10 @@ private:
 
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout modelPipelineLayout;
-	VkPipeline dragonPipeline;
+	VkPipeline modelPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
-	void CreateDragonPipeline();
+	void CreateModelPipeline();
 };
 
