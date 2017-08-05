@@ -97,7 +97,7 @@ void Input::UpdatePos(double elapsed) {
 
 	if (x != 0 || y != 0 || z != 0) {
 		glm::vec3 dir(x, y, z);
-		glm::normalize(dir);
+		dir = glm::normalize(dir);
 		x = dir.x;
 		y = dir.y;
 		z = dir.z;
