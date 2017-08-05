@@ -44,6 +44,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateUniformSet();
 	CreateTextureSet(dragonColor.imageView, dragonTextureSet);
 	CreateTextureSet(suzanneColor.imageView, suzanneTextureSet);
+	CreateTextureSet(skyboxColor.imageView, skyboxDescriptorSet);
 
 	CreatePipelines();
 
@@ -344,14 +345,14 @@ void Scene::CreateUniformBuffer() {
 void Scene::CreateDescriptorPool() {
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 }
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 3;
+	poolInfo.maxSets = 4;
 
 	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create descriptor pool!");
