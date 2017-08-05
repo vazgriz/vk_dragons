@@ -41,5 +41,4 @@ private:
 	Transform transform;
 
 	void CreateBuffers();
-	Buffer CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer destBuffer, void* source, size_t size);
 };
