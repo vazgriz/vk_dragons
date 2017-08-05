@@ -49,7 +49,7 @@ private:
 	VkDescriptorSet uniformSet;
 	VkDescriptorSet dragonTextureSet;
 	VkDescriptorSet suzanneTextureSet;
-	VkDescriptorSet skyboxDescriptorSet;
+	VkDescriptorSet skyboxTextureSet;
 
 	void UploadResources();
 	void UpdateUniform();

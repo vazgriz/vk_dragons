@@ -44,7 +44,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateUniformSet();
 	CreateTextureSet(dragonColor.imageView, dragonTextureSet);
 	CreateTextureSet(suzanneColor.imageView, suzanneTextureSet);
-	CreateTextureSet(skyboxColor.imageView, skyboxDescriptorSet);
+	CreateTextureSet(skyboxColor.imageView, skyboxTextureSet);
 
 	CreatePipelines();
 
