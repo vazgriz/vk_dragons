@@ -101,7 +101,7 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 	return { buffer, alloc.size, alloc.offset };
 }
 
-Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, void* source, size_t size) {
+Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, const void* source, size_t size) {
 	Buffer buffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 	char* dest = static_cast<char*>(renderer.memory->hostMapping) + buffer.offset;
 	memcpy(dest, source, size);
