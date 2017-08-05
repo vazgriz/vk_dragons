@@ -7,7 +7,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane(renderer),
 	dragonColor(renderer),
 	suzanneColor(renderer),
-	skybox(renderer),
+	skyboxColor(renderer),
 	camera(45.0f, width, height),
 	input(window, camera),
 	lightDepth(renderer),
@@ -28,7 +28,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	dragonColor.Init("resources/dragon_texture_color.png");
 	suzanneColor.Init("resources/suzanne_texture_color.png");
-	skybox.InitCubemap("resources/cubemap/cubemap");
+	skyboxColor.InitCubemap("resources/cubemap/cubemap");
 
 	UploadResources();
 

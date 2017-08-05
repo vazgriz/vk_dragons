@@ -33,7 +33,7 @@ private:
 	Model plane;
 	Texture dragonColor;
 	Texture suzanneColor;
-	Texture skybox;
+	Texture skyboxColor;
 
 	DepthBuffer lightDepth;
 	DepthBuffer depth;
