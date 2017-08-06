@@ -88,7 +88,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 		copy.bufferImageHeight = 0;
 		copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		copy.imageSubresource.mipLevel = 0;
-		copy.imageSubresource.baseArrayLayer = 0;
+		copy.imageSubresource.baseArrayLayer = static_cast<uint32_t>(i);
 		copy.imageSubresource.layerCount = 1;
 		copy.imageOffset = { 0, 0, 0 };
 		copy.imageExtent = {
