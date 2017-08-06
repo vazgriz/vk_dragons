@@ -35,11 +35,12 @@ void Texture::Init(const std::string& filename) {
 void Texture::InitCubemap(const std::string& filenameRoot) {
 	//to create a cubemap, there must 6 layers in an image
 	//the layers correspond to +X, -X, +Y, -Y, +Z, -Z
+	//Vulkan uses Y-down convention, so +Y corresponds to down
 	std::vector<std::string> filenames = {
 		filenameRoot + "_r.png",
 		filenameRoot + "_l.png",
-		filenameRoot + "_u.png",
 		filenameRoot + "_d.png",
+		filenameRoot + "_u.png",
 		filenameRoot + "_b.png",
 		filenameRoot + "_f.png",
 	};

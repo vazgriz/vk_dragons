@@ -10,5 +10,6 @@ layout(set = 1, binding = 0) uniform samplerCube textureCubeMap;
 layout(location = 0) out vec4 fragColor;
 
 void main(){
-	fragColor = texture(textureCubeMap, position);
+	vec3 uvw = vec3(position.x, -position.y, position.z);
+	fragColor = texture(textureCubeMap, uvw);
 }
