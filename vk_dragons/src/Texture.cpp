@@ -23,7 +23,6 @@ void Texture::Init(const std::string& filename) {
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
 
-	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
 	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
@@ -48,7 +47,6 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 	LoadImages(filenames);
 	CalulateMipChain();
 
-	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
 	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
