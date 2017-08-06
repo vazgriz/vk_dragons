@@ -380,8 +380,8 @@ void Scene::CreateUniformSet() {
 
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = uniformBuffer.buffer;
-	bufferInfo.offset = offsetof(Uniform, camera);
-	bufferInfo.range = sizeof(Uniform::Camera);
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(Uniform);
 
 	VkWriteDescriptorSet descriptorWrite;
 
