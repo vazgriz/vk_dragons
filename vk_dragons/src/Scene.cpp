@@ -83,6 +83,7 @@ void Scene::UploadResources() {
 
 	dragonColor.UploadData(commandBuffer);
 	suzanneColor.UploadData(commandBuffer);
+	skyboxColor.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
 
@@ -93,6 +94,7 @@ void Scene::UploadResources() {
 
 	dragonColor.DestroyStaging();
 	suzanneColor.DestroyStaging();
+	skyboxColor.DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }
