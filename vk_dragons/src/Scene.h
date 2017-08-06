@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Input.h"
 #include "DepthBuffer.h"
+#include "Skybox.h"
 
 struct Uniform {
 	struct Camera {
@@ -32,6 +33,7 @@ private:
 	Model dragon;
 	Model suzanne;
 	Model plane;
+	Skybox skybox;
 	Texture dragonColor;
 	Texture suzanneColor;
 	Texture skyboxColor;
@@ -72,10 +74,14 @@ private:
 
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout modelPipelineLayout;
+	VkPipelineLayout skyboxPipelineLayout;
 	VkPipeline modelPipeline;
+	VkPipeline skyboxPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
 	void CreateModelPipeline();
+	void CreateSkyboxPipelineLayout();
+	void CreateSkyboxPipeline();
 };
 

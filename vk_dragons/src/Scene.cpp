@@ -5,6 +5,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragon(renderer),
 	suzanne(renderer),
 	plane(renderer),
+	skybox(renderer),
 	dragonColor(renderer),
 	suzanneColor(renderer),
 	skyboxColor(renderer),
@@ -19,6 +20,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
+	skybox.Init();
 
 	dragon.GetTransform().SetScale(glm::vec3(0.5f));
 	dragon.GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
@@ -77,6 +79,7 @@ void Scene::UploadResources() {
 	dragon.UploadData(commandBuffer);
 	suzanne.UploadData(commandBuffer);
 	plane.UploadData(commandBuffer);
+	skybox.UploadData(commandBuffer);
 
 	dragonColor.UploadData(commandBuffer);
 	suzanneColor.UploadData(commandBuffer);
@@ -86,6 +89,7 @@ void Scene::UploadResources() {
 	dragon.DestroyStaging();
 	suzanne.DestroyStaging();
 	plane.DestroyStaging();
+	skybox.DestroyStaging();
 
 	dragonColor.DestroyStaging();
 	suzanneColor.DestroyStaging();
@@ -185,6 +189,11 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &suzanneTextureSet, 0, nullptr);
 	suzanne.Draw(commandBuffer, modelPipelineLayout);
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 1, 1, &skyboxTextureSet, 0, nullptr);
+	skybox.Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 
