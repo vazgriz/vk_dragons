@@ -14,9 +14,9 @@ const std::vector<glm::vec3> positions = {
 };
 
 const std::vector<uint32_t> indices = {
-	2, 1, 0, 3, 1, 2, // Front face
+	2, 1, 0, 3, 1, 2, // Back face
 	3, 5, 1, 7, 5, 3, // Right face
-	7, 4, 5, 6, 4, 7, // Back face
+	7, 4, 5, 6, 4, 7, // Front face
 	6, 0, 4, 2, 0, 6, // Left face
 	1, 4, 0, 5, 4, 1, // Bottom face
 	6, 3, 2, 7, 3, 6  // Top face
