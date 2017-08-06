@@ -13,9 +13,11 @@ public:
 	void Update();
 	glm::mat4 GetProjection();
 	glm::mat4 GetView();
+	glm::mat4 GetRotationOnlyView();
 private:
 	glm::mat4 projection;
 	glm::mat4 view;
+	glm::mat4 rotationOnlyView;
 	glm::vec3 position;
 	glm::quat rotation;
 	float fov;

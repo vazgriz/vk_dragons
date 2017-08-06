@@ -98,6 +98,7 @@ void Scene::UpdateUniform() {
 	Uniform* uniform = reinterpret_cast<Uniform*>(ptr);
 	uniform->camera.projection = camera.GetProjection();
 	uniform->camera.view = camera.GetView();
+	uniform->camera.rotationOnlyView = camera.GetRotationOnlyView();
 }
 
 void Scene::Update(double elapsed) {

@@ -10,6 +10,7 @@ layout(location = 4) in vec2 t;
 layout(set = 0, binding = 0) uniform Camera {
     mat4 projection;
     mat4 view;
+    mat4 rotationOnlyView;
 } camera;
 
 layout(push_constant) uniform Model {
