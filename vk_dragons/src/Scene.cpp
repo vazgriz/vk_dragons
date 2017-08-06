@@ -5,9 +5,10 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragon(renderer),
 	suzanne(renderer),
 	plane(renderer),
+	skybox(renderer),
 	dragonColor(renderer),
 	suzanneColor(renderer),
-	skybox(renderer),
+	skyboxColor(renderer),
 	camera(45.0f, width, height),
 	input(window, camera),
 	lightDepth(renderer),
@@ -19,6 +20,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragon.Init("resources/dragon.obj");
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
+	skybox.Init();
 
 	dragon.GetTransform().SetScale(glm::vec3(0.5f));
 	dragon.GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
@@ -28,7 +30,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	dragonColor.Init("resources/dragon_texture_color.png");
 	suzanneColor.Init("resources/suzanne_texture_color.png");
-	skybox.InitCubemap("resources/cubemap/cubemap");
+	skyboxColor.InitCubemap("resources/cubemap/cubemap");
 
 	UploadResources();
 
@@ -42,8 +44,9 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateUniformBuffer();
 	CreateDescriptorPool();
 	CreateUniformSet();
-	CreateDragonTextureSet();
-	CreateSuzanneTextureSet();
+	CreateTextureSet(dragonColor.imageView, dragonTextureSet);
+	CreateTextureSet(suzanneColor.imageView, suzanneTextureSet);
+	CreateTextureSet(skyboxColor.imageView, skyboxTextureSet);
 
 	CreatePipelines();
 
@@ -76,18 +79,22 @@ void Scene::UploadResources() {
 	dragon.UploadData(commandBuffer);
 	suzanne.UploadData(commandBuffer);
 	plane.UploadData(commandBuffer);
+	skybox.UploadData(commandBuffer);
 
 	dragonColor.UploadData(commandBuffer);
 	suzanneColor.UploadData(commandBuffer);
+	skyboxColor.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
 
 	dragon.DestroyStaging();
 	suzanne.DestroyStaging();
 	plane.DestroyStaging();
+	skybox.DestroyStaging();
 
 	dragonColor.DestroyStaging();
 	suzanneColor.DestroyStaging();
+	skyboxColor.DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }
@@ -97,6 +104,7 @@ void Scene::UpdateUniform() {
 	Uniform* uniform = reinterpret_cast<Uniform*>(ptr);
 	uniform->camera.projection = camera.GetProjection();
 	uniform->camera.view = camera.GetView();
+	uniform->camera.rotationOnlyView = camera.GetRotationOnlyView();
 }
 
 void Scene::Update(double elapsed) {
@@ -129,11 +137,6 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	depth.Init(width, height);
-
-	/*VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
-	TransitionImages(commandBuffer);
-	renderer.SubmitCommandBuffer(commandBuffer);*/
-
 	createRenderPass();
 	createFramebuffers();
 }
@@ -180,7 +183,7 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, dragonPipeline);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &dragonTextureSet, 0, nullptr);
@@ -188,6 +191,11 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &suzanneTextureSet, 0, nullptr);
 	suzanne.Draw(commandBuffer, modelPipelineLayout);
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 1, 1, &skyboxTextureSet, 0, nullptr);
+	skybox.Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 
@@ -298,7 +306,7 @@ void Scene::CreateSampler() {
 	samplerInfo.maxLod = 4.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
+		throw std::runtime_error("Failed to create texture sampler!");
 	}
 }
 
@@ -344,14 +352,14 @@ void Scene::CreateUniformBuffer() {
 void Scene::CreateDescriptorPool() {
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 }
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 3;
+	poolInfo.maxSets = 4;
 
 	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create descriptor pool!");
@@ -388,7 +396,7 @@ void Scene::CreateUniformSet() {
 	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void Scene::CreateDragonTextureSet() {
+void Scene::CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorSet) {
 	VkDescriptorSetLayout layouts[] = { textureSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -396,47 +404,18 @@ void Scene::CreateDragonTextureSet() {
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = layouts;
 
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &dragonTextureSet) != VK_SUCCESS) {
+	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to allocate texture set!");
 	}
 
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = dragonColor.imageView;
+	imageInfo.imageView = imageView;
 	imageInfo.sampler = sampler;
 
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = dragonTextureSet;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pImageInfo = &imageInfo;
-
-	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
-}
-
-void Scene::CreateSuzanneTextureSet() {
-	VkDescriptorSetLayout layouts[] = { textureSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &suzanneTextureSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate texture set!");
-	}
-
-	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = suzanneColor.imageView;
-	imageInfo.sampler = sampler;
-
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = suzanneTextureSet;
+	descriptorWrite.dstSet = descriptorSet;
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

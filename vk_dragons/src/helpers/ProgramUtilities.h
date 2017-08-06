@@ -32,6 +32,8 @@ Buffer CreateBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags us
 
 Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags usage);
 
+Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, const void* source, size_t size);
+
 VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename);
 
 Image CreateImage(Renderer& renderer, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, uint32_t arrayLevels, VkImageUsageFlags usage, VkImageCreateFlags flags);

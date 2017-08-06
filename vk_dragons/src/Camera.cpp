@@ -35,6 +35,7 @@ void Camera::Update() {
 	glm::vec3 forward = rotation * glm::vec3(0, 0, -1);
 	glm::vec3 up = rotation * glm::vec3(0, 1, 0);
 	view = glm::lookAt(position, position + forward, up);
+	rotationOnlyView = glm::lookAt(glm::vec3(), forward, up);
 }
 
 glm::mat4 Camera::GetProjection() {
@@ -43,4 +44,8 @@ glm::mat4 Camera::GetProjection() {
 
 glm::mat4 Camera::GetView() {
 	return view;
+}
+
+glm::mat4 Camera::GetRotationOnlyView() {
+	return rotationOnlyView;
 }

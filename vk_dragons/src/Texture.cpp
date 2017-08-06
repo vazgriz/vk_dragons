@@ -23,7 +23,6 @@ void Texture::Init(const std::string& filename) {
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
 
-	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
 	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
@@ -36,11 +35,12 @@ void Texture::Init(const std::string& filename) {
 void Texture::InitCubemap(const std::string& filenameRoot) {
 	//to create a cubemap, there must 6 layers in an image
 	//the layers correspond to +X, -X, +Y, -Y, +Z, -Z
+	//Vulkan uses Y-down convention, so +Y corresponds to down
 	std::vector<std::string> filenames = {
 		filenameRoot + "_r.png",
 		filenameRoot + "_l.png",
-		filenameRoot + "_u.png",
 		filenameRoot + "_d.png",
+		filenameRoot + "_u.png",
 		filenameRoot + "_b.png",
 		filenameRoot + "_f.png",
 	};
@@ -48,7 +48,6 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 	LoadImages(filenames);
 	CalulateMipChain();
 
-	uint32_t mipLevels = static_cast<uint32_t>(mipChain.size());
 	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
@@ -90,7 +89,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 		copy.bufferImageHeight = 0;
 		copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		copy.imageSubresource.mipLevel = 0;
-		copy.imageSubresource.baseArrayLayer = 0;
+		copy.imageSubresource.baseArrayLayer = static_cast<uint32_t>(i);
 		copy.imageSubresource.layerCount = 1;
 		copy.imageOffset = { 0, 0, 0 };
 		copy.imageExtent = {

@@ -1,17 +1,15 @@
-#version 330
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
 // Input: position in model space
-in INTERFACE {
-	vec3 position; 
-} In ;
+in vec3 position; 
 
-uniform samplerCube textureCubeMap;
+layout(set = 1, binding = 0) uniform samplerCube textureCubeMap;
 
 // Output: the fragment color
-out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 void main(){
-	
-	fragColor = texture(textureCubeMap,In.position).rgb;
-
+	vec3 uvw = vec3(position.x, -position.y, position.z);
+	fragColor = texture(textureCubeMap, uvw);
 }

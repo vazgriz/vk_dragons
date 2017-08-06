@@ -5,11 +5,13 @@
 #include "Camera.h"
 #include "Input.h"
 #include "DepthBuffer.h"
+#include "Skybox.h"
 
 struct Uniform {
 	struct Camera {
 		glm::mat4 projection;
 		glm::mat4 view;
+		glm::mat4 rotationOnlyView;
 	} camera;
 };
 
@@ -31,9 +33,10 @@ private:
 	Model dragon;
 	Model suzanne;
 	Model plane;
+	Skybox skybox;
 	Texture dragonColor;
 	Texture suzanneColor;
-	Texture skybox;
+	Texture skyboxColor;
 
 	DepthBuffer lightDepth;
 	DepthBuffer depth;
@@ -49,6 +52,7 @@ private:
 	VkDescriptorSet uniformSet;
 	VkDescriptorSet dragonTextureSet;
 	VkDescriptorSet suzanneTextureSet;
+	VkDescriptorSet skyboxTextureSet;
 
 	void UploadResources();
 	void UpdateUniform();
@@ -63,18 +67,21 @@ private:
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
-	void CreateDragonTextureSet();
-	void CreateSuzanneTextureSet();
+	void CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorSet);
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
 
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout modelPipelineLayout;
-	VkPipeline dragonPipeline;
+	VkPipelineLayout skyboxPipelineLayout;
+	VkPipeline modelPipeline;
+	VkPipeline skyboxPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
-	void CreateDragonPipeline();
+	void CreateModelPipeline();
+	void CreateSkyboxPipelineLayout();
+	void CreateSkyboxPipeline();
 };
 
