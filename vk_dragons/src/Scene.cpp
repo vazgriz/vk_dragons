@@ -131,11 +131,6 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	depth.Init(width, height);
-
-	/*VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
-	TransitionImages(commandBuffer);
-	renderer.SubmitCommandBuffer(commandBuffer);*/
-
 	createRenderPass();
 	createFramebuffers();
 }
