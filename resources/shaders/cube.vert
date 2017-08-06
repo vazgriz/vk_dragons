@@ -17,6 +17,7 @@ out vec3 position;
 
 void main(){
 	// We multiply the coordinates by the MV matrix, and ouput the result.
-	gl_Position = camera.projection * camera.rotationOnlyView * vec4(v, 1.0);
+	vec4 pos = camera.projection * camera.rotationOnlyView * vec4(v, 1.0);
+    gl_Position = pos.xyww;
 	position = v;
 }
