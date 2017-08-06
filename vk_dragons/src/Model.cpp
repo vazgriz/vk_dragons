@@ -97,6 +97,18 @@ std::vector<VkVertexInputAttributeDescription> Model::GetAttributeDescriptions()
 	});
 }
 
+std::vector<VkVertexInputBindingDescription> Model::GetDepthBindingDescriptions() {
+	return std::vector<VkVertexInputBindingDescription>({
+		{ 0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//position
+	});
+}
+
+std::vector<VkVertexInputAttributeDescription> Model::GetDepthAttributeDescriptions() {
+	return std::vector<VkVertexInputAttributeDescription>({
+		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//position
+	});
+}
+
 Transform& Model::GetTransform() {
 	return transform;
 }

@@ -18,6 +18,8 @@ public:
 	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 	static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
+	static std::vector<VkVertexInputBindingDescription> GetDepthBindingDescriptions();
+	static std::vector<VkVertexInputAttributeDescription> GetDepthAttributeDescriptions();
 
 	Transform& GetTransform();
 
