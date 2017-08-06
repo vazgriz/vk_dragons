@@ -304,7 +304,7 @@ void Scene::CreateSampler() {
 	samplerInfo.maxLod = 4.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
+		throw std::runtime_error("Failed to create texture sampler!");
 	}
 }
 
