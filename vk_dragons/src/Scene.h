@@ -8,11 +8,9 @@
 #include "Skybox.h"
 
 struct Uniform {
-	struct Camera {
-		glm::mat4 projection;
-		glm::mat4 view;
-		glm::mat4 rotationOnlyView;
-	} camera;
+	glm::mat4 camProjection;
+	glm::mat4 camView;
+	glm::mat4 camRotationOnlyView;
 };
 
 class Scene {

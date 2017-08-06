@@ -102,9 +102,9 @@ void Scene::UploadResources() {
 void Scene::UpdateUniform() {
 	char* ptr = reinterpret_cast<char*>(renderer.memory->hostMapping) + uniformBuffer.offset;
 	Uniform* uniform = reinterpret_cast<Uniform*>(ptr);
-	uniform->camera.projection = camera.GetProjection();
-	uniform->camera.view = camera.GetView();
-	uniform->camera.rotationOnlyView = camera.GetRotationOnlyView();
+	uniform->camProjection = camera.GetProjection();
+	uniform->camView = camera.GetView();
+	uniform->camRotationOnlyView = camera.GetRotationOnlyView();
 }
 
 void Scene::Update(double elapsed) {
