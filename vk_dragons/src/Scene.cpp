@@ -7,9 +7,16 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane(renderer),
 	skybox(renderer),
 	dragonColor(renderer),
+	dragonNormal(renderer),
+	dragonEffects(renderer),
 	suzanneColor(renderer),
+	suzanneNormal(renderer),
+	suzanneEffects(renderer),
 	planeColor(renderer),
+	planeNormal(renderer),
+	planeEffects(renderer),
 	skyboxColor(renderer),
+	skyboxSmallColor(renderer),
 	camera(45.0f, width, height),
 	input(window, camera),
 	lightDepth(renderer),
@@ -33,9 +40,19 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane.GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
 	dragonColor.Init("resources/dragon_texture_color.png");
+	dragonNormal.Init("resources/dragon_texture_normal.png");
+	dragonEffects.Init("resources/dragon_texture_ao_specular_reflection.png");
+
 	suzanneColor.Init("resources/suzanne_texture_color.png");
+	suzanneNormal.Init("resources/suzanne_texture_normal.png");
+	suzanneEffects.Init("resources/suzanne_texture_ao_specular_reflection.png");
+
 	planeColor.Init("resources/plane_texture_color.png");
+	planeNormal.Init("resources/plane_texture_normal.png");
+	planeEffects.Init("resources/plane_texture_depthmap.png");
+
 	skyboxColor.InitCubemap("resources/cubemap/cubemap");
+	skyboxSmallColor.InitCubemap("resources/cubemap/cubemap_diff");
 
 	UploadResources();
 
@@ -95,9 +112,19 @@ void Scene::UploadResources() {
 	skybox.UploadData(commandBuffer);
 
 	dragonColor.UploadData(commandBuffer);
+	dragonNormal.UploadData(commandBuffer);
+	dragonEffects.UploadData(commandBuffer);
+
 	suzanneColor.UploadData(commandBuffer);
+	suzanneNormal.UploadData(commandBuffer);
+	suzanneEffects.UploadData(commandBuffer);
+
 	planeColor.UploadData(commandBuffer);
+	planeNormal.UploadData(commandBuffer);
+	planeEffects.UploadData(commandBuffer);
+
 	skyboxColor.UploadData(commandBuffer);
+	skyboxSmallColor.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
 
@@ -107,9 +134,19 @@ void Scene::UploadResources() {
 	skybox.DestroyStaging();
 
 	dragonColor.DestroyStaging();
+	dragonNormal.DestroyStaging();
+	dragonEffects.DestroyStaging();
+
 	suzanneColor.DestroyStaging();
+	suzanneNormal.DestroyStaging();
+	suzanneEffects.DestroyStaging();
+
 	planeColor.DestroyStaging();
+	planeNormal.DestroyStaging();
+	planeEffects.DestroyStaging();
+
 	skyboxColor.DestroyStaging();
+	skyboxSmallColor.DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }

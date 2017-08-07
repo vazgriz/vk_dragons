@@ -43,10 +43,21 @@ private:
 	Model suzanne;
 	Model plane;
 	Skybox skybox;
+
 	Texture dragonColor;
+	Texture dragonNormal;
+	Texture dragonEffects;
+
 	Texture suzanneColor;
+	Texture suzanneNormal;
+	Texture suzanneEffects;
+
 	Texture planeColor;
+	Texture planeNormal;
+	Texture planeEffects;
+
 	Texture skyboxColor;
+	Texture skyboxSmallColor;
 
 	DepthBuffer lightDepth;
 	DepthBuffer depth;
