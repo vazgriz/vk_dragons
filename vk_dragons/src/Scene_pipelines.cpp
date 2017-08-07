@@ -41,8 +41,8 @@ void Scene::CreateModelPipelineLayout() {
 }
 
 void Scene::CreateModelPipeline() {
-	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/prog1.vert.spv");
-	VkShaderModule frag = CreateShaderModule(renderer.device, "resources/shaders/prog1.frag.spv");
+	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/object.vert.spv");
+	VkShaderModule frag = CreateShaderModule(renderer.device, "resources/shaders/object.frag.spv");
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
