@@ -92,15 +92,19 @@ private:
 
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout modelPipelineLayout;
+	VkPipelineLayout planePipelineLayout;
 	VkPipelineLayout skyboxPipelineLayout;
 	VkPipelineLayout lightPipelineLayout;
 	VkPipeline modelPipeline;
+	VkPipeline planePipeline;
 	VkPipeline skyboxPipeline;
 	VkPipeline lightPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
 	void CreateModelPipeline();
+	void CreatePlanePipelineLayout();
+	void CreatePlanePipeline();
 	void CreateSkyboxPipelineLayout();
 	void CreateSkyboxPipeline();
 	void CreateLightPipelineLayout();
