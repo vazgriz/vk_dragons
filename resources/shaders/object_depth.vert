@@ -6,11 +6,17 @@ layout(location = 0) in vec3 v;
 
 // Uniform: the MVP, MV and normal matrices
 layout(set = 0, binding = 0) uniform Uniforms {
-    mat4 projection;
-    mat4 view;
+    mat4 camProjection;
+    mat4 camView;
     mat4 rotationOnlyView;
+    mat4 camViewInverse;
     mat4 lightProjection;
     mat4 lightView;
+	vec4 lightPosition;
+	vec4 lightIa;
+	vec4 lightId;
+	vec4 lightIs;
+	float lightShininess;
 } uniforms;
 
 layout(push_constant) uniform Model {
