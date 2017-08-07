@@ -30,41 +30,39 @@ layout(push_constant) uniform Model {
 
 
 // Output: tangent space matrix, position in view space and uv.
-out INTERFACE {
-	mat3 tbn;
-	vec3 position;
-	vec2 uv;
-	vec3 lightSpacePosition;
-	vec3 modelPosition;
-	vec3 tangentSpacePosition;
-	vec3 tangentSpaceView;
-	vec3 tangentSpaceLight;
-} Out ;
+layout(location = 0) out mat3 outTbn;
+layout(location = 3) out vec3 outPosition;
+layout(location = 4) out vec2 outUV;
+layout(location = 5) out vec3 outLightSpacePosition;
+layout(location = 6) out vec3 outModelPosition;
+layout(location = 7) out vec3 outTangentSpacePosition;
+layout(location = 8) out vec3 outTangentSpaceView;
+layout(location = 9) out vec3 outTangentSpaceLight;
 
 
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.
 	gl_Position = uniforms.camProjection * uniforms.camView * model.matrix * vec4(v, 1.0);
 	
-	Out.position = (uniforms.camProjection * uniforms.camView * vec4(v,1.0)).xyz;
+	outPosition = (uniforms.camProjection * uniforms.camView * vec4(v,1.0)).xyz;
 	
-	Out.uv = uv;
+	outUV = uv;
 	
 	// Compute the TBN matrix (from tangent space to view space).
 	vec3 T = normalize(model.normalMatrix * tang);
 	vec3 B = normalize(model.normalMatrix * binor);
 	vec3 N = normalize(model.normalMatrix * n);
-	Out.tbn = mat3(T, B, N);
+	outTbn = mat3(T, B, N);
 	
 	// Compute position in light space
-	Out.lightSpacePosition = 0.5*(uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0)).xyz + 0.5;
+	outLightSpacePosition = 0.5*(uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0)).xyz + 0.5;
 	
-	Out.modelPosition = v;
+	outModelPosition = v;
 	
-	Out.tangentSpacePosition = transpose(Out.tbn) * Out.position;
+	outTangentSpacePosition = transpose(outTbn) * outPosition;
 	
-	Out.tangentSpaceView = transpose(Out.tbn) * vec3(0.0);
+	outTangentSpaceView = transpose(outTbn) * vec3(0.0);
 	
-	Out.tangentSpaceLight = transpose(Out.tbn) * uniforms.lightPosition.xyz;
+	outTangentSpaceLight = transpose(outTbn) * uniforms.lightPosition.xyz;
 	
 }

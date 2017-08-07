@@ -1,19 +1,18 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-// Input: tangent space matrix, position (view space) and uv coming from the vertex shader
-in INTERFACE {
-	mat3 tbn;
-	vec3 position;
-	vec2 uv;
-	vec3 lightSpacePosition;
-	vec3 modelPosition;
-	vec3 tangentSpacePosition;
-	vec3 tangentSpaceView;
-	vec3 tangentSpaceLight;
-} In ;
+// Input: tangent space matrix, inPosition (view space) and inUV coming from the vertex shader
 
-// Uniform: the light structure (position in view space)
+layout(location = 0) in mat3 inTbn;
+layout(location = 3) in vec3 inPosition;
+layout(location = 4) in vec2 inUV;
+layout(location = 5) in vec3 inLightSpacePosition;
+layout(location = 6) in vec3 inModelPosition;
+layout(location = 7) in vec3 inTangentSpacePosition;
+layout(location = 8) in vec3 inTangentSpaceView;
+layout(location = 9) in vec3 inTangentSpaceLight;
+
+// Uniform: the light structure (inPosition in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
     mat4 camProjection;
     mat4 camView;
@@ -21,7 +20,7 @@ layout(set = 0, binding = 0) uniform Uniforms {
     mat4 camViewInverse;
     mat4 lightProjection;
     mat4 lightView;
-	vec4 lightPosition;
+	vec4 lightinPosition;
 	vec4 lightIa;
 	vec4 lightId;
 	vec4 lightIs;
@@ -51,17 +50,17 @@ float random(vec4 p){
 
 // Compute the light shading.
 
-vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor, out vec3 ambient){
+vec3 shading(vec2 inUV, vec3 lightinPosition, float lightShininess, vec3 lightColor, out vec3 ambient){
 	// Compute the normal at the fragment using the tangent space matrix and the normal read in the normal map.
-	vec3 n = texture(textureNormal,uv).rgb;
+	vec3 n = texture(textureNormal,inUV).rgb;
 	n = normalize(n * 2.0 - 1.0);
-	n = normalize(In.tbn * n);
+	n = normalize(inTbn * n);
 	
 	// Compute the direction from the point to the light
-	// uniforms.lightPosition.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(lightPosition - uniforms.lightPosition.w * In.position);
+	// uniforms.lightinPosition.w == 0 if the light is directional, 1 else.
+	vec3 d = normalize(lightinPosition - uniforms.lightinPosition.w * inPosition);
 	
-	vec3 diffuseColor = texture(textureColor, uv).rgb;
+	vec3 diffuseColor = texture(textureColor, inUV).rgb;
 	
 	vec3 worldNormal = vec3(uniforms.camViewInverse * vec4(n,0.0));
 	vec3 ambientLightColor = texture(textureCubeMapSmall,normalize(worldNormal)).rgb;
@@ -73,7 +72,7 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 	// Compute the diffuse factor
 	float diffuse = max(0.0, dot(d,n));
 	
-	vec3 v = normalize(-In.position);
+	vec3 v = normalize(inPosition);
 	
 	// Compute the specular factor
 	float specular = 0.0;
@@ -88,18 +87,18 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 
 // Compute the shadow multiplicator based on shadow map.
 
-float shadow(vec3 lightSpacePosition){
+float shadow(vec3 lightSpaceInPosition){
 	float probabilityMax = 1.0;
-	if (lightSpacePosition.z < 1.0){
+	if (lightSpaceInPosition.z < 1.0){
 		// Read first and second moment from shadow map.
-		vec2 moments = texture(shadowMap, lightSpacePosition.xy).rg;
+		vec2 moments = texture(shadowMap, lightSpaceInPosition.xy).rg;
 		// Initial probability of light.
-		float probability = float(lightSpacePosition.z <= moments.x);
+		float probability = float(lightSpaceInPosition.z <= moments.x);
 		// Compute variance.
 		float variance = moments.y - (moments.x * moments.x);
 		variance = max(variance, 0.00001);
 		// Delta of depth.
-		float d = lightSpacePosition.z - moments.x;
+		float d = lightSpaceInPosition.z - moments.x;
 		// Use Chebyshev to estimate bound on probability.
 		probabilityMax = variance / (variance + d*d);
 		probabilityMax = max(probability, probabilityMax);
@@ -110,49 +109,49 @@ float shadow(vec3 lightSpacePosition){
 }
 
 
-// Compute the new UV coordinates for the parallax mapping effect.
+// Compute the new inUV coordinates for the parallax mapping effect.
 
-vec2 parallax(vec2 uv, vec3 vTangentDir){
+vec2 parallax(vec2 inUV, vec3 vTangentDir){
 	
 	// We can adapt the layer count based on the view direction. If we are straight above the surface, we don't need many layers.
 	float layersCount = mix(PARALLAX_MAX, PARALLAX_MIN, abs(vTangentDir.z));
 	// Depth will vary between 0 and 1.
 	float layerHeight = 1.0 / layersCount;
 	float currentLayer = 0.0;
-	// Initial depth at the given position.
-	float currentDepth = texture(textureEffects, uv).z;
+	// Initial depth at the given inPosition.
+	float currentDepth = texture(textureEffects, inUV).z;
 	
 	// Step vector: in tangent space, we walk on the surface, in the (X,Y) plane.
 	vec2 shift = PARALLAX_SCALE * vTangentDir.xy;
-	// This shift corresponds to a UV shift, scaled depending on the height of a layer and the vertical coordinate of the view direction.
-	vec2 shiftUV = shift / vTangentDir.z * layerHeight;
-	vec2 newUV = uv;
+	// This shift corresponds to a inUV shift, scaled depending on the height of a layer and the vertical coordinate of the view direction.
+	vec2 shiftinUV = shift / vTangentDir.z * layerHeight;
+	vec2 newinUV = inUV;
 	
 	// While the current layer is above the surface (ie smaller than depth), we march.
 	while (currentLayer < currentDepth) {
-		// We update the UV, going further away from the viewer.
-		newUV -= shiftUV;
+		// We update the inUV, going further away from the viewer.
+		newinUV -= shiftinUV;
 		// Update current depth.
-		currentDepth = texture(textureEffects,newUV).z;
+		currentDepth = texture(textureEffects,newinUV).z;
 		// Update current layer.
 		currentLayer += layerHeight;
 	}
 	
-	// Perform interpolation between the current depth layer and the previous one to refine the UV shift.
-	vec2 previousNewUV = newUV + shiftUV;
+	// Perform interpolation between the current depth layer and the previous one to refine the inUV shift.
+	vec2 previousNewinUV = newinUV + shiftinUV;
 	// The local depth is the gap between the current depth and the current depth layer.
 	float currentLocalDepth = currentDepth - currentLayer;
-	float previousLocalDepth = texture(textureEffects,previousNewUV).z - (currentLayer - layerHeight);
+	float previousLocalDepth = texture(textureEffects,previousNewinUV).z - (currentLayer - layerHeight);
 	
-	// Interpolate between the two local depths to obtain the correct UV shift.
-	return mix(newUV,previousNewUV,currentLocalDepth / (currentLocalDepth - previousLocalDepth));
+	// Interpolate between the two local depths to obtain the correct inUV shift.
+	return mix(newinUV,previousNewinUV,currentLocalDepth / (currentLocalDepth - previousLocalDepth));
 }
 
-float parallaxShadow(vec2 uv, vec3 lTangentDir){
+float parallaxShadow(vec2 inUV, vec3 lTangentDir){
 	
 	float shadowMultiplier = 0.0;
-	// Query the depth at the current shifted UV.
-	float initialDepth = texture(textureEffects,uv).z;
+	// Query the depth at the current shifted inUV.
+	float initialDepth = texture(textureEffects,inUV).z;
 	
 	// Compute the adaptative number of sampling depth layers.
 	float layersCount = mix(PARALLAX_MAX, PARALLAX_MIN, abs(lTangentDir.z));
@@ -160,14 +159,14 @@ float parallaxShadow(vec2 uv, vec3 lTangentDir){
 	float layerHeight = initialDepth / layersCount;
 	
 	// We will ray-march in the light direction, starting from the current point.
-	// This shift corresponds to a UV shift, scaled depending on the height of
+	// This shift corresponds to a inUV shift, scaled depending on the height of
 	// a layer and the vertical coordinate of the light direction.
-	vec2 shiftUV = PARALLAX_SCALE * lTangentDir.xy / lTangentDir.z / layersCount;
+	vec2 shiftinUV = PARALLAX_SCALE * lTangentDir.xy / lTangentDir.z / layersCount;
 	
 	// Slightly bias the initial depth layer.
 	float currentLayer = initialDepth - 0.1*layerHeight;
 	float currentDepth = initialDepth;
-	vec2 newUV = uv;
+	vec2 newinUV = inUV;
 	float stepCount = 0.0;
 	
 	// While the depth is above 0.0, iterate and march along the light direction.
@@ -184,10 +183,10 @@ float parallaxShadow(vec2 uv, vec3 lTangentDir){
 		}
 		// Increase the iteration count.
 		stepCount += 1.0;
-		// We update the UV, going further away from the viewer.
-		newUV += shiftUV;
+		// We update the inUV, going further away from the viewer.
+		newinUV += shiftinUV;
 		// Update current depth.
-		currentDepth = texture(textureEffects,newUV).z;
+		currentDepth = texture(textureEffects,newinUV).z;
 		// Update current layer.
 		currentLayer -= layerHeight;
 	}
@@ -200,24 +199,24 @@ float parallaxShadow(vec2 uv, vec3 lTangentDir){
 void main(){
 	
 	// Combien view direction in tangent space.
-	vec3 vTangentDir = normalize(In.tangentSpaceView - In.tangentSpacePosition);
-	// Query UV offset.
-	vec2 parallaxUV = parallax(In.uv, vTangentDir);
-	// If UV are outside the texture ([0,1]), we discard the fragment.
-	if(parallaxUV.x > 1.0 || parallaxUV.y  > 1.0 || parallaxUV.x < 0.0 || parallaxUV.y < 0.0){
+	vec3 vTangentDir = normalize(inTangentSpaceView - inTangentSpacePosition);
+	// Query inUV offset.
+	vec2 parallaxinUV = parallax(inUV, vTangentDir);
+	// If inUV are outside the texture ([0,1]), we discard the fragment.
+	if(parallaxinUV.x > 1.0 || parallaxinUV.y  > 1.0 || parallaxinUV.x < 0.0 || parallaxinUV.y < 0.0){
 		discard;
 	}
 	
 	vec3 ambient;
-	vec3 lightShading = shading(parallaxUV, uniforms.lightPosition.xyz, uniforms.lightShininess, uniforms.lightIs.rgb,ambient);
+	vec3 lightShading = shading(parallaxinUV, uniforms.lightinPosition.xyz, uniforms.lightShininess, uniforms.lightIs.rgb,ambient);
 	
 	// Compute parallax self-shadowing factor.
-	// The light direction is computed, uniforms.lightPosition.w == 0 if the light is directional, 1 else.
-	vec3 lTangentDir = normalize(In.tangentSpaceLight - uniforms.lightPosition.w * In.tangentSpacePosition);
-	float shadowParallax = parallaxShadow(parallaxUV, lTangentDir);
+	// The light direction is computed, uniforms.lightinPosition.w == 0 if the light is directional, 1 else.
+	vec3 lTangentDir = normalize(inTangentSpaceLight - uniforms.lightinPosition.w * inTangentSpacePosition);
+	float shadowParallax = parallaxShadow(parallaxinUV, lTangentDir);
 	
 	// Shadow: combine the factor from the parallax self-shadowing with the factor from the shadow map.
-	float shadowMultiplicator = shadow(In.lightSpacePosition);
+	float shadowMultiplicator = shadow(inLightSpacePosition);
 	shadowMultiplicator *= shadowParallax;
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
