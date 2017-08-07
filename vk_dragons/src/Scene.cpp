@@ -118,6 +118,7 @@ void Scene::UpdateUniform() {
 	uniform->camProjection = camera.GetProjection();
 	uniform->camView = camera.GetView();
 	uniform->camRotationOnlyView = camera.GetRotationOnlyView();
+	uniform->camViewInverse = glm::inverse(camera.GetView());
 	uniform->lightProjection = light.GetProjection();
 	uniform->lightView = light.GetView();
 	uniform->lightIa = light.GetIa();

@@ -12,6 +12,7 @@ struct Uniform {
 	glm::mat4 camProjection;
 	glm::mat4 camView;
 	glm::mat4 camRotationOnlyView;
+	glm::mat4 camViewInverse;
 	glm::mat4 lightProjection;
 	glm::mat4 lightView;
 	glm::vec4 lightPosition;
