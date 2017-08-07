@@ -4,9 +4,9 @@
 // Attributes
 layout(location = 0) in vec3 v;
 layout(location = 1) in vec3 n;
-layout(location = 2) in vec2 uv;
-layout(location = 3) in vec3 tang;
-layout(location = 4) in vec3 binor;
+layout(location = 2) in vec3 tang;
+layout(location = 3) in vec3 binor;
+layout(location = 4) in vec2 uv;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
