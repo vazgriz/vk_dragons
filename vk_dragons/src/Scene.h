@@ -14,6 +14,11 @@ struct Uniform {
 	glm::mat4 camRotationOnlyView;
 	glm::mat4 lightProjection;
 	glm::mat4 lightView;
+	glm::vec4 lightPosition;
+	glm::vec4 lightIa;
+	glm::vec4 lightId;
+	glm::vec4 lightIs;
+	float lightShininess;
 };
 
 class Scene {

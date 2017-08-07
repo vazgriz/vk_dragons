@@ -120,6 +120,10 @@ void Scene::UpdateUniform() {
 	uniform->camRotationOnlyView = camera.GetRotationOnlyView();
 	uniform->lightProjection = light.GetProjection();
 	uniform->lightView = light.GetView();
+	uniform->lightIa = light.GetIa();
+	uniform->lightId = light.GetId();
+	uniform->lightIs = light.GetIs();
+	uniform->lightShininess = light.GetShininess();
 }
 
 void Scene::Update(double elapsed) {
