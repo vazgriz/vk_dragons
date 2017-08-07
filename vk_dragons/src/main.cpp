@@ -1,6 +1,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include<GLFW/glfw3.h>
 #include "Scene.h"
+#include <sstream>
 
 #define INITIAL_SIZE_WIDTH 800
 #define INITIAL_SIZE_HEIGHT 600
@@ -37,6 +38,9 @@ int main() {
 	glfwShowWindow(window);
 	double lastTime = 0.0;
 
+	double nextFPS = 0.25;
+	int frames = 0;
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
@@ -48,6 +52,15 @@ int main() {
 		double now = glfwGetTime();
 		double elapsed = now - lastTime;
 		lastTime = now;
+		frames++;
+
+		if (now > nextFPS) {
+			std::stringstream stream;
+			stream << "Here Be Dragons (" << frames / 0.25 << " fps)";
+			glfwSetWindowTitle(window, stream.str().c_str());
+			frames = 0;
+			nextFPS = now + 0.25;
+		}
 
 		scene.Update(elapsed);
 		scene.Render();
