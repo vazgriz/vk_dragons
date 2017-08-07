@@ -43,6 +43,9 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	createSwapchainResources(width, height);
 
+	CreateDepthRenderPass();
+	CreateDepthFramebuffer();
+
 	CreateSampler();
 	CreateUniformSetLayout();
 	CreateTextureSetLayout();
@@ -63,6 +66,8 @@ Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
 	lightDepth.Cleanup();
 	CleanupSwapchainResources();
+	vkDestroyRenderPass(renderer.device, depthRenderPass, nullptr);
+	vkDestroyFramebuffer(renderer.device, depthFramebuffer, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
@@ -297,6 +302,62 @@ void Scene::createFramebuffers() {
 		if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create framebuffer!");
 		}
+	}
+}
+
+void Scene::CreateDepthRenderPass() {
+	VkAttachmentDescription depthAttachment = {};
+	depthAttachment.format = depth.format;
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthAttachmentRef = {};
+	depthAttachmentRef.attachment = 0;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &depthAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
+
+	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &depthRenderPass) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create render pass!");
+	}
+}
+
+void Scene::CreateDepthFramebuffer() {
+	VkFramebufferCreateInfo framebufferInfo = {};
+	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferInfo.renderPass = depthRenderPass;
+	framebufferInfo.attachmentCount = 1;
+	framebufferInfo.pAttachments = &lightDepth.imageView;
+	framebufferInfo.width = lightDepth.GetWidth();
+	framebufferInfo.height = lightDepth.GetHeight();
+	framebufferInfo.layers = 1;
+
+	if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &depthFramebuffer) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create framebuffer!");
 	}
 }
 

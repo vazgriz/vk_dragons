@@ -59,11 +59,16 @@ private:
 	VkDescriptorSet planeTextureSet;
 	VkDescriptorSet skyboxTextureSet;
 
+	VkRenderPass depthRenderPass;
+	VkFramebuffer depthFramebuffer;
+
 	void UploadResources();
 	void UpdateUniform();
 
 	void createRenderPass();
 	void createFramebuffers();
+	void CreateDepthRenderPass();
+	void CreateDepthFramebuffer();
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void CreateSampler();
