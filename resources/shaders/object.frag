@@ -1,36 +1,38 @@
-#version 330
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
 // Input: tangent space matrix, position (view space) and uv coming from the vertex shader
-in INTERFACE {
-    mat3 tbn;
-	vec3 position; 
-	vec2 uv;
-	vec3 lightSpacePosition;
-	vec3 modelPosition;
-} In ;
+layout(location = 0) in mat3 Intbn;
+layout(location = 3) in vec3 Inposition; 
+layout(location = 4) in vec2 Inuv;
+layout(location = 5) in vec3 InlightSpacePosition;
+layout(location = 6) in vec3 InmodelPosition;
 
 // Uniform: the light structure (position in view space)
-layout (std140) uniform Light {
-  vec4 position;
-  vec4 Ia;
-  vec4 Id;
-  vec4 Is;
-  float shininess;
-} light;
+layout(set = 0, binding = 0) uniform Uniforms {
+    mat4 camProjection;
+    mat4 camView;
+    mat4 rotationOnlyView;
+    mat4 camViewInverse;
+    mat4 lightProjection;
+    mat4 lightView;
+	vec4 lightPosition;
+	vec4 lightIa;
+	vec4 lightId;
+	vec4 lightIs;
+	float lightShininess;
+} uniforms;
 
 
-uniform sampler2D textureColor;
-uniform sampler2D textureNormal;
-uniform sampler2D textureEffects;
-uniform samplerCube textureCubeMap;
-uniform samplerCube textureCubeMapSmall;
-
-uniform sampler2D shadowMap;
-
-uniform mat4 inverseV;
+layout(set = 1, binding = 0) uniform sampler2D textureColor;
+layout(set = 1, binding = 1) uniform sampler2D textureNormal;
+layout(set = 1, binding = 2) uniform sampler2D textureEffects;
+layout(set = 1, binding = 3) uniform samplerCube textureCubeMap;
+layout(set = 1, binding = 4) uniform samplerCube textureCubeMapSmall;
+layout(set = 1, binding = 5) uniform sampler2D shadowMap;
 
 // Output: the fragment color
-out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 // Returns a random float in [0,1] based on the input vec4 seed.
 float random(vec4 p){
@@ -40,20 +42,20 @@ float random(vec4 p){
 
 void main(){
 	// Compute the normal at the fragment using the tangent space matrix and the normal read in the normal map.
-	vec3 n = texture(textureNormal,In.uv).rgb;
+	vec3 n = texture(textureNormal,Inuv).rgb;
 	n = normalize(n * 2.0 - 1.0);
-	n = normalize(In.tbn * n);
+	n = normalize(Intbn * n);
 
 	// Read the effects values
-	vec3 effects = texture(textureEffects,In.uv).rgb;
+	vec3 effects = texture(textureEffects,Inuv).rgb;
 
 	// Compute the direction from the point to the light
 	// light.position.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(light.position.xyz - light.position.w * In.position);
+	vec3 d = normalize(uniforms.lightPosition.xyz - uniforms.lightPosition.w * Inposition);
 
-	vec3 diffuseColor = texture(textureColor, In.uv).rgb;
+	vec3 diffuseColor = texture(textureColor, Inuv).rgb;
 	
-	vec3 worldNormal = vec3(inverseV * vec4(n,0.0));
+	vec3 worldNormal = vec3(uniforms.camViewInverse * vec4(n,0.0));
 	vec3 lightColor = texture(textureCubeMapSmall,normalize(worldNormal)).rgb;
 	diffuseColor = mix(diffuseColor, diffuseColor * lightColor, 0.5);
 	
@@ -63,36 +65,39 @@ void main(){
 	// Compute the diffuse factor
 	float diffuse = max(0.0, dot(d,n));
 
-	vec3 v = normalize(-In.position);
+	vec3 v = normalize(-Inposition);
 
 	// Compute the specular factor
 	float specular = 0.0;
 	if(diffuse > 0.0){
 		vec3 r = reflect(-d,n);
-		specular = pow(max(dot(r,v),0.0),light.shininess);
+		specular = pow(max(dot(r,v),0.0), uniforms.lightShininess);
 		specular *= effects.g;
 	}
 	
 	vec3 reflectionColor = vec3(0.0);
 	if(effects.b > 0.0){
 		vec3 rCubeMap = reflect(-v, n);
-		rCubeMap = vec3(inverseV * vec4(rCubeMap,0.0));
+		rCubeMap = vec3(uniforms.camViewInverse * vec4(rCubeMap,0.0));
 		reflectionColor = texture(textureCubeMap,rCubeMap).rgb;
 	}
 
-	vec3 lightShading = diffuse * diffuseColor + specular * light.Is.rgb;
+	vec3 lightShading = diffuse * diffuseColor + specular * uniforms.lightIs.rgb;
 	
 	float shadow = 1.0;
-	if (In.lightSpacePosition.z < 1.0){
+	if (InlightSpacePosition.z < 1.0){
 		// Read first and second moment from shadow map.
-		vec2 moments = texture(shadowMap, In.lightSpacePosition.xy).rg;
+		vec2 moments;
+        moments.r = 0.5 * texture(shadowMap, InlightSpacePosition.xy).r + 0.5;
+        moments.g = moments.r * moments.r;
+        
 		// Initial probability of light.
-		float probability = float(In.lightSpacePosition.z <= moments.x);
+		float probability = float(InlightSpacePosition.z <= moments.x);
 		// Compute variance.
 		float variance = moments.y - (moments.x * moments.x);
 		variance = max(variance, 0.0001);
 		// Delta of depth.
-		float delta = In.lightSpacePosition.z - moments.x;
+		float delta = InlightSpacePosition.z - moments.x;
 		// Use Chebyshev to estimate bound on probability.
 		float probabilityMax = variance / (variance + delta*delta);
 		shadow = max(probability, probabilityMax);
@@ -101,8 +106,8 @@ void main(){
 	}
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
-	fragColor = ambient * light.Ia.rgb + shadow * lightShading;
+	vec3 fColor = ambient * uniforms.lightIa.rgb + shadow * lightShading;
 	// Mix with the reflexion color.
-	fragColor = mix(fragColor,reflectionColor,0.5*effects.b);
+	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);
 	
 }

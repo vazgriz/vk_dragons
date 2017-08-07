@@ -30,7 +30,7 @@ void Model::Init(const std::string& fileName) {
 	CreateBuffers();
 }
 
-void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
+void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera) {
 	VkBuffer buffers[] = {
 		positionsBuffer.buffer,
 		normalsBuffer.buffer,
@@ -42,6 +42,25 @@ void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 		0, 0, 0, 0, 0
 	};
 	vkCmdBindVertexBuffers(commandBuffer, 0, 5, buffers, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
+
+	glm::mat4 MV = camera.GetView() * transform.GetWorldMatrix();
+	glm::mat4 normal = glm::mat4(glm::transpose(glm::inverse(glm::mat3(MV))));
+	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), 3 * sizeof(glm::vec4), &normal);
+
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+}
+
+void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
+	VkBuffer buffers[] = {
+		positionsBuffer.buffer,
+	};
+	VkDeviceSize offsets[] = {
+		0
+	};
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
@@ -94,6 +113,18 @@ std::vector<VkVertexInputAttributeDescription> Model::GetAttributeDescriptions()
 		{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//tangent
 		{ 3, 3, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//binormal
 		{ 4, 4, VK_FORMAT_R32G32_SFLOAT, 0 },		//texcoord
+	});
+}
+
+std::vector<VkVertexInputBindingDescription> Model::GetDepthBindingDescriptions() {
+	return std::vector<VkVertexInputBindingDescription>({
+		{ 0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//position
+	});
+}
+
+std::vector<VkVertexInputAttributeDescription> Model::GetDepthAttributeDescriptions() {
+	return std::vector<VkVertexInputAttributeDescription>({
+		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//position
 	});
 }
 

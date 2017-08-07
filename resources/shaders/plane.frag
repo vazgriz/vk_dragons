@@ -1,39 +1,41 @@
-#version 330
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
 // Input: tangent space matrix, position (view space) and uv coming from the vertex shader
-in INTERFACE {
-	mat3 tbn;
-	vec3 position;
-	vec2 uv;
-	vec3 lightSpacePosition;
-	vec3 modelPosition;
-	vec3 tangentSpacePosition;
-	vec3 tangentSpaceView;
-	vec3 tangentSpaceLight;
-} In ;
+layout(location = 0) in mat3 Intbn;
+layout(location = 3) in vec3 Inposition;
+layout(location = 4) in vec2 Inuv;
+layout(location = 5) in vec3 InlightSpacePosition;
+layout(location = 6) in vec3 InmodelPosition;
+layout(location = 7) in vec3 IntangentSpacePosition;
+layout(location = 8) in vec3 IntangentSpaceView;
+layout(location = 9) in vec3 IntangentSpaceLight;
 
 // Uniform: the light structure (position in view space)
-layout (std140) uniform Light {
-	vec4 position;
-	vec4 Ia;
-	vec4 Id;
-	vec4 Is;
-	float shininess;
-} light;
+layout(set = 0, binding = 0) uniform Uniforms {
+    mat4 camProjection;
+    mat4 camView;
+    mat4 rotationOnlyView;
+    mat4 camViewInverse;
+    mat4 lightProjection;
+    mat4 lightView;
+	vec4 lightPosition;
+	vec4 lightIa;
+	vec4 lightId;
+	vec4 lightIs;
+	float lightShininess;
+} uniforms;
 
 
-uniform sampler2D textureColor;
-uniform sampler2D textureNormal;
-uniform sampler2D textureEffects;
-uniform samplerCube textureCubeMap;
-uniform samplerCube textureCubeMapSmall;
-
-uniform sampler2D shadowMap;
-
-uniform mat4 inverseV;
+layout(set = 1, binding = 0) uniform sampler2D textureColor;
+layout(set = 1, binding = 1) uniform sampler2D textureNormal;
+layout(set = 1, binding = 2) uniform sampler2D textureEffects;
+layout(set = 1, binding = 3) uniform samplerCube textureCubeMap;
+layout(set = 1, binding = 4) uniform samplerCube textureCubeMapSmall;
+layout(set = 1, binding = 5) uniform sampler2D shadowMap;
 
 // Output: the fragment color
-out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 #define PARALLAX_MIN 8
 #define PARALLAX_MAX 32
@@ -51,15 +53,15 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 	// Compute the normal at the fragment using the tangent space matrix and the normal read in the normal map.
 	vec3 n = texture(textureNormal,uv).rgb;
 	n = normalize(n * 2.0 - 1.0);
-	n = normalize(In.tbn * n);
+	n = normalize(Intbn * n);
 	
 	// Compute the direction from the point to the light
 	// light.position.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(lightPosition - light.position.w * In.position);
+	vec3 d = normalize(lightPosition - uniforms.lightPosition.w * Inposition);
 	
 	vec3 diffuseColor = texture(textureColor, uv).rgb;
 	
-	vec3 worldNormal = vec3(inverseV * vec4(n,0.0));
+	vec3 worldNormal = vec3(uniforms.camViewInverse * vec4(n,0.0));
 	vec3 ambientLightColor = texture(textureCubeMapSmall,normalize(worldNormal)).rgb;
 	diffuseColor = mix(diffuseColor, diffuseColor * ambientLightColor, 0.5);
 	
@@ -69,7 +71,7 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 	// Compute the diffuse factor
 	float diffuse = max(0.0, dot(d,n));
 	
-	vec3 v = normalize(-In.position);
+	vec3 v = normalize(-Inposition);
 	
 	// Compute the specular factor
 	float specular = 0.0;
@@ -88,7 +90,10 @@ float shadow(vec3 lightSpacePosition){
 	float probabilityMax = 1.0;
 	if (lightSpacePosition.z < 1.0){
 		// Read first and second moment from shadow map.
-		vec2 moments = texture(shadowMap, lightSpacePosition.xy).rg;
+		vec2 moments;
+        moments.r = 0.5 * texture(shadowMap, lightSpacePosition.xy).r + 0.5;
+        moments.g = moments.r * moments.r;
+        
 		// Initial probability of light.
 		float probability = float(lightSpacePosition.z <= moments.x);
 		// Compute variance.
@@ -196,27 +201,27 @@ float parallaxShadow(vec2 uv, vec3 lTangentDir){
 void main(){
 	
 	// Combien view direction in tangent space.
-	vec3 vTangentDir = normalize(In.tangentSpaceView - In.tangentSpacePosition);
+	vec3 vTangentDir = normalize(IntangentSpaceView - IntangentSpacePosition);
 	// Query UV offset.
-	vec2 parallaxUV = parallax(In.uv, vTangentDir);
+	vec2 parallaxUV = parallax(Inuv, vTangentDir);
 	// If UV are outside the texture ([0,1]), we discard the fragment.
 	if(parallaxUV.x > 1.0 || parallaxUV.y  > 1.0 || parallaxUV.x < 0.0 || parallaxUV.y < 0.0){
 		discard;
 	}
 	
 	vec3 ambient;
-	vec3 lightShading = shading(parallaxUV, light.position.xyz, light.shininess, light.Is.rgb,ambient);
+	vec3 lightShading = shading(parallaxUV, uniforms.lightPosition.xyz, uniforms.lightShininess, uniforms.lightIs.rgb,ambient);
 	
 	// Compute parallax self-shadowing factor.
 	// The light direction is computed, light.position.w == 0 if the light is directional, 1 else.
-	vec3 lTangentDir = normalize(In.tangentSpaceLight - light.position.w * In.tangentSpacePosition);
+	vec3 lTangentDir = normalize(IntangentSpaceLight - uniforms.lightPosition.w * IntangentSpacePosition);
 	float shadowParallax = parallaxShadow(parallaxUV, lTangentDir);
 	
 	// Shadow: combine the factor from the parallax self-shadowing with the factor from the shadow map.
-	float shadowMultiplicator = shadow(In.lightSpacePosition);
+	float shadowMultiplicator = shadow(InlightSpacePosition);
 	shadowMultiplicator *= shadowParallax;
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
-	fragColor = ambient * light.Ia.rgb + shadowMultiplicator * lightShading;
+	fragColor = vec4(ambient * uniforms.lightIa.rgb + shadowMultiplicator * lightShading, 0.0);
 	
 }
