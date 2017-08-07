@@ -3,7 +3,6 @@
 void Scene::CreatePipelines() {
 	CreateModelPipelineLayout();
 	CreateModelPipeline();
-	CreatePlanePipelineLayout();
 	CreatePlanePipeline();
 	CreateSkyboxPipelineLayout();
 	CreateSkyboxPipeline();
@@ -14,7 +13,6 @@ void Scene::CreatePipelines() {
 void Scene::DestroyPipelines() {
 	vkDestroyPipelineLayout(renderer.device, modelPipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, modelPipeline, nullptr);
-	vkDestroyPipelineLayout(renderer.device, planePipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, planePipeline, nullptr);
 	vkDestroyPipelineLayout(renderer.device, skyboxPipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, skyboxPipeline, nullptr);
@@ -150,26 +148,6 @@ void Scene::CreateModelPipeline() {
 	vkDestroyShaderModule(renderer.device, frag, nullptr);
 }
 
-void Scene::CreatePlanePipelineLayout() {
-	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, textureSetLayout };
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 2;
-	pipelineLayoutInfo.pSetLayouts = setLayouts;
-
-	VkPushConstantRange pushConstantInfo;
-	pushConstantInfo.offset = 0;
-	pushConstantInfo.size = sizeof(glm::mat4) + sizeof(glm::vec4) * 3;	//size of mat3 under std430 rules
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	pipelineLayoutInfo.pushConstantRangeCount = 1;
-	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
-
-	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &planePipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
-	}
-}
-
 void Scene::CreatePlanePipeline() {
 	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/prog1.vert.spv");
 	VkShaderModule frag = CreateShaderModule(renderer.device, "resources/shaders/prog1.frag.spv");
@@ -266,7 +244,7 @@ void Scene::CreatePlanePipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.layout = planePipelineLayout;
+	pipelineInfo.layout = modelPipelineLayout;
 	pipelineInfo.renderPass = mainRenderPass;
 	pipelineInfo.subpass = 0;
 
