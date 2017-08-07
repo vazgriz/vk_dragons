@@ -266,7 +266,7 @@ void Scene::CreatePlanePipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.layout = modelPipelineLayout;
+	pipelineInfo.layout = planePipelineLayout;
 	pipelineInfo.renderPass = mainRenderPass;
 	pipelineInfo.subpass = 0;
 
