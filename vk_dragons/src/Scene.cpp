@@ -70,9 +70,9 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateUniformBuffer();
 	CreateDescriptorPool();
 	CreateUniformSet();
-	CreateTextureSet(dragonColor.imageView, dragonTextureSet);
-	CreateTextureSet(suzanneColor.imageView, suzanneTextureSet);
-	CreateTextureSet(planeColor.imageView, planeTextureSet);
+	CreateTextureSet(dragonColor.imageView, dragonNormal.imageView, dragonEffects.imageView, dragonTextureSet);
+	CreateTextureSet(suzanneColor.imageView, suzanneNormal.imageView, suzanneEffects.imageView, suzanneTextureSet);
+	CreateTextureSet(planeColor.imageView, planeNormal.imageView, planeEffects.imageView, planeTextureSet);
 	CreateSkyboxSet();
 
 	CreatePipelines();
@@ -572,7 +572,7 @@ void Scene::CreateUniformSet() {
 	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void Scene::CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorSet) {
+void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet) {
 	VkDescriptorSetLayout layouts[] = { textureSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -586,8 +586,22 @@ void Scene::CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorS
 
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = imageView;
 	imageInfo.sampler = sampler;
+
+	VkDescriptorImageInfo depthInfo = {};
+	depthInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	depthInfo.imageView = lightDepth.imageView;
+	depthInfo.sampler = sampler;
+
+	VkDescriptorImageInfo imageInfos[] = {
+		imageInfo, imageInfo, imageInfo, imageInfo, imageInfo, depthInfo
+	};
+
+	imageInfos[0].imageView = colorView;
+	imageInfos[1].imageView = normalView;
+	imageInfos[2].imageView = effectsView;
+	imageInfos[3].imageView = skyboxColor.imageView;
+	imageInfos[4].imageView = skyboxSmallColor.imageView;
 
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -595,8 +609,8 @@ void Scene::CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorS
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pImageInfo = &imageInfo;
+	descriptorWrite.descriptorCount = 6;
+	descriptorWrite.pImageInfo = imageInfos;
 
 	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }

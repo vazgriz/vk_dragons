@@ -98,7 +98,7 @@ private:
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
-	void CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorSet);
+	void CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet);
 	void CreateSkyboxSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
