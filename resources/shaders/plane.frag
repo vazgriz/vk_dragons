@@ -29,13 +29,12 @@ layout(set = 0, binding = 0) uniform Uniforms {
 } uniforms;
 
 
-uniform sampler2D textureColor;
-uniform sampler2D textureNormal;
-uniform sampler2D textureEffects;
-uniform samplerCube textureCubeMap;
-uniform samplerCube textureCubeMapSmall;
-
-uniform sampler2D shadowMap;
+layout(set = 1, binding = 0) uniform sampler2D textureColor;
+layout(set = 1, binding = 1) uniform sampler2D textureNormal;
+layout(set = 1, binding = 2) uniform sampler2D textureEffects;
+layout(set = 1, binding = 3) uniform samplerCube textureCubeMap;
+layout(set = 1, binding = 4) uniform samplerCube textureCubeMapSmall;
+layout(set = 1, binding = 5) uniform sampler2D shadowMap;
 
 // Output: the fragment color
 out vec3 fragColor;
