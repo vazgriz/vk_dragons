@@ -78,13 +78,17 @@ private:
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout modelPipelineLayout;
 	VkPipelineLayout skyboxPipelineLayout;
+	VkPipelineLayout depthPipelineLayout;
 	VkPipeline modelPipeline;
 	VkPipeline skyboxPipeline;
+	VkPipeline depthPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
 	void CreateModelPipeline();
 	void CreateSkyboxPipelineLayout();
 	void CreateSkyboxPipeline();
+	void CreateDepthPipelineLayout();
+	void CreateDepthPipeline();
 };
 
