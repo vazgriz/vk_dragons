@@ -6,7 +6,7 @@ class DepthBuffer {
 public:
 	DepthBuffer(Renderer& renderer);
 
-	void Init(uint32_t width, uint32_t height);
+	void Init(uint32_t width, uint32_t height, VkImageUsageFlags flags);
 	void Cleanup();
 
 	uint32_t GetWidth();

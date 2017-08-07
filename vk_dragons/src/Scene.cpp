@@ -56,7 +56,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	UploadResources();
 
-	lightDepth.Init(512, 512);
+	lightDepth.Init(512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
 
 	createSwapchainResources(width, height);
 
@@ -196,7 +196,7 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 }
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
-	depth.Init(width, height);
+	depth.Init(width, height, 0);
 	createRenderPass();
 	createFramebuffers();
 }
