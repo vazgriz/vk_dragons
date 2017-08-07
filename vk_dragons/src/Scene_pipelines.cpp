@@ -272,6 +272,14 @@ void Scene::CreateDepthPipelineLayout() {
 	pipelineLayoutInfo.setLayoutCount = 1;
 	pipelineLayoutInfo.pSetLayouts = &uniformSetLayout;
 
+	VkPushConstantRange pushConstantInfo = {};
+	pushConstantInfo.offset = 0;
+	pushConstantInfo.size = sizeof(glm::mat4);
+	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	pipelineLayoutInfo.pushConstantRangeCount = 1;
+	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
+
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &depthPipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create pipeline layout!");
 	}
@@ -307,14 +315,14 @@ void Scene::CreateDepthPipeline() {
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)renderer.swapChainExtent.width;
-	viewport.height = (float)renderer.swapChainExtent.height;
+	viewport.width = (float)lightDepth.GetWidth();
+	viewport.height = (float)lightDepth.GetHeight();
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent = renderer.swapChainExtent;
+	scissor.extent = { lightDepth.GetWidth(), lightDepth.GetHeight() };
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -358,8 +366,8 @@ void Scene::CreateDepthPipeline() {
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.layout = skyboxPipelineLayout;
-	pipelineInfo.renderPass = mainRenderPass;
+	pipelineInfo.layout = depthPipelineLayout;
+	pipelineInfo.renderPass = depthRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &depthPipeline) != VK_SUCCESS) {
