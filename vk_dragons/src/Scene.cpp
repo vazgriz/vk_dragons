@@ -49,13 +49,14 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateSampler();
 	CreateUniformSetLayout();
 	CreateTextureSetLayout();
+	CreateSkyboxSetLayout();
 	CreateUniformBuffer();
 	CreateDescriptorPool();
 	CreateUniformSet();
 	CreateTextureSet(dragonColor.imageView, dragonTextureSet);
 	CreateTextureSet(suzanneColor.imageView, suzanneTextureSet);
 	CreateTextureSet(planeColor.imageView, planeTextureSet);
-	CreateTextureSet(skyboxColor.imageView, skyboxTextureSet);
+	CreateSkyboxSet();
 
 	CreatePipelines();
 
@@ -70,6 +71,7 @@ Scene::~Scene() {
 	vkDestroyFramebuffer(renderer.device, lightFramebuffer, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(renderer.device, skyboxSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
 	vkDestroySampler(renderer.device, sampler, nullptr);
@@ -446,12 +448,38 @@ void Scene::CreateTextureSetLayout() {
 	textureLayoutBinding.descriptorCount = 1;
 	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+	//set consists of six textures that are all the same except for the binding number
+	VkDescriptorSetLayoutBinding bindings[] = {
+		textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding
+	};
+
+	for (uint32_t i = 0; i < 6; i++) {
+		bindings[i].binding = i;
+	}
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = 6;
+	layoutInfo.pBindings = bindings;
+
+	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create texture set layout!");
+	}
+}
+
+void Scene::CreateSkyboxSetLayout() {
+	VkDescriptorSetLayoutBinding textureLayoutBinding = {};
+	textureLayoutBinding.binding = 0;
+	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	textureLayoutBinding.descriptorCount = 1;
+	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings = &textureLayoutBinding;
 
-	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &skyboxSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture set layout!");
 	}
 }
@@ -464,7 +492,7 @@ void Scene::CreateUniformBuffer() {
 void Scene::CreateDescriptorPool() {
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 }
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 24 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
@@ -528,6 +556,35 @@ void Scene::CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorS
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pImageInfo = &imageInfo;
+
+	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
+}
+
+void Scene::CreateSkyboxSet() {
+	VkDescriptorSetLayout layouts[] = { skyboxSetLayout };
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = layouts;
+
+	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &skyboxTextureSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate texture set!");
+	}
+
+	VkDescriptorImageInfo imageInfo = {};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = skyboxColor.imageView;
+	imageInfo.sampler = sampler;
+
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = skyboxTextureSet;
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

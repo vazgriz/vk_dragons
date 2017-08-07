@@ -279,7 +279,7 @@ void Scene::CreatePlanePipeline() {
 }
 
 void Scene::CreateSkyboxPipelineLayout() {
-	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, textureSetLayout };
+	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, skyboxSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 2;

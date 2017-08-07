@@ -57,6 +57,7 @@ private:
 	VkSampler sampler;
 	VkDescriptorSetLayout uniformSetLayout;
 	VkDescriptorSetLayout textureSetLayout;
+	VkDescriptorSetLayout skyboxSetLayout;
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet uniformSet;
@@ -82,10 +83,12 @@ private:
 	void CreateSampler();
 	void CreateUniformSetLayout();
 	void CreateTextureSetLayout();
+	void CreateSkyboxSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
 	void CreateTextureSet(VkImageView imageView, VkDescriptorSet& descriptorSet);
+	void CreateSkyboxSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
