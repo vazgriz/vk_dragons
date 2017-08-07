@@ -30,7 +30,7 @@ void Model::Init(const std::string& fileName) {
 	CreateBuffers();
 }
 
-void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
+void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera) {
 	VkBuffer buffers[] = {
 		positionsBuffer.buffer,
 		normalsBuffer.buffer,

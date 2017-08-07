@@ -7,6 +7,7 @@
 #include "Allocator.h"
 #include "ProgramUtilities.h"
 #include "Transform.h"
+#include "Camera.h"
 
 class Model {
 public:
@@ -15,7 +16,7 @@ public:
 	void Init(const std::string& fileName);
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
-	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera);
 	static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 	static std::vector<VkVertexInputBindingDescription> GetDepthBindingDescriptions();
