@@ -212,6 +212,7 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 
 	dragon.Draw(commandBuffer, depthPipelineLayout);
+	suzanne.Draw(commandBuffer, depthPipelineLayout);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
