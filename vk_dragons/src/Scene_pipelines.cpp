@@ -5,8 +5,8 @@ void Scene::CreatePipelines() {
 	CreateModelPipeline();
 	CreateSkyboxPipelineLayout();
 	CreateSkyboxPipeline();
-	CreateDepthPipelineLayout();
-	CreateDepthPipeline();
+	CreateLightPipelineLayout();
+	CreateLightPipeline();
 }
 
 void Scene::DestroyPipelines() {
@@ -14,8 +14,8 @@ void Scene::DestroyPipelines() {
 	vkDestroyPipeline(renderer.device, modelPipeline, nullptr);
 	vkDestroyPipelineLayout(renderer.device, skyboxPipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, skyboxPipeline, nullptr);
-	vkDestroyPipelineLayout(renderer.device, depthPipelineLayout, nullptr);
-	vkDestroyPipeline(renderer.device, depthPipeline, nullptr);
+	vkDestroyPipelineLayout(renderer.device, lightPipelineLayout, nullptr);
+	vkDestroyPipeline(renderer.device, lightPipeline, nullptr);
 }
 
 void Scene::CreateModelPipelineLayout() {
@@ -266,7 +266,7 @@ void Scene::CreateSkyboxPipeline() {
 	vkDestroyShaderModule(renderer.device, frag, nullptr);
 }
 
-void Scene::CreateDepthPipelineLayout() {
+void Scene::CreateLightPipelineLayout() {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
@@ -280,12 +280,12 @@ void Scene::CreateDepthPipelineLayout() {
 	pipelineLayoutInfo.pushConstantRangeCount = 1;
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
 
-	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &depthPipelineLayout) != VK_SUCCESS) {
+	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &lightPipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create pipeline layout!");
 	}
 }
 
-void Scene::CreateDepthPipeline() {
+void Scene::CreateLightPipeline() {
 	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/object_depth.vert.spv");
 	//This pipeline has a vertex shader, but no fragment shader. It only writes to the depth buffer.
 
@@ -366,11 +366,11 @@ void Scene::CreateDepthPipeline() {
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.layout = depthPipelineLayout;
-	pipelineInfo.renderPass = depthRenderPass;
+	pipelineInfo.layout = lightPipelineLayout;
+	pipelineInfo.renderPass = lightRenderPass;
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &depthPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &lightPipeline) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create graphics pipeline!");
 	}
 

@@ -59,16 +59,16 @@ private:
 	VkDescriptorSet planeTextureSet;
 	VkDescriptorSet skyboxTextureSet;
 
-	VkRenderPass depthRenderPass;
-	VkFramebuffer depthFramebuffer;
+	VkRenderPass lightRenderPass;
+	VkFramebuffer lightFramebuffer;
 
 	void UploadResources();
 	void UpdateUniform();
 
 	void createRenderPass();
 	void createFramebuffers();
-	void CreateDepthRenderPass();
-	void CreateDepthFramebuffer();
+	void CreateLightRenderPass();
+	void CreateLightFramebuffer();
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
@@ -87,17 +87,17 @@ private:
 	//defined in Scene_pipelines.cpp
 	VkPipelineLayout modelPipelineLayout;
 	VkPipelineLayout skyboxPipelineLayout;
-	VkPipelineLayout depthPipelineLayout;
+	VkPipelineLayout lightPipelineLayout;
 	VkPipeline modelPipeline;
 	VkPipeline skyboxPipeline;
-	VkPipeline depthPipeline;
+	VkPipeline lightPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
 	void CreateModelPipeline();
 	void CreateSkyboxPipelineLayout();
 	void CreateSkyboxPipeline();
-	void CreateDepthPipelineLayout();
-	void CreateDepthPipeline();
+	void CreateLightPipelineLayout();
+	void CreateLightPipeline();
 };
 

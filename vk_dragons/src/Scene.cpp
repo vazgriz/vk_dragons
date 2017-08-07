@@ -43,8 +43,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	createSwapchainResources(width, height);
 
-	CreateDepthRenderPass();
-	CreateDepthFramebuffer();
+	CreateLightRenderPass();
+	CreateLightFramebuffer();
 
 	CreateSampler();
 	CreateUniformSetLayout();
@@ -66,8 +66,8 @@ Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
 	lightDepth.Cleanup();
 	CleanupSwapchainResources();
-	vkDestroyRenderPass(renderer.device, depthRenderPass, nullptr);
-	vkDestroyFramebuffer(renderer.device, depthFramebuffer, nullptr);
+	vkDestroyRenderPass(renderer.device, lightRenderPass, nullptr);
+	vkDestroyFramebuffer(renderer.device, lightFramebuffer, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
@@ -195,8 +195,8 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = depthRenderPass;
-	renderPassInfo.framebuffer = depthFramebuffer;
+	renderPassInfo.renderPass = lightRenderPass;
+	renderPassInfo.framebuffer = lightFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = { lightDepth.GetWidth(), lightDepth.GetHeight() };
 
@@ -208,11 +208,11 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depthPipeline);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 
-	dragon.Draw(commandBuffer, depthPipelineLayout);
-	suzanne.Draw(commandBuffer, depthPipelineLayout);
+	dragon.Draw(commandBuffer, lightPipelineLayout);
+	suzanne.Draw(commandBuffer, lightPipelineLayout);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -335,7 +335,7 @@ void Scene::createFramebuffers() {
 	}
 }
 
-void Scene::CreateDepthRenderPass() {
+void Scene::CreateLightRenderPass() {
 	VkAttachmentDescription depthAttachment = {};
 	depthAttachment.format = depth.format;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -371,22 +371,22 @@ void Scene::CreateDepthRenderPass() {
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &depthRenderPass) != VK_SUCCESS) {
+	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &lightRenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create render pass!");
 	}
 }
 
-void Scene::CreateDepthFramebuffer() {
+void Scene::CreateLightFramebuffer() {
 	VkFramebufferCreateInfo framebufferInfo = {};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.renderPass = depthRenderPass;
+	framebufferInfo.renderPass = lightRenderPass;
 	framebufferInfo.attachmentCount = 1;
 	framebufferInfo.pAttachments = &lightDepth.imageView;
 	framebufferInfo.width = lightDepth.GetWidth();
 	framebufferInfo.height = lightDepth.GetHeight();
 	framebufferInfo.layers = 1;
 
-	if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &depthFramebuffer) != VK_SUCCESS) {
+	if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &lightFramebuffer) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create framebuffer!");
 	}
 }
