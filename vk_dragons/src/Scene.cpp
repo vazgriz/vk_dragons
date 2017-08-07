@@ -584,35 +584,61 @@ void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkIm
 		throw std::runtime_error("Failed to allocate texture set!");
 	}
 
-	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.sampler = sampler;
+	VkDescriptorImageInfo colorInfo = {};
+	colorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	colorInfo.imageView = colorView;
+	colorInfo.sampler = sampler;
+
+	VkDescriptorImageInfo normalInfo = {};
+	normalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	normalInfo.imageView = normalView;
+	normalInfo.sampler = sampler;
+
+	VkDescriptorImageInfo effectsInfo = {};
+	effectsInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	effectsInfo.imageView = effectsView;
+	effectsInfo.sampler = sampler;
+
+	VkDescriptorImageInfo skyInfo = {};
+	skyInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	skyInfo.imageView = skyboxColor.imageView;
+	skyInfo.sampler = sampler;
+
+	VkDescriptorImageInfo skySmallInfo = {};
+	skySmallInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	skySmallInfo.imageView = skyboxSmallColor.imageView;
+	skySmallInfo.sampler = sampler;
 
 	VkDescriptorImageInfo depthInfo = {};
 	depthInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	depthInfo.imageView = lightDepth.imageView;
 	depthInfo.sampler = sampler;
 
-	VkDescriptorImageInfo imageInfos[] = {
-		imageInfo, imageInfo, imageInfo, imageInfo, imageInfo, depthInfo
-	};
-
-	imageInfos[0].imageView = colorView;
-	imageInfos[1].imageView = normalView;
-	imageInfos[2].imageView = effectsView;
-	imageInfos[3].imageView = skyboxColor.imageView;
-	imageInfos[4].imageView = skyboxSmallColor.imageView;
-
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstBinding = 0;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 6;
-	descriptorWrite.pImageInfo = imageInfos;
+	descriptorWrite.descriptorCount = 1;
 
-	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
+	VkWriteDescriptorSet writes[] = {
+		descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite
+	};
+
+	writes[0].pImageInfo = &colorInfo;
+	writes[0].dstBinding = 0;
+	writes[1].pImageInfo = &normalInfo;
+	writes[1].dstBinding = 1;
+	writes[2].pImageInfo = &effectsInfo;
+	writes[2].dstBinding = 2;
+	writes[3].pImageInfo = &skyInfo;
+	writes[3].dstBinding = 3;
+	writes[4].pImageInfo = &skySmallInfo;
+	writes[4].dstBinding = 4;
+	writes[5].pImageInfo = &depthInfo;
+	writes[5].dstBinding = 5;
+
+	vkUpdateDescriptorSets(renderer.device, 6, writes, 0, nullptr);
 }
 
 void Scene::CreateSkyboxSet() {
