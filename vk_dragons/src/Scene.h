@@ -39,6 +39,7 @@ private:
 	Skybox skybox;
 	Texture dragonColor;
 	Texture suzanneColor;
+	Texture planeColor;
 	Texture skyboxColor;
 
 	DepthBuffer lightDepth;
@@ -55,6 +56,7 @@ private:
 	VkDescriptorSet uniformSet;
 	VkDescriptorSet dragonTextureSet;
 	VkDescriptorSet suzanneTextureSet;
+	VkDescriptorSet planeTextureSet;
 	VkDescriptorSet skyboxTextureSet;
 
 	void UploadResources();

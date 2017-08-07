@@ -8,6 +8,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	skybox(renderer),
 	dragonColor(renderer),
 	suzanneColor(renderer),
+	planeColor(renderer),
 	skyboxColor(renderer),
 	camera(45.0f, width, height),
 	input(window, camera),
@@ -28,8 +29,12 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	suzanne.GetTransform().SetScale(glm::vec3(0.25f));
 	suzanne.GetTransform().SetPosition(glm::vec3(0.2f, 0, 0));
 
+	plane.GetTransform().SetScale(glm::vec3(2.0f));
+	plane.GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
+
 	dragonColor.Init("resources/dragon_texture_color.png");
 	suzanneColor.Init("resources/suzanne_texture_color.png");
+	planeColor.Init("resources/plane_texture_color.png");
 	skyboxColor.InitCubemap("resources/cubemap/cubemap");
 
 	UploadResources();
@@ -46,6 +51,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateUniformSet();
 	CreateTextureSet(dragonColor.imageView, dragonTextureSet);
 	CreateTextureSet(suzanneColor.imageView, suzanneTextureSet);
+	CreateTextureSet(planeColor.imageView, planeTextureSet);
 	CreateTextureSet(skyboxColor.imageView, skyboxTextureSet);
 
 	CreatePipelines();
@@ -83,6 +89,7 @@ void Scene::UploadResources() {
 
 	dragonColor.UploadData(commandBuffer);
 	suzanneColor.UploadData(commandBuffer);
+	planeColor.UploadData(commandBuffer);
 	skyboxColor.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
@@ -94,6 +101,7 @@ void Scene::UploadResources() {
 
 	dragonColor.DestroyStaging();
 	suzanneColor.DestroyStaging();
+	planeColor.DestroyStaging();
 	skyboxColor.DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
@@ -194,6 +202,9 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &suzanneTextureSet, 0, nullptr);
 	suzanne.Draw(commandBuffer, modelPipelineLayout);
+
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &planeTextureSet, 0, nullptr);
+	plane.Draw(commandBuffer, modelPipelineLayout);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
@@ -355,14 +366,14 @@ void Scene::CreateUniformBuffer() {
 void Scene::CreateDescriptorPool() {
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 }
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 4;
+	poolInfo.maxSets = 5;
 
 	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create descriptor pool!");
