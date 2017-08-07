@@ -149,8 +149,8 @@ void Scene::CreateModelPipeline() {
 }
 
 void Scene::CreatePlanePipeline() {
-	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/prog1.vert.spv");
-	VkShaderModule frag = CreateShaderModule(renderer.device, "resources/shaders/prog1.frag.spv");
+	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/plane.vert.spv");
+	VkShaderModule frag = CreateShaderModule(renderer.device, "resources/shaders/plane.frag.spv");
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
