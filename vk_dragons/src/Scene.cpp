@@ -105,12 +105,15 @@ void Scene::UpdateUniform() {
 	uniform->camProjection = camera.GetProjection();
 	uniform->camView = camera.GetView();
 	uniform->camRotationOnlyView = camera.GetRotationOnlyView();
+	uniform->lightProjection = light.GetProjection();
+	uniform->lightView = light.GetView();
 }
 
 void Scene::Update(double elapsed) {
 	time += static_cast<float>(elapsed);
 	input.Update(elapsed);
 	camera.Update();
+	light.SetPosition(glm::vec3(2.0f, (1.5f + sin(0.5*time)), 2.0f));
 	UpdateUniform();
 
 	suzanne.GetTransform().SetRotation(time, glm::vec3(0, 1, 0));

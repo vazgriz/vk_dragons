@@ -6,6 +6,7 @@
 #include "Input.h"
 #include "DepthBuffer.h"
 #include "Skybox.h"
+#include "Light.h"
 
 struct Uniform {
 	glm::mat4 camProjection;
@@ -29,6 +30,8 @@ private:
 	Camera camera;
 	Input input;
 	float time;
+
+	Light light;
 
 	Model dragon;
 	Model suzanne;
