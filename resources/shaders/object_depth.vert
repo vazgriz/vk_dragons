@@ -13,7 +13,11 @@ layout(set = 0, binding = 0) uniform Uniforms {
     mat4 lightView;
 } uniforms;
 
+layout(push_constant) uniform Model {
+    mat4 matrix;
+} model;
+
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.
-	gl_Position = uniforms.lightProjection * uniforms.lightView * vec4(v, 1.0);
+	gl_Position = uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v, 1.0);
 }
