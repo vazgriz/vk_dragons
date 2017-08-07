@@ -28,41 +28,40 @@ layout(push_constant) uniform Model {
     mat3 normalMatrix;
 } model;
 
-
 // Output: tangent space matrix, position in view space and uv.
-layout(location = 0) out mat3 outTbn;
-layout(location = 3) out vec3 outPosition;
-layout(location = 4) out vec2 outUV;
-layout(location = 5) out vec3 outLightSpacePosition;
-layout(location = 6) out vec3 outModelPosition;
-layout(location = 7) out vec3 outTangentSpacePosition;
-layout(location = 8) out vec3 outTangentSpaceView;
-layout(location = 9) out vec3 outTangentSpaceLight;
 
+layout(location = 0) out mat3 Outtbn;
+layout(location = 3) out vec3 Outposition;
+layout(location = 4) out vec2 Outuv;
+layout(location = 5) out vec3 OutlightSpacePosition;
+layout(location = 6) out vec3 OutmodelPosition;
+layout(location = 7) out vec3 OuttangentSpacePosition;
+layout(location = 8) out vec3 OuttangentSpaceView;
+layout(location = 9) out vec3 OuttangentSpaceLight;
 
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.
 	gl_Position = uniforms.camProjection * uniforms.camView * model.matrix * vec4(v, 1.0);
 	
-	outPosition = (uniforms.camProjection * uniforms.camView * vec4(v,1.0)).xyz;
+	Outposition = (uniforms.camView * model.matrix * vec4(v,1.0)).xyz;
 	
-	outUV = uv;
+	Outuv = uv;
 	
 	// Compute the TBN matrix (from tangent space to view space).
 	vec3 T = normalize(model.normalMatrix * tang);
 	vec3 B = normalize(model.normalMatrix * binor);
 	vec3 N = normalize(model.normalMatrix * n);
-	outTbn = mat3(T, B, N);
+	Outtbn = mat3(T, B, N);
 	
 	// Compute position in light space
-	outLightSpacePosition = 0.5*(uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0)).xyz + 0.5;
+	OutlightSpacePosition = 0.5*(uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0)).xyz + 0.5;
 	
-	outModelPosition = v;
+	OutmodelPosition = v;
 	
-	outTangentSpacePosition = transpose(outTbn) * outPosition;
+	OuttangentSpacePosition = transpose(Outtbn) * Outposition;
 	
-	outTangentSpaceView = transpose(outTbn) * vec3(0.0);
+	OuttangentSpaceView = transpose(Outtbn) * vec3(0.0);
 	
-	outTangentSpaceLight = transpose(outTbn) * uniforms.lightPosition.xyz;
+	OuttangentSpaceLight = transpose(Outtbn) * uniforms.lightPosition.xyz;
 	
 }
