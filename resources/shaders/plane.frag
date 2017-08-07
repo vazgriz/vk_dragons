@@ -37,7 +37,7 @@ layout(set = 1, binding = 4) uniform samplerCube textureCubeMapSmall;
 layout(set = 1, binding = 5) uniform sampler2D shadowMap;
 
 // Output: the fragment color
-out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 #define PARALLAX_MIN 8
 #define PARALLAX_MAX 32
@@ -221,6 +221,6 @@ void main(){
 	shadowMultiplicator *= shadowParallax;
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
-	fragColor = ambient * uniforms.lightIa.rgb + shadowMultiplicator * lightShading;
+	fragColor = vec4(ambient * uniforms.lightIa.rgb + shadowMultiplicator * lightShading, 0.0);
 	
 }
