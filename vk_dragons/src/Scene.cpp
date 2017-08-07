@@ -184,6 +184,39 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
+	RecordDepthPass(commandBuffer);
+	RecordMainPass(commandBuffer, imageIndex);
+
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to record command buffer!");
+	}
+}
+
+void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = depthRenderPass;
+	renderPassInfo.framebuffer = depthFramebuffer;
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = { lightDepth.GetWidth(), lightDepth.GetHeight() };
+
+	VkClearValue clearColor = {};
+	clearColor.depthStencil = { 1.0f, 0 };
+
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, depthPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+
+	dragon.Draw(commandBuffer, depthPipelineLayout);
+
+	vkCmdEndRenderPass(commandBuffer);
+}
+
+void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = mainRenderPass;
@@ -217,10 +250,6 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 	skybox.Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
-
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to record command buffer!");
-	}
 }
 
 void Scene::createRenderPass() {
