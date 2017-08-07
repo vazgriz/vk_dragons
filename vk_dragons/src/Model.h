@@ -17,6 +17,7 @@ public:
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera);
+	void DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 	static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 	static std::vector<VkVertexInputBindingDescription> GetDepthBindingDescriptions();
