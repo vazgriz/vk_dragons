@@ -12,6 +12,7 @@ public:
 
 	void Init(const std::string& filename);
 	void InitCubemap(const std::string& filenameRoot);
+	void Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 

@@ -57,6 +57,18 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, arrayLayers);
 }
 
+void Texture::Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage) {
+	mipLevels = 1;
+	arrayLayers = 1;
+
+	image = CreateImage(renderer,
+		format,
+		width, height,
+		mipLevels, arrayLayers,
+		usage, 0).image;
+	imageView = CreateImageView(renderer.device, image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
+}
+
 void Texture::LoadImages(std::vector<std::string>& filenames) {
 	data.resize(filenames.size());
 	unsigned int width, height;
