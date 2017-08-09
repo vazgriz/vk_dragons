@@ -238,6 +238,7 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
 	RecordDepthPass(commandBuffer);
+	RecordBoxBlurPass(commandBuffer);
 	RecordMainPass(commandBuffer, imageIndex);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -266,6 +267,31 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 
 	dragon.DrawDepth(commandBuffer, lightPipelineLayout);
 	suzanne.DrawDepth(commandBuffer, lightPipelineLayout);
+
+	vkCmdEndRenderPass(commandBuffer);
+}
+
+void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = boxBlurRenderPass;
+	renderPassInfo.framebuffer = boxBlurFramebuffer;
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = { boxBlur.GetWidth(), boxBlur.GetHeight() };
+
+
+	VkClearValue clearColor = {};
+	clearColor.depthStencil = { 1.0f, 0 };
+
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipelineLayout, 0, 1, &lightDepthSet, 0, nullptr);
+
+	quad.Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }

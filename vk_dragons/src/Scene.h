@@ -100,6 +100,7 @@ private:
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
+	void RecordBoxBlurPass(VkCommandBuffer commandBuffer);
 	void RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void CreateSampler();
 	void CreateUniformSetLayout();
