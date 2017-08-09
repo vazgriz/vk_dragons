@@ -540,7 +540,7 @@ void Scene::CreateBoxBlurPipeline() {
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
 	viewport.width = (float)boxBlur.GetWidth();
-	viewport.height = (float)boxBlur.GetHeight();;
+	viewport.height = (float)boxBlur.GetHeight();
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
