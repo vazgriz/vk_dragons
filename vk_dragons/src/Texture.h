@@ -18,6 +18,7 @@ public:
 
 	VkImage image;
 	VkImageView imageView;
+	VkFormat format;
 
 private:
 	Renderer& renderer;
