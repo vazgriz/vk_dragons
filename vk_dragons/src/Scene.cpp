@@ -135,12 +135,15 @@ void Scene::UploadResources() {
 	skyboxColor.UploadData(commandBuffer);
 	skyboxSmallColor.UploadData(commandBuffer);
 
+	quad.UploadData(commandBuffer);
+
 	renderer.SubmitCommandBuffer(commandBuffer);
 
 	dragon.DestroyStaging();
 	suzanne.DestroyStaging();
 	plane.DestroyStaging();
 	skybox.DestroyStaging();
+	quad.DestroyStaging();
 
 	dragonColor.DestroyStaging();
 	dragonNormal.DestroyStaging();
