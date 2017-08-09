@@ -360,23 +360,10 @@ void Scene::createFramebuffers() {
 	swapChainFramebuffers.resize(renderer.swapChainImageViews.size());
 
 	for (size_t i = 0; i < renderer.swapChainImageViews.size(); i++) {
-		VkImageView attachments[] = {
-			renderer.swapChainImageViews[i],
-			depth.imageView
-		};
-
-		VkFramebufferCreateInfo framebufferInfo = {};
-		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = mainRenderPass;
-		framebufferInfo.attachmentCount = 2;
-		framebufferInfo.pAttachments = attachments;
-		framebufferInfo.width = renderer.swapChainExtent.width;
-		framebufferInfo.height = renderer.swapChainExtent.height;
-		framebufferInfo.layers = 1;
-
-		if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create framebuffer!");
-		}
+		swapChainFramebuffers[i] = CreateFramebuffer(
+			renderer, mainRenderPass,
+			renderer.swapChainExtent.width, renderer.swapChainExtent.height,
+			std::vector<VkImageView>{ renderer.swapChainImageViews[i], depth.imageView });
 	}
 }
 
@@ -422,18 +409,7 @@ void Scene::CreateLightRenderPass() {
 }
 
 void Scene::CreateLightFramebuffer() {
-	VkFramebufferCreateInfo framebufferInfo = {};
-	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.renderPass = lightRenderPass;
-	framebufferInfo.attachmentCount = 1;
-	framebufferInfo.pAttachments = &lightDepth.imageView;
-	framebufferInfo.width = lightDepth.GetWidth();
-	framebufferInfo.height = lightDepth.GetHeight();
-	framebufferInfo.layers = 1;
-
-	if (vkCreateFramebuffer(renderer.device, &framebufferInfo, nullptr, &lightFramebuffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create framebuffer!");
-	}
+	lightFramebuffer = CreateFramebuffer(renderer, lightRenderPass, lightDepth.GetWidth(), lightDepth.GetHeight(), std::vector<VkImageView>{ lightDepth.imageView });
 }
 
 void Scene::CreateSampler() {
