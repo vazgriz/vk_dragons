@@ -5,7 +5,7 @@ const std::vector<glm::vec3> positions = {
 	{ -1.0, -1.0, 0.0 },
 	{  1.0, -1.0, 0.0 },
 	{ -1.0,  1.0, 0.0 },
-	{  1.0, -1.0, 0.0 },
+	{  1.0,  1.0, 0.0 },
 };
 
 const std::vector<uint32_t> indices = {
