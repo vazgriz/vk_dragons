@@ -90,7 +90,7 @@ Scene::~Scene() {
 	vkDestroyFramebuffer(renderer.device, lightFramebuffer, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, modelTextureSetLayout, nullptr);
-	vkDestroyDescriptorSetLayout(renderer.device, skyboxSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
 	vkDestroySampler(renderer.device, sampler, nullptr);
@@ -493,7 +493,7 @@ void Scene::CreateSkyboxSetLayout() {
 	layoutInfo.bindingCount = 1;
 	layoutInfo.pBindings = &textureLayoutBinding;
 
-	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &skyboxSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture set layout!");
 	}
 }
@@ -620,7 +620,7 @@ void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkIm
 }
 
 void Scene::CreateSkyboxSet() {
-	VkDescriptorSetLayout layouts[] = { skyboxSetLayout };
+	VkDescriptorSetLayout layouts[] = { textureSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;

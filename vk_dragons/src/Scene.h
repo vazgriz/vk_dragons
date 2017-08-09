@@ -70,7 +70,7 @@ private:
 	VkSampler sampler;
 	VkDescriptorSetLayout uniformSetLayout;
 	VkDescriptorSetLayout modelTextureSetLayout;
-	VkDescriptorSetLayout skyboxSetLayout;
+	VkDescriptorSetLayout textureSetLayout;
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet uniformSet;
