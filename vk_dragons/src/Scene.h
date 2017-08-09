@@ -78,6 +78,7 @@ private:
 	VkDescriptorSet suzanneTextureSet;
 	VkDescriptorSet planeTextureSet;
 	VkDescriptorSet skyboxTextureSet;
+	VkDescriptorSet lightDepthSet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
@@ -102,6 +103,7 @@ private:
 	void CreateUniformSet();
 	void CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet);
 	void CreateSkyboxSet();
+	void CreateLightDepthSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
