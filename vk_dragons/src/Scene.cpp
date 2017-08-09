@@ -6,6 +6,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	suzanne(renderer),
 	plane(renderer),
 	skybox(renderer),
+	quad(renderer),
 	dragonColor(renderer),
 	dragonNormal(renderer),
 	dragonEffects(renderer),
@@ -30,6 +31,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	suzanne.Init("resources/suzanne.obj");
 	plane.Init("resources/plane.obj");
 	skybox.Init();
+	quad.Init();
 
 	dragon.GetTransform().SetScale(glm::vec3(0.5f));
 	dragon.GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));

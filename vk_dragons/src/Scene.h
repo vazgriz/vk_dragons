@@ -7,6 +7,7 @@
 #include "DepthBuffer.h"
 #include "Skybox.h"
 #include "Light.h"
+#include "ScreenQuad.h"
 
 struct Uniform {
 	glm::mat4 camProjection;
@@ -43,6 +44,7 @@ private:
 	Model suzanne;
 	Model plane;
 	Skybox skybox;
+	ScreenQuad quad;
 
 	Texture dragonColor;
 	Texture dragonNormal;
