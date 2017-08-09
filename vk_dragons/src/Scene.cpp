@@ -20,6 +20,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	camera(45.0f, width, height),
 	input(window, camera),
 	lightDepth(renderer),
+	boxBlur(renderer),
 	depth(renderer) {
 
 	time = 0.0f;
@@ -57,6 +58,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	UploadResources();
 
 	lightDepth.Init(512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
+	boxBlur.Init(lightDepth.GetWidth(), lightDepth.GetHeight(), VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
 	createSwapchainResources(width, height);
 

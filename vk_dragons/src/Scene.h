@@ -60,6 +60,8 @@ private:
 	Texture skyboxSmallColor;
 
 	DepthBuffer lightDepth;
+	Texture boxBlur;
+
 	DepthBuffer depth;
 
 	VkRenderPass mainRenderPass;
