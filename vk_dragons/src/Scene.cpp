@@ -279,9 +279,8 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = { boxBlur.GetWidth(), boxBlur.GetHeight() };
 
-
 	VkClearValue clearColor = {};
-	clearColor.depthStencil = { 1.0f, 0 };
+	clearColor.color = { 1.0f, 0.0f, 0.0f, 0.0f };
 
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
