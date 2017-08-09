@@ -67,7 +67,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	CreateSampler();
 	CreateUniformSetLayout();
-	CreateTextureSetLayout();
+	CreateModelTextureSetLayout();
 	CreateSkyboxSetLayout();
 	CreateUniformBuffer();
 	CreateDescriptorPool();
@@ -89,7 +89,7 @@ Scene::~Scene() {
 	vkDestroyRenderPass(renderer.device, lightRenderPass, nullptr);
 	vkDestroyFramebuffer(renderer.device, lightFramebuffer, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
-	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(renderer.device, modelTextureSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, skyboxSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
@@ -455,7 +455,7 @@ void Scene::CreateUniformSetLayout() {
 	}
 }
 
-void Scene::CreateTextureSetLayout() {
+void Scene::CreateModelTextureSetLayout() {
 	VkDescriptorSetLayoutBinding textureLayoutBinding = {};
 	textureLayoutBinding.binding = 0;
 	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -476,7 +476,7 @@ void Scene::CreateTextureSetLayout() {
 	layoutInfo.bindingCount = 6;
 	layoutInfo.pBindings = bindings;
 
-	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &modelTextureSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture set layout!");
 	}
 }
@@ -551,7 +551,7 @@ void Scene::CreateUniformSet() {
 }
 
 void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet) {
-	VkDescriptorSetLayout layouts[] = { textureSetLayout };
+	VkDescriptorSetLayout layouts[] = { modelTextureSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;

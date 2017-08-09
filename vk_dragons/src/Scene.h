@@ -69,7 +69,7 @@ private:
 	std::vector<VkCommandBuffer> commandBuffers;
 	VkSampler sampler;
 	VkDescriptorSetLayout uniformSetLayout;
-	VkDescriptorSetLayout textureSetLayout;
+	VkDescriptorSetLayout modelTextureSetLayout;
 	VkDescriptorSetLayout skyboxSetLayout;
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
@@ -95,7 +95,7 @@ private:
 	void RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void CreateSampler();
 	void CreateUniformSetLayout();
-	void CreateTextureSetLayout();
+	void CreateModelTextureSetLayout();
 	void CreateSkyboxSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
