@@ -26,10 +26,10 @@ void Texture::Init(const std::string& filename) {
 	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
-		mipLevels, 1,
+		mipLevels, arrayLayers,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		0).image;
-	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1);
+	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
 }
 
 void Texture::InitCubemap(const std::string& filenameRoot) {
@@ -51,10 +51,10 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 	image = CreateImage(renderer,
 		VK_FORMAT_R8G8B8A8_UNORM,
 		width, height,
-		mipLevels, 6,
+		mipLevels, arrayLayers,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT).image;
-	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6);
+	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, arrayLayers);
 }
 
 void Texture::LoadImages(std::vector<std::string>& filenames) {
