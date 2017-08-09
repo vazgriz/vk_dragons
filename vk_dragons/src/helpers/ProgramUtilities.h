@@ -44,5 +44,6 @@ bool hasStencilComponent(VkFormat format);
 
 void Transition(VkCommandBuffer commandBuffer, VkFormat format, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t arrayLayers);
 
+VkFramebuffer CreateFramebuffer(Renderer& renderer, VkRenderPass renderPass, uint32_t width, uint32_t height, std::vector<VkImageView>& imageViews);
 
 #endif
