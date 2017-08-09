@@ -83,6 +83,9 @@ private:
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
 
+	VkRenderPass boxBlurRenderPass;
+	VkFramebuffer boxBlurFramebuffer;
+
 	void UploadResources();
 	void UpdateUniform();
 
@@ -90,6 +93,8 @@ private:
 	void createFramebuffers();
 	void CreateLightRenderPass();
 	void CreateLightFramebuffer();
+	void CreateBoxBlurRenderPass();
+	void CreateBoxBlurFramebuffer();
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
