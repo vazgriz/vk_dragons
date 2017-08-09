@@ -16,6 +16,9 @@ public:
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 
+	uint32_t GetWidth();
+	uint32_t GetHeight();
+
 	VkImage image;
 	VkImageView imageView;
 	VkFormat format;

@@ -63,6 +63,8 @@ void Texture::Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsag
 	mipLevels = 1;
 	arrayLayers = 1;
 	this->format = format;
+	this->width = width;
+	this->height = height;
 
 	image = CreateImage(renderer,
 		format,
@@ -87,6 +89,14 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 	this->width = static_cast<uint32_t>(width);
 	this->height = static_cast<uint32_t>(height);
 	arrayLayers = static_cast<uint32_t>(data.size());
+}
+
+uint32_t Texture::GetWidth() {
+	return width;
+}
+
+uint32_t Texture::GetHeight() {
+	return height;
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
