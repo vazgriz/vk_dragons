@@ -8,7 +8,7 @@ layout(location = 0) in vec2 uv;
 layout(set = 0, binding = 0) uniform sampler2D screenTexture;
 
 // Output: the fragment color
-out vec2 fragColor;
+layout(location = 0) out vec2 fragColor;
 
 void main(){	
 	// We have to unroll the box blur loop manually.
