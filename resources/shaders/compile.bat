@@ -7,4 +7,6 @@
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V object.frag -o object.frag.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V plane.vert -o plane.vert.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V plane.frag -o plane.frag.spv
+%VK_SDK_PATH%/Bin32/glslangValidator.exe -V boxblur.vert -o boxblur.vert.spv
+%VK_SDK_PATH%/Bin32/glslangValidator.exe -V boxblur.frag -o boxblur.frag.spv
 pause
