@@ -54,7 +54,9 @@ void main(){
 	Outtbn = mat3(T, B, N);
 	
 	// Compute position in light space
-	OutlightSpacePosition = 0.5*(uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0)).xyz + 0.5;
+    vec4 lightPosition = uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0);
+	OutlightSpacePosition.xy = 0.5 * lightPosition.xy + 0.5;
+    OutlightSpacePosition.z = lightPosition.z;
 	
 	OutmodelPosition = v;
 	
