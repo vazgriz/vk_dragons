@@ -379,6 +379,9 @@ VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentMode
 			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
 				bestMode = availablePresentMode;
 			}
+			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR && bestMode == VK_PRESENT_MODE_FIFO_KHR) {
+				bestMode = availablePresentMode;
+			}
 		}
 	}
 
