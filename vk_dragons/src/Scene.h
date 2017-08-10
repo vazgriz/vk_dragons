@@ -7,6 +7,7 @@
 #include "DepthBuffer.h"
 #include "Skybox.h"
 #include "Light.h"
+#include "ScreenQuad.h"
 
 struct Uniform {
 	glm::mat4 camProjection;
@@ -43,6 +44,7 @@ private:
 	Model suzanne;
 	Model plane;
 	Skybox skybox;
+	ScreenQuad quad;
 
 	Texture dragonColor;
 	Texture dragonNormal;
@@ -60,6 +62,8 @@ private:
 	Texture skyboxSmallColor;
 
 	DepthBuffer lightDepth;
+	Texture boxBlur;
+
 	DepthBuffer depth;
 
 	VkRenderPass mainRenderPass;
@@ -67,8 +71,8 @@ private:
 	std::vector<VkCommandBuffer> commandBuffers;
 	VkSampler sampler;
 	VkDescriptorSetLayout uniformSetLayout;
+	VkDescriptorSetLayout modelTextureSetLayout;
 	VkDescriptorSetLayout textureSetLayout;
-	VkDescriptorSetLayout skyboxSetLayout;
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet uniformSet;
@@ -76,9 +80,13 @@ private:
 	VkDescriptorSet suzanneTextureSet;
 	VkDescriptorSet planeTextureSet;
 	VkDescriptorSet skyboxTextureSet;
+	VkDescriptorSet lightDepthSet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
+
+	VkRenderPass boxBlurRenderPass;
+	VkFramebuffer boxBlurFramebuffer;
 
 	void UploadResources();
 	void UpdateUniform();
@@ -87,19 +95,23 @@ private:
 	void createFramebuffers();
 	void CreateLightRenderPass();
 	void CreateLightFramebuffer();
+	void CreateBoxBlurRenderPass();
+	void CreateBoxBlurFramebuffer();
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
+	void RecordBoxBlurPass(VkCommandBuffer commandBuffer);
 	void RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void CreateSampler();
 	void CreateUniformSetLayout();
-	void CreateTextureSetLayout();
+	void CreateModelTextureSetLayout();
 	void CreateSkyboxSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
 	void CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet);
 	void CreateSkyboxSet();
+	void CreateLightDepthSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
@@ -108,10 +120,12 @@ private:
 	VkPipelineLayout modelPipelineLayout;
 	VkPipelineLayout skyboxPipelineLayout;
 	VkPipelineLayout lightPipelineLayout;
+	VkPipelineLayout boxBlurPipelineLayout;
 	VkPipeline modelPipeline;
 	VkPipeline planePipeline;
 	VkPipeline skyboxPipeline;
 	VkPipeline lightPipeline;
+	VkPipeline boxBlurPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
@@ -121,5 +135,7 @@ private:
 	void CreateSkyboxPipeline();
 	void CreateLightPipelineLayout();
 	void CreateLightPipeline();
+	void CreateBoxBlurPipelineLayout();
+	void CreateBoxBlurPipeline();
 };
 

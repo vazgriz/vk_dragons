@@ -22,14 +22,15 @@ void Texture::DestroyStaging() {
 void Texture::Init(const std::string& filename) {
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
+	format = VK_FORMAT_R8G8B8A8_UNORM;
 
 	image = CreateImage(renderer,
-		VK_FORMAT_R8G8B8A8_UNORM,
+		format,
 		width, height,
-		mipLevels, 1,
+		mipLevels, arrayLayers,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		0).image;
-	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, 1);
+	imageView = CreateImageView(renderer.device, image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
 }
 
 void Texture::InitCubemap(const std::string& filenameRoot) {
@@ -47,14 +48,30 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 
 	LoadImages(filenames);
 	CalulateMipChain();
+	format = VK_FORMAT_R8G8B8A8_UNORM;
 
 	image = CreateImage(renderer,
-		VK_FORMAT_R8G8B8A8_UNORM,
+		format,
 		width, height,
-		mipLevels, 6,
+		mipLevels, arrayLayers,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT).image;
-	imageView = CreateImageView(renderer.device, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, 6);
+	imageView = CreateImageView(renderer.device, image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, arrayLayers);
+}
+
+void Texture::Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage) {
+	mipLevels = 1;
+	arrayLayers = 1;
+	this->format = format;
+	this->width = width;
+	this->height = height;
+
+	image = CreateImage(renderer,
+		format,
+		width, height,
+		mipLevels, arrayLayers,
+		usage, 0).image;
+	imageView = CreateImageView(renderer.device, image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
 }
 
 void Texture::LoadImages(std::vector<std::string>& filenames) {
@@ -72,6 +89,14 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 	this->width = static_cast<uint32_t>(width);
 	this->height = static_cast<uint32_t>(height);
 	arrayLayers = static_cast<uint32_t>(data.size());
+}
+
+uint32_t Texture::GetWidth() {
+	return width;
+}
+
+uint32_t Texture::GetHeight() {
+	return height;
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {

@@ -12,11 +12,16 @@ public:
 
 	void Init(const std::string& filename);
 	void InitCubemap(const std::string& filenameRoot);
+	void Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 
+	uint32_t GetWidth();
+	uint32_t GetHeight();
+
 	VkImage image;
 	VkImageView imageView;
+	VkFormat format;
 
 private:
 	Renderer& renderer;

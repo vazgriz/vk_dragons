@@ -244,3 +244,21 @@ void Transition(VkCommandBuffer commandBuffer, VkFormat format, VkImage image, V
 		1, &barrier
 	);
 }
+
+VkFramebuffer CreateFramebuffer(Renderer& renderer, VkRenderPass renderPass, uint32_t width, uint32_t height, std::vector<VkImageView>& imageViews) {
+	VkFramebufferCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	info.renderPass = renderPass;
+	info.width = width;
+	info.height = height;
+	info.layers = 1;
+	info.pAttachments = imageViews.data();
+	info.attachmentCount = static_cast<uint32_t>(imageViews.size());
+
+	VkFramebuffer framebuffer;
+	if (vkCreateFramebuffer(renderer.device, &info, nullptr, &framebuffer) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create framebuffer!");
+	}
+
+	return framebuffer;
+}

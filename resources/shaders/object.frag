@@ -87,9 +87,7 @@ void main(){
 	float shadow = 1.0;
 	if (InlightSpacePosition.z < 1.0){
 		// Read first and second moment from shadow map.
-		vec2 moments;
-        moments.r = 0.5 * texture(shadowMap, InlightSpacePosition.xy).r + 0.5;
-        moments.g = moments.r * moments.r;
+		vec2 moments = texture(shadowMap, InlightSpacePosition.xy).rg;
         
 		// Initial probability of light.
 		float probability = float(InlightSpacePosition.z <= moments.x);
