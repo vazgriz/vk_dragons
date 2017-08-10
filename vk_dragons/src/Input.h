@@ -1,17 +1,21 @@
 #pragma once
 #include <GLFW/glfw3.h>
 #include "Camera.h"
-#include <functional>
+#include "Renderer.h"
+
+class Scene;
 
 class Input {
 public:
-	Input(GLFWwindow* window, Camera& camera);
+	Input(GLFWwindow* window, Camera& camera, Scene& scene, Renderer& renderer);
 
 	void Update(double elapsed);
 
 private:
 	GLFWwindow* window;
+	Scene& scene;
 	Camera& camera;
+	Renderer& renderer;
 
 	void HandleKey(int key, int scancode, int action, int mods);
 	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);

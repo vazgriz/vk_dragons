@@ -2,9 +2,14 @@
 #include <stdexcept>
 #include <set>
 #include <algorithm>
+#include <iostream>
 
 Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	this->window = window;
+	this->width = width;
+	this->height = height;
+	vsync = true;
+
 	createInstance();
 	createSurface();
 	pickPhysicalDevice();
@@ -76,6 +81,18 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 	vkDeviceWaitIdle(device);
 	cleanupSwapChain();
 	recreateSwapChain();
+}
+
+void Renderer::ToggleVSync() {
+	vsync = !vsync;
+}
+
+uint32_t Renderer::GetWidth() {
+	return width;
+}
+
+uint32_t Renderer::GetHeight() {
+	return height;
 }
 
 void Renderer::recreateSwapChain() {
@@ -212,6 +229,11 @@ void Renderer::pickPhysicalDevice() {
 	if (physicalDevice == VK_NULL_HANDLE) {
 		throw std::runtime_error("Failed to find a suitable GPU!");
 	}
+
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+	std::cout << properties.deviceName << std::endl;
 }
 
 QueueFamilyIndices Renderer::findQueueFamilies(VkPhysicalDevice device) {
@@ -358,13 +380,15 @@ VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurface
 VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
 	VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
-	for (const auto& availablePresentMode : availablePresentModes) {
-		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-			return availablePresentMode;
+	if (!vsync) {
+		for (const auto& availablePresentMode : availablePresentModes) {
+			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+				bestMode = availablePresentMode;
+			}
+			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR && bestMode == VK_PRESENT_MODE_FIFO_KHR) {
+				bestMode = availablePresentMode;
+			}
 		}
-		/*else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-			bestMode = availablePresentMode;
-		}*/
 	}
 
 	return bestMode;

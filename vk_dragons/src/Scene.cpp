@@ -19,7 +19,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	skyboxColor(renderer),
 	skyboxSmallColor(renderer),
 	camera(45.0f, width, height),
-	input(window, camera),
+	input(window, camera, *this, renderer),
 	lightDepth(renderer),
 	boxBlur(renderer),
 	depth(renderer) {

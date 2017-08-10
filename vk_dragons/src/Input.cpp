@@ -1,7 +1,8 @@
 #include "Input.h"
+#include "Scene.h"
 #include <algorithm>
 
-Input::Input(GLFWwindow* window, Camera& camera) : camera(camera) {
+Input::Input(GLFWwindow* window, Camera& camera, Scene& scene, Renderer& renderer) : scene(scene), camera(camera), renderer(renderer) {
 	this->window = window;
 
 	glfwSetWindowUserPointer(window, this);
@@ -27,6 +28,11 @@ void Input::HandleKey(int key, int scancode, int action, int mods) {
 	Toggle(left, GLFW_KEY_A, key, action);
 	Toggle(up, GLFW_KEY_E, key, action);
 	Toggle(down, GLFW_KEY_Q, key, action);
+
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+		renderer.ToggleVSync();
+		scene.Resize(renderer.GetWidth(), renderer.GetHeight());
+	}
 }
 
 void Input::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
