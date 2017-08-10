@@ -5,6 +5,9 @@
 
 Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	this->window = window;
+	this->width = width;
+	this->height = height;
+
 	createInstance();
 	createSurface();
 	pickPhysicalDevice();
