@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <set>
 #include <algorithm>
+#include <iostream>
 
 Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	this->window = window;
@@ -228,6 +229,11 @@ void Renderer::pickPhysicalDevice() {
 	if (physicalDevice == VK_NULL_HANDLE) {
 		throw std::runtime_error("Failed to find a suitable GPU!");
 	}
+
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+	std::cout << properties.deviceName << std::endl;
 }
 
 QueueFamilyIndices Renderer::findQueueFamilies(VkPhysicalDevice device) {
