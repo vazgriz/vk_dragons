@@ -81,6 +81,14 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 	recreateSwapChain();
 }
 
+uint32_t Renderer::GetWidth() {
+	return width;
+}
+
+uint32_t Renderer::GetHeight() {
+	return height;
+}
+
 void Renderer::recreateSwapChain() {
 	createSwapChain();
 	createImageViews();
