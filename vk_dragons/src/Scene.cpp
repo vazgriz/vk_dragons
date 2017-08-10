@@ -668,10 +668,10 @@ void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkIm
 	skySmallInfo.imageView = skyboxSmallColor.imageView;
 	skySmallInfo.sampler = sampler;
 
-	VkDescriptorImageInfo depthInfo = {};
-	depthInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-	depthInfo.imageView = lightDepth.imageView;
-	depthInfo.sampler = sampler;
+	VkDescriptorImageInfo shadowInfo = {};
+	shadowInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	shadowInfo.imageView = boxBlur.imageView;
+	shadowInfo.sampler = sampler;
 
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -694,7 +694,7 @@ void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkIm
 	writes[3].dstBinding = 3;
 	writes[4].pImageInfo = &skySmallInfo;
 	writes[4].dstBinding = 4;
-	writes[5].pImageInfo = &depthInfo;
+	writes[5].pImageInfo = &shadowInfo;
 	writes[5].dstBinding = 5;
 
 	vkUpdateDescriptorSets(renderer.device, 6, writes, 0, nullptr);
