@@ -29,7 +29,7 @@ void Input::HandleKey(int key, int scancode, int action, int mods) {
 	Toggle(up, GLFW_KEY_E, key, action);
 	Toggle(down, GLFW_KEY_Q, key, action);
 
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 		renderer.ToggleVSync();
 		scene.Resize(renderer.GetWidth(), renderer.GetHeight());
 	}
