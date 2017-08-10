@@ -7,6 +7,7 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	this->window = window;
 	this->width = width;
 	this->height = height;
+	vsync = true;
 
 	createInstance();
 	createSurface();
@@ -79,6 +80,10 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 	vkDeviceWaitIdle(device);
 	cleanupSwapChain();
 	recreateSwapChain();
+}
+
+void Renderer::ToggleVSync() {
+	vsync = !vsync;
 }
 
 uint32_t Renderer::GetWidth() {
@@ -369,13 +374,12 @@ VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurface
 VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
 	VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
-	for (const auto& availablePresentMode : availablePresentModes) {
-		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-			return availablePresentMode;
+	if (!vsync) {
+		for (const auto& availablePresentMode : availablePresentModes) {
+			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+				bestMode = availablePresentMode;
+			}
 		}
-		/*else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-			bestMode = availablePresentMode;
-		}*/
 	}
 
 	return bestMode;
