@@ -503,8 +503,12 @@ void Scene::CreateSampler() {
 	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 1;
+	if (renderer.deviceFeatures.samplerAnisotropy == VK_TRUE) {
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = renderer.deviceProperties.limits.maxSamplerAnisotropy;
+	} else {
+		samplerInfo.maxAnisotropy = 1;
+	}
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
