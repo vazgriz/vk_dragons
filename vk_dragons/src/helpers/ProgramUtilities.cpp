@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <lodepng/lodepng.h>
+#include <map>
 
 std::string loadStringFromFile(const std::string & filename) {
 	std::ifstream in;
@@ -74,7 +75,7 @@ Buffer CreateBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags us
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
-	return { buffer, alloc.size, alloc.offset };
+	return { alloc.memory, buffer, alloc.size, alloc.offset };
 }
 
 Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags usage) {
@@ -98,12 +99,12 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
-	return { buffer, alloc.size, alloc.offset };
+	return { alloc.memory, buffer, alloc.size, alloc.offset };
 }
 
 Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, const void* source, size_t size) {
 	Buffer buffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	char* dest = static_cast<char*>(renderer.memory->hostMapping) + buffer.offset;
+	char* dest = static_cast<char*>(renderer.memory->GetMapping(buffer.memory)) + buffer.offset;
 	memcpy(dest, source, size);
 
 	VkBufferCopy copy = {};
@@ -219,17 +220,29 @@ void Transition(VkCommandBuffer commandBuffer, VkFormat format, VkImage image, V
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = arrayLayers;
 
+	VkPipelineStageFlags source;
+	VkPipelineStageFlags dest;
+
 	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && (newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || newLayout == VK_IMAGE_LAYOUT_GENERAL)) {
-		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		barrier.srcAccessMask = 0;
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		source = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dest = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
 	else if ((oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL || oldLayout == VK_IMAGE_LAYOUT_GENERAL) && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		source = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		dest = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 	else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
 		barrier.srcAccessMask = 0;
 		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		source = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		dest = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	}
 	else {
 		throw std::invalid_argument("Unsupported layout transition!");
@@ -237,7 +250,7 @@ void Transition(VkCommandBuffer commandBuffer, VkFormat format, VkImage image, V
 
 	vkCmdPipelineBarrier(
 		commandBuffer,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		source, dest,
 		0,
 		0, nullptr,
 		0, nullptr,

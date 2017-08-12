@@ -164,7 +164,7 @@ void Scene::UploadResources() {
 }
 
 void Scene::UpdateUniform() {
-	char* ptr = reinterpret_cast<char*>(renderer.memory->hostMapping) + uniformBuffer.offset;
+	char* ptr = reinterpret_cast<char*>(renderer.memory->GetMapping(uniformBuffer.memory)) + uniformBuffer.offset;
 	Uniform* uniform = reinterpret_cast<Uniform*>(ptr);
 	uniform->camProjection = camera.GetProjection();
 	uniform->camView = camera.GetView();
@@ -504,7 +504,7 @@ void Scene::CreateSampler() {
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.maxAnisotropy = 1;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;

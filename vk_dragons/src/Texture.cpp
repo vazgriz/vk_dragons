@@ -105,7 +105,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
 		stagingBuffers[i] = CreateHostBuffer(renderer, data[i].size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-		char* dest = static_cast<char*>(renderer.memory->hostMapping) + stagingBuffers[i].offset;
+		char* dest = static_cast<char*>(renderer.memory->GetMapping(stagingBuffers[i].memory)) + stagingBuffers[i].offset;
 		memcpy(dest, data[i].data(), data[i].size());
 
 		VkBufferImageCopy copy = {};

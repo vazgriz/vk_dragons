@@ -7,6 +7,7 @@
 #include "../Renderer.h"
 
 struct Buffer {
+	VkDeviceMemory memory;
 	VkBuffer buffer;
 	size_t size;
 	size_t offset;

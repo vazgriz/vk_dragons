@@ -3,6 +3,7 @@
 #include "Allocator.h"
 #include <memory>
 #include <vector>
+#include <map>
 
 //file is named "MemorySystem.h" because "Memory.h" conflicts with included headers in visual studio
 
@@ -11,6 +12,7 @@
 class Memory {
 public:
 	Memory(VkPhysicalDevice physicalDevice, VkDevice device);
+
 	void Cleanup();
 
 	//stack allocators are used because this application has simple memory requirements
@@ -20,20 +22,15 @@ public:
 	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
 	Allocator& GetDeviceAllocator(uint32_t);
 
-	//the mapping for the host memory is kept alive for the entire application
-	//it is implicitly unmapped when the memory is freed in Cleanup()
-	void* hostMapping;
+	void* GetMapping(VkDeviceMemory memory);
 
 private:
 	VkDevice device;
 	VkPhysicalDeviceMemoryProperties memoryProperties;
 
-	VkDeviceMemory hostMemory;
-	std::vector<VkDeviceMemory> deviceMemories;
-	std::vector<Allocator> deviceAllocators;
+	std::vector<std::unique_ptr<Allocator>> deviceAllocators;
 
 	void AllocHostMemory();
-	VkDeviceMemory Alloc(uint32_t type);
 	Allocator& AllocDevice(uint32_t type);
 };
 
