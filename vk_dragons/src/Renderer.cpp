@@ -21,8 +21,8 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 }
 
 Renderer::~Renderer() {
-	memory->Cleanup();
 	vkDeviceWaitIdle(device);
+	memory->Cleanup();
 	cleanupSwapChain();
 	vkDestroyCommandPool(device, commandPool, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
@@ -230,10 +230,10 @@ void Renderer::pickPhysicalDevice() {
 		throw std::runtime_error("Failed to find a suitable GPU!");
 	}
 
-	VkPhysicalDeviceProperties properties;
-	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+	deviceProperties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
-	std::cout << properties.deviceName << std::endl;
+	std::cout << deviceProperties.deviceName << std::endl;
 }
 
 QueueFamilyIndices Renderer::findQueueFamilies(VkPhysicalDevice device) {
@@ -268,6 +268,22 @@ QueueFamilyIndices Renderer::findQueueFamilies(VkPhysicalDevice device) {
 	return indices;
 }
 
+void Renderer::SelectFeatures(VkPhysicalDeviceFeatures& features) {
+	VkPhysicalDeviceFeatures availableFeatures;
+	vkGetPhysicalDeviceFeatures(physicalDevice, &availableFeatures);
+
+	deviceFeatures = {};
+	if (availableFeatures.shaderClipDistance == VK_TRUE) {
+		features.shaderClipDistance = VK_TRUE;
+	}
+	if (availableFeatures.shaderCullDistance == VK_TRUE) {
+		features.shaderCullDistance = VK_TRUE;
+	}
+	if (availableFeatures.samplerAnisotropy == VK_TRUE) {
+		features.samplerAnisotropy = VK_TRUE;
+	}
+}
+
 void Renderer::createLogicalDevice() {
 	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
@@ -284,9 +300,7 @@ void Renderer::createLogicalDevice() {
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceFeatures deviceFeatures = {};
-	deviceFeatures.shaderClipDistance = VK_TRUE;
-	deviceFeatures.shaderCullDistance = VK_TRUE;
+	SelectFeatures(deviceFeatures);
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

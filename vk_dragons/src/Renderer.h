@@ -42,6 +42,8 @@ public:
 	std::unique_ptr<Memory> memory;
 
 	VkPhysicalDevice physicalDevice;
+	VkPhysicalDeviceProperties deviceProperties;
+	VkPhysicalDeviceFeatures deviceFeatures;
 	VkDevice device;
 	VkExtent2D swapChainExtent;
 	VkCommandPool commandPool;
@@ -75,6 +77,7 @@ private:
 	void pickPhysicalDevice();
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	void SelectFeatures(VkPhysicalDeviceFeatures& features);
 	void createLogicalDevice();
 	void createSurface();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);

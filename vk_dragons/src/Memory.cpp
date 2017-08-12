@@ -5,28 +5,16 @@ Memory::Memory(VkPhysicalDevice physicalDevice, VkDevice device) {
 	this->device = device;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 
-	//host memory is allocated once
-	//device memory is allocated as needed
+	//host allocator is created once
+	//device allocators are created as needed
 	AllocHostMemory();
 }
 
 void Memory::Cleanup() {
-	vkFreeMemory(device, hostMemory, nullptr);
-	for (auto& memory : deviceMemories) {
-		vkFreeMemory(device, memory, nullptr);
+	hostAllocator->Cleanup();
+	for (auto& ptr : deviceAllocators) {
+		ptr->Cleanup();
 	}
-}
-
-VkDeviceMemory Memory::Alloc(uint32_t type) {
-	VkMemoryAllocateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	info.memoryTypeIndex = type;
-	info.allocationSize = ALLOCATION_SIZE;
-
-	VkDeviceMemory memory;
-	vkAllocateMemory(device, &info, nullptr, &memory);
-
-	return memory;
 }
 
 void Memory::AllocHostMemory() {
@@ -56,23 +44,18 @@ void Memory::AllocHostMemory() {
 
 	if (!found) throw std::runtime_error("Could not find suitable host memory");
 
-	hostMemory = Alloc(type);
-
-	hostAllocator = std::make_unique<Allocator>(hostMemory, type, ALLOCATION_SIZE);
-
-	vkMapMemory(device, hostMemory, 0, ALLOCATION_SIZE, 0, &hostMapping);
+	hostAllocator = std::make_unique<Allocator>(device, type, ALLOCATION_SIZE);
 }
 
 Allocator& Memory::AllocDevice(uint32_t type) {
-	VkDeviceMemory memory = Alloc(type);
-	deviceMemories.push_back(memory);
-	deviceAllocators.emplace_back(memory, type, ALLOCATION_SIZE);
-	return deviceAllocators[deviceAllocators.size() - 1];
+	deviceAllocators.emplace_back(std::make_unique<Allocator>(device, type, ALLOCATION_SIZE));
+	return *deviceAllocators[deviceAllocators.size() - 1];
 }
 
 Allocator& Memory::GetDeviceAllocator(VkMemoryRequirements requirements) {
 	//check if an Allocator that matches the requirements has already been created
-	for (Allocator& allocator : deviceAllocators) {
+	for (auto& ptr : deviceAllocators) {
+		auto& allocator = *ptr;
 		uint32_t type = allocator.GetType();
 		uint32_t test = 1 << type;
 		uint32_t bits = requirements.memoryTypeBits & test;
@@ -101,11 +84,16 @@ Allocator& Memory::GetDeviceAllocator(VkMemoryRequirements requirements) {
 }
 
 Allocator& Memory::GetDeviceAllocator(uint32_t type) {
-	for (Allocator& allocator : deviceAllocators) {
+	for (auto& ptr : deviceAllocators) {
+		auto& allocator = *ptr;
 		if (allocator.GetType() == type) {
 			return allocator;
 		}
 	}
 
 	throw std::runtime_error("Could not find requested allocator");
+}
+
+void* Memory::GetMapping(VkDeviceMemory memory) {
+	return hostAllocator->GetMapping(memory);
 }

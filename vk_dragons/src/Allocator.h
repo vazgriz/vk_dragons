@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 #include <stack>
+#include <vector>
 
 struct Allocation {
 	VkDeviceMemory memory;
@@ -9,21 +10,36 @@ struct Allocation {
 	size_t size;
 };
 
+struct Page {
+	VkDeviceMemory memory;
+	size_t pointer;
+	void* mapping;
+};
+
+struct InternalAllocation {
+	size_t page;
+	size_t pointer;
+};
+
 class Allocator {
-	//simple stack allocator
 public:
-	Allocator(VkDeviceMemory memory, uint32_t type, size_t totalSize);
+	Allocator(VkDevice device, uint32_t type, size_t pageSize);
+
+	void Cleanup();
+
 	Allocation Alloc(size_t size, size_t alignment);
 	void Pop();
 	void Reset();
 	uint32_t GetType();
+	void* GetMapping(VkDeviceMemory memory);
 
 private:
-	VkDeviceMemory memory;
-	size_t totalSize;
-	size_t pointer;
+	VkDevice device;
+	size_t pageSize;
 	uint32_t type;
 
-	//keeps track of where each allocation starts before alignment is applied, to prevent memory leaks
-	std::stack<size_t> stack;
+	std::vector<Page> pages;
+	std::stack<InternalAllocation> stack;
+	void AllocPage();
+	Allocation AttemptAlloc(size_t index, size_t size, size_t alignment);
 };
