@@ -1,13 +1,14 @@
-#version 330
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
 // Input: UV coordinates
-in INTERFACE {
-	vec2 uv;
-} In ;
+layout(location = 0) vec2 uv;
 
 // Uniforms: the texture, inverse of the screen size, FXAA flag.
-uniform sampler2D screenTexture;
-uniform vec2 inverseScreenSize;
+layout(location = 0) uniform sampler2D screenTexture;
+
+//Specialization constant. If this isn't set by the application, the default value is (1, 1)
+layout(constant_id = 0) const vec2 inverseScreenSize = vec2(1.0);
 
 // Settings for FXAA.
 #define EDGE_THRESHOLD_MIN 0.0312
@@ -17,25 +18,24 @@ uniform vec2 inverseScreenSize;
 #define SUBPIXEL_QUALITY 0.75
 
 // Output: the fragment color
-out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 // Return the luma value in perceptual space for a given RGB color in linear space.
 float rgb2luma(vec3 rgb){
 	return sqrt(dot(rgb, vec3(0.299, 0.587, 0.114)));
 }
 
-void main(){
-	
-	vec3 colorCenter = texture(screenTexture,In.uv).rgb;
+void main(){	
+	vec3 colorCenter = texture(screenTexture,uv).rgb;
 	
 	// Luma at the current fragment
 	float lumaCenter = rgb2luma(colorCenter);
 	
 	// Luma at the four direct neighbours of the current fragment.
-	float lumaDown = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(0,-1)).rgb);
-	float lumaUp = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(0,1)).rgb);
-	float lumaLeft = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(-1,0)).rgb);
-	float lumaRight = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(1,0)).rgb);
+	float lumaDown = rgb2luma(textureOffset(screenTexture,uv,ivec2(0,-1)).rgb);
+	float lumaUp = rgb2luma(textureOffset(screenTexture,uv,ivec2(0,1)).rgb);
+	float lumaLeft = rgb2luma(textureOffset(screenTexture,uv,ivec2(-1,0)).rgb);
+	float lumaRight = rgb2luma(textureOffset(screenTexture,uv,ivec2(1,0)).rgb);
 	
 	// Find the maximum and minimum luma around the current fragment.
 	float lumaMin = min(lumaCenter,min(min(lumaDown,lumaUp),min(lumaLeft,lumaRight)));
@@ -51,10 +51,10 @@ void main(){
 	}
 	
 	// Query the 4 remaining corners lumas.
-	float lumaDownLeft = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(-1,-1)).rgb);
-	float lumaUpRight = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(1,1)).rgb);
-	float lumaUpLeft = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(-1,1)).rgb);
-	float lumaDownRight = rgb2luma(textureOffset(screenTexture,In.uv,ivec2(1,-1)).rgb);
+	float lumaDownLeft = rgb2luma(textureOffset(screenTexture,uv,ivec2(-1,-1)).rgb);
+	float lumaUpRight = rgb2luma(textureOffset(screenTexture,uv,ivec2(1,1)).rgb);
+	float lumaUpLeft = rgb2luma(textureOffset(screenTexture,uv,ivec2(-1,1)).rgb);
+	float lumaDownRight = rgb2luma(textureOffset(screenTexture,uv,ivec2(1,-1)).rgb);
 	
 	// Combine the four edges lumas (using intermediary variables for future computations with the same values).
 	float lumaDownUp = lumaDown + lumaUp;
@@ -100,7 +100,7 @@ void main(){
 	}
 	
 	// Shift UV in the correct direction by half a pixel.
-	vec2 currentUv = In.uv;
+	vec2 currentUv = uv;
 	if(isHorizontal){
 		currentUv.y += stepLength * 0.5;
 	} else {
@@ -166,8 +166,8 @@ void main(){
 	}
 	
 	// Compute the distances to each side edge of the edge (!).
-	float distance1 = isHorizontal ? (In.uv.x - uv1.x) : (In.uv.y - uv1.y);
-	float distance2 = isHorizontal ? (uv2.x - In.uv.x) : (uv2.y - In.uv.y);
+	float distance1 = isHorizontal ? (uv.x - uv1.x) : (uv.y - uv1.y);
+	float distance2 = isHorizontal ? (uv2.x - uv.x) : (uv2.y - uv.y);
 	
 	// In which direction is the side of the edge closer ?
 	bool isDirection1 = distance1 < distance2;
@@ -205,7 +205,7 @@ void main(){
 	finalOffset = max(finalOffset,subPixelOffsetFinal);
 	
 	// Compute the final UV coordinates.
-	vec2 finalUv = In.uv;
+	vec2 finalUv = uv;
 	if(isHorizontal){
 		finalUv.y += finalOffset * stepLength;
 	} else {
@@ -214,6 +214,5 @@ void main(){
 	
 	// Read the color at the new UV coordinates, and use it.
 	vec3 finalColor = texture(screenTexture,finalUv).rgb;
-	fragColor = finalColor;
-	
+	fragColor = vec4(finalColor, 1.0);
 }
