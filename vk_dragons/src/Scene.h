@@ -65,6 +65,7 @@ private:
 	Texture boxBlur;
 
 	DepthBuffer depth;
+	Texture geometryTarget;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -88,15 +89,20 @@ private:
 	VkRenderPass boxBlurRenderPass;
 	VkFramebuffer boxBlurFramebuffer;
 
+	VkRenderPass geometryRenderPass;
+	VkFramebuffer geometryFramebuffer;
+
 	void UploadResources();
 	void UpdateUniform();
 
-	void createRenderPass();
-	void createFramebuffers();
 	void CreateLightRenderPass();
 	void CreateLightFramebuffer();
 	void CreateBoxBlurRenderPass();
 	void CreateBoxBlurFramebuffer();
+	void CreateGeometryRenderPass();
+	void CreateGeometryFramebuffer(uint32_t width, uint32_t height);
+	void CreateMainRenderPass();
+	void CreateMainFramebuffers(uint32_t width, uint32_t height);
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
