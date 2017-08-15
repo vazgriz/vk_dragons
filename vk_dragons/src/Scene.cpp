@@ -23,7 +23,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	lightDepth(renderer),
 	boxBlur(renderer),
 	depth(renderer),
-	geometryTarget(renderer) {
+	geometryTarget(renderer),
+	fxaaTarget(renderer) {
 
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
@@ -78,6 +79,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateLightDepthSet();
 
 	AllocateTextureSet(geometrySet);
+	AllocateTextureSet(fxaaSet);
 	createSwapchainResources(width, height);
 
 	CreateLightRenderPass();
@@ -112,6 +114,7 @@ Scene::~Scene() {
 void Scene::CleanupSwapchainResources() {
 	depth.Cleanup();
 	geometryTarget.Cleanup();
+	fxaaTarget.Cleanup();
 	for (auto& framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(renderer.device, framebuffer, nullptr);
 	}
@@ -218,11 +221,13 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	depth.Init(width, height, 0);
 	geometryTarget.Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	fxaaTarget.Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	CreateMainRenderPass();
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
 	CreateGeometryFramebuffer(width, height);
 	WriteDescriptor(geometrySet, geometryTarget.imageView);
+	WriteDescriptor(fxaaSet, fxaaTarget.imageView);
 }
 
 void Scene::AllocateCommandBuffers() {
@@ -722,7 +727,7 @@ void Scene::CreateDescriptorPool() {
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 7;
+	poolInfo.maxSets = 8;
 
 	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create descriptor pool!");

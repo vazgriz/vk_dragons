@@ -66,6 +66,7 @@ private:
 
 	DepthBuffer depth;
 	Texture geometryTarget;
+	Texture fxaaTarget;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -83,6 +84,7 @@ private:
 	VkDescriptorSet skyboxTextureSet;
 	VkDescriptorSet lightDepthSet;
 	VkDescriptorSet geometrySet;
+	VkDescriptorSet fxaaSet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
