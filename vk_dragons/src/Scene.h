@@ -82,6 +82,7 @@ private:
 	VkDescriptorSet planeTextureSet;
 	VkDescriptorSet skyboxTextureSet;
 	VkDescriptorSet lightDepthSet;
+	VkDescriptorSet geometrySet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
@@ -110,6 +111,7 @@ private:
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
 	void RecordBoxBlurPass(VkCommandBuffer commandBuffer);
+	void RecordGeometryPass(VkCommandBuffer commandBuffer);
 	void RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void CreateSampler();
 	void CreateUniformSetLayout();

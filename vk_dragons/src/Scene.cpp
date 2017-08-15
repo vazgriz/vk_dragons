@@ -63,6 +63,21 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	lightDepth.Init(512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
 	boxBlur.Init(lightDepth.GetWidth(), lightDepth.GetHeight(), VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
+	CreateSampler();
+	CreateDescriptorPool();
+	CreateTextureSetLayout();
+	CreateUniformSetLayout();
+	CreateModelTextureSetLayout();
+
+	CreateUniformBuffer();
+	CreateUniformSet();
+	CreateTextureSet(dragonColor.imageView, dragonNormal.imageView, dragonEffects.imageView, dragonTextureSet);
+	CreateTextureSet(suzanneColor.imageView, suzanneNormal.imageView, suzanneEffects.imageView, suzanneTextureSet);
+	CreateTextureSet(planeColor.imageView, planeNormal.imageView, planeEffects.imageView, planeTextureSet);
+	CreateTextureSet(skyboxTextureSet, skyboxColor.imageView);
+	CreateLightDepthSet();
+
+	AllocateTextureSet(geometrySet);
 	createSwapchainResources(width, height);
 
 	CreateLightRenderPass();
@@ -70,19 +85,6 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateBoxBlurRenderPass();
 	CreateBoxBlurFramebuffer();
 	CreateScreenQuadRenderPass();
-
-	CreateSampler();
-	CreateUniformSetLayout();
-	CreateModelTextureSetLayout();
-	CreateTextureSetLayout();
-	CreateUniformBuffer();
-	CreateDescriptorPool();
-	CreateUniformSet();
-	CreateTextureSet(dragonColor.imageView, dragonNormal.imageView, dragonEffects.imageView, dragonTextureSet);
-	CreateTextureSet(suzanneColor.imageView, suzanneNormal.imageView, suzanneEffects.imageView, suzanneTextureSet);
-	CreateTextureSet(planeColor.imageView, planeNormal.imageView, planeEffects.imageView, planeTextureSet);
-	CreateTextureSet(skyboxTextureSet, skyboxColor.imageView);
-	CreateLightDepthSet();
 
 	CreatePipelines();
 
@@ -220,6 +222,7 @@ void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
 	CreateGeometryFramebuffer(width, height);
+	WriteDescriptor(geometrySet, geometryTarget.imageView);
 }
 
 void Scene::AllocateCommandBuffers() {
@@ -251,6 +254,7 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 
 	RecordDepthPass(commandBuffer);
 	RecordBoxBlurPass(commandBuffer);
+	RecordGeometryPass(commandBuffer);
 	RecordMainPass(commandBuffer, imageIndex);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -307,11 +311,11 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	vkCmdEndRenderPass(commandBuffer);
 }
 
-void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = mainRenderPass;
-	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	renderPassInfo.renderPass = geometryRenderPass;
+	renderPassInfo.framebuffer = geometryFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
@@ -344,6 +348,24 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	vkCmdEndRenderPass(commandBuffer);
 }
 
+void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = mainRenderPass;
+	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+
+	VkClearValue clearColor = {};
+	clearColor.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdEndRenderPass(commandBuffer);
+}
+
 void Scene::CreateMainRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = renderer.swapChainImageFormat;
@@ -355,29 +377,14 @@ void Scene::CreateMainRenderPass() {
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = depth.format;
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
 	VkAttachmentReference colorAttachmentRef = {};
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentReference depthAttachmentRef = {};
-	depthAttachmentRef.attachment = 1;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
-	subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -387,11 +394,10 @@ void Scene::CreateMainRenderPass() {
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-	VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 2;
-	renderPassInfo.pAttachments = attachments;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
 	renderPassInfo.dependencyCount = 1;
@@ -409,7 +415,7 @@ void Scene::CreateMainFramebuffers(uint32_t width, uint32_t height) {
 		swapChainFramebuffers[i] = CreateFramebuffer(
 			renderer, mainRenderPass,
 			width, height,
-			std::vector<VkImageView>{ renderer.swapChainImageViews[i], depth.imageView });
+			std::vector<VkImageView>{ renderer.swapChainImageViews[i] });
 	}
 }
 
