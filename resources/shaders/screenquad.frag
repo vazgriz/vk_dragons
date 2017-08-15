@@ -1,21 +1,17 @@
-#version 330
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
 // Input: UV coordinates
-in INTERFACE {
-	vec2 uv;
-} In ;
+layout(location = 0) in vec2 uv;
 
 // Uniforms: the texture, inverse of the screen size, FXAA flag.
-uniform sampler2D screenTexture;
-uniform vec2 inverseScreenSize;
+layout(set = 0, binding = 0) uniform sampler2D screenTexture;
 
 // Output: the fragment color
-out vec3 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 
-void main(){
-	
-	vec3 finalColor = texture(screenTexture,In.uv).rgb;
-	fragColor = finalColor;
-	
+void main(){	
+	vec3 finalColor = texture(screenTexture,uv).rgb;
+	fragColor = vec4(finalColor, 1.0);	
 }
