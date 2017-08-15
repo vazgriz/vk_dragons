@@ -5,7 +5,7 @@
 layout(location = 0) in vec2 uv;
 
 // Uniforms: the texture, inverse of the screen size, FXAA flag.
-layout(location = 0) uniform sampler2D screenTexture;
+layout(set = 0, binding = 0) uniform sampler2D screenTexture;
 
 //Specialization constants. If these aren't set by the application, the default value is (1, 1)
 layout(constant_id = 0) const float inverseScreenSizeX = 1.0;
