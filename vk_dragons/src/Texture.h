@@ -20,7 +20,7 @@ public:
 	uint32_t GetWidth();
 	uint32_t GetHeight();
 
-	VkImage image;
+	Image image;
 	VkImageView imageView;
 	VkFormat format;
 
