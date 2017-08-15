@@ -9,6 +9,10 @@ Texture::Texture(Renderer& renderer) : renderer(renderer) {
 }
 
 Texture::~Texture() {
+	Cleanup();
+}
+
+void Texture::Cleanup() {
 	vkDestroyImage(renderer.device, image, nullptr);
 	vkDestroyImageView(renderer.device, imageView, nullptr);
 }
