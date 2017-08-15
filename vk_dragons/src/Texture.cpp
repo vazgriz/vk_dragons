@@ -13,8 +13,11 @@ Texture::~Texture() {
 }
 
 void Texture::Cleanup() {
-	vkDestroyImage(renderer.device, image, nullptr);
-	vkDestroyImageView(renderer.device, imageView, nullptr);
+	if (image != VK_NULL_HANDLE) {
+		vkDestroyImage(renderer.device, image, nullptr);
+		vkDestroyImageView(renderer.device, imageView, nullptr);
+		image = VK_NULL_HANDLE;
+	}
 }
 
 void Texture::DestroyStaging() {
