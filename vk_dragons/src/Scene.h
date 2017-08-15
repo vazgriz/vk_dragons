@@ -119,7 +119,7 @@ private:
 	void CreateDescriptorPool();
 	void CreateUniformSet();
 	void CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet);
-	void CreateSkyboxSet();
+	void CreateTextureSet(VkDescriptorSet& descriptorSet, VkImageView imageView);
 	void CreateLightDepthSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);

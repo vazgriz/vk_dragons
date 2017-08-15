@@ -81,7 +81,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateTextureSet(dragonColor.imageView, dragonNormal.imageView, dragonEffects.imageView, dragonTextureSet);
 	CreateTextureSet(suzanneColor.imageView, suzanneNormal.imageView, suzanneEffects.imageView, suzanneTextureSet);
 	CreateTextureSet(planeColor.imageView, planeNormal.imageView, planeEffects.imageView, planeTextureSet);
-	CreateSkyboxSet();
+	CreateTextureSet(skyboxTextureSet, skyboxColor.imageView);
 	CreateLightDepthSet();
 
 	CreatePipelines();
@@ -817,7 +817,7 @@ void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkIm
 	vkUpdateDescriptorSets(renderer.device, 6, writes, 0, nullptr);
 }
 
-void Scene::CreateSkyboxSet() {
+void Scene::CreateTextureSet(VkDescriptorSet& descriptorSet, VkImageView imageView) {
 	VkDescriptorSetLayout layouts[] = { textureSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -825,18 +825,18 @@ void Scene::CreateSkyboxSet() {
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = layouts;
 
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &skyboxTextureSet) != VK_SUCCESS) {
+	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to allocate texture set!");
 	}
 
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = skyboxColor.imageView;
+	imageInfo.imageView = imageView;
 	imageInfo.sampler = sampler;
 
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = skyboxTextureSet;
+	descriptorWrite.dstSet = descriptorSet;
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
