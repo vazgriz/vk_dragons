@@ -738,7 +738,7 @@ void Scene::CreateFinalPipeline() {
 	} gamma;
 
 	gamma.enableGamma = !renderer.IsGamma();
-	gamma.gamma = 2.2;
+	gamma.gamma = 2.2f;
 
 	VkSpecializationMapEntry entries[2];
 	entries[0].constantID = 0;
