@@ -640,14 +640,14 @@ void Scene::CreateFinalPipeline() {
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)boxBlur.GetWidth();
-	viewport.height = (float)boxBlur.GetHeight();
+	viewport.width = (float)renderer.swapChainExtent.width;
+	viewport.height = (float)renderer.swapChainExtent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent = { boxBlur.GetWidth() , boxBlur.GetHeight() };
+	scissor.extent = renderer.swapChainExtent;
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -692,7 +692,7 @@ void Scene::CreateFinalPipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = screenQuadPipelineLayout;
-	pipelineInfo.renderPass = screenQuadRenderPass;
+	pipelineInfo.renderPass = mainRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &finalPipeline) != VK_SUCCESS) {
