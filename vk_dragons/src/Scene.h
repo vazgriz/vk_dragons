@@ -96,6 +96,7 @@ private:
 	VkFramebuffer geometryFramebuffer;
 
 	VkRenderPass screenQuadRenderPass;
+	VkFramebuffer fxaaFramebuffer;
 
 	void UploadResources();
 	void UpdateUniform();
@@ -107,6 +108,7 @@ private:
 	void CreateGeometryRenderPass();
 	void CreateGeometryFramebuffer(uint32_t width, uint32_t height);
 	void CreateScreenQuadRenderPass();
+	void CreateFXAAFramebuffer(uint32_t width, uint32_t height);
 	void CreateMainRenderPass();
 	void CreateMainFramebuffers(uint32_t width, uint32_t height);
 	void AllocateCommandBuffers();
@@ -114,6 +116,7 @@ private:
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
 	void RecordBoxBlurPass(VkCommandBuffer commandBuffer);
 	void RecordGeometryPass(VkCommandBuffer commandBuffer);
+	void RecordFXAAPass(VkCommandBuffer commandBuffer);
 	void RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void CreateSampler();
 	void CreateUniformSetLayout();

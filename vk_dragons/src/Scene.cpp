@@ -80,13 +80,13 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	AllocateTextureSet(geometrySet);
 	AllocateTextureSet(fxaaSet);
+	CreateScreenQuadRenderPass();
 	createSwapchainResources(width, height);
 
 	CreateLightRenderPass();
 	CreateLightFramebuffer();
 	CreateBoxBlurRenderPass();
 	CreateBoxBlurFramebuffer();
-	CreateScreenQuadRenderPass();
 
 	CreatePipelines();
 
@@ -121,6 +121,7 @@ void Scene::CleanupSwapchainResources() {
 	vkDestroyRenderPass(renderer.device, mainRenderPass, nullptr);
 	vkDestroyRenderPass(renderer.device, geometryRenderPass, nullptr);
 	vkDestroyFramebuffer(renderer.device, geometryFramebuffer, nullptr);
+	vkDestroyFramebuffer(renderer.device, fxaaFramebuffer, nullptr);
 }
 
 void Scene::UploadResources() {
@@ -226,6 +227,7 @@ void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
 	CreateGeometryFramebuffer(width, height);
+	CreateFXAAFramebuffer(width, height);
 	WriteDescriptor(geometrySet, geometryTarget.imageView);
 	WriteDescriptor(fxaaSet, fxaaTarget.imageView);
 }
@@ -260,6 +262,7 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 	RecordDepthPass(commandBuffer);
 	RecordBoxBlurPass(commandBuffer);
 	RecordGeometryPass(commandBuffer);
+	RecordFXAAPass(commandBuffer);
 	RecordMainPass(commandBuffer, imageIndex);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -353,6 +356,29 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdEndRenderPass(commandBuffer);
 }
 
+void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = screenQuadRenderPass;
+	renderPassInfo.framebuffer = fxaaFramebuffer;
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+
+	VkClearValue clearColor = {};
+	clearColor.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &geometrySet, 0, nullptr);
+
+	quad.Draw(commandBuffer);
+
+	vkCmdEndRenderPass(commandBuffer);
+}
+
 void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -369,7 +395,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &geometrySet, 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &fxaaSet, 0, nullptr);
 
 	quad.Draw(commandBuffer);
 
@@ -538,7 +564,7 @@ void Scene::CreateScreenQuadRenderPass() {
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkAttachmentReference colorAttachmentRef = {};
 	colorAttachmentRef.attachment = 0;
@@ -569,6 +595,10 @@ void Scene::CreateScreenQuadRenderPass() {
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &screenQuadRenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create render pass!");
 	}
+}
+
+void Scene::CreateFXAAFramebuffer(uint32_t width, uint32_t height) {
+	fxaaFramebuffer = CreateFramebuffer(renderer, screenQuadRenderPass, width, height, std::vector<VkImageView>{ fxaaTarget.imageView });
 }
 
 void Scene::CreateMainRenderPass() {

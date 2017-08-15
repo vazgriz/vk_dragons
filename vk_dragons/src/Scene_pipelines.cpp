@@ -10,6 +10,7 @@ void Scene::CreatePipelines() {
 	CreateLightPipeline();
 	CreateScreenQuadPipelineLayout();
 	CreateBoxBlurPipeline();
+	CreateFXAAPipeline();
 	CreateFinalPipeline();
 }
 
@@ -23,6 +24,7 @@ void Scene::DestroyPipelines() {
 	vkDestroyPipeline(renderer.device, lightPipeline, nullptr);
 	vkDestroyPipelineLayout(renderer.device, screenQuadPipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, boxBlurPipeline, nullptr);
+	vkDestroyPipeline(renderer.device, fxaaPipeline, nullptr);
 	vkDestroyPipeline(renderer.device, finalPipeline, nullptr);
 }
 
@@ -614,11 +616,28 @@ void Scene::CreateFXAAPipeline() {
 	vertShaderStageInfo.module = vert;
 	vertShaderStageInfo.pName = "main";
 
+	float specializationData[2] = { 1.0f / renderer.swapChainExtent.width, 1.0f / renderer.swapChainExtent.height };
+
+	VkSpecializationMapEntry entries[2];
+	entries[0].constantID = 0;
+	entries[0].offset = 0;
+	entries[0].size = sizeof(float);
+	entries[1].constantID = 1;
+	entries[1].offset = sizeof(float);
+	entries[1].size = sizeof(float);
+
+	VkSpecializationInfo specialization = {};
+	specialization.dataSize = sizeof(specializationData);
+	specialization.pData = &specializationData;
+	specialization.mapEntryCount = 2;
+	specialization.pMapEntries = entries;
+
 	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
 	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fragShaderStageInfo.module = frag;
 	fragShaderStageInfo.pName = "main";
+	fragShaderStageInfo.pSpecializationInfo = &specialization;	//use specialization constants
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
@@ -692,7 +711,7 @@ void Scene::CreateFXAAPipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = screenQuadPipelineLayout;
-	pipelineInfo.renderPass = mainRenderPass;
+	pipelineInfo.renderPass = screenQuadRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &fxaaPipeline) != VK_SUCCESS) {
