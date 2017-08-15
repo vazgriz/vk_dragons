@@ -11,4 +11,5 @@
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V boxblur.frag -o boxblur.frag.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V screenquad.vert -o screenquad.vert.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V fxaa.frag -o fxaa.frag.spv
+%VK_SDK_PATH%/Bin32/glslangValidator.exe -V final_screenquad.frag -o final_screenquad.frag.spv
 pause
