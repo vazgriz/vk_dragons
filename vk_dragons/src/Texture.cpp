@@ -13,8 +13,8 @@ Texture::~Texture() {
 }
 
 void Texture::Cleanup() {
-	renderer.memory->GetDeviceAllocator(image.type).Pop();
 	if (image.image != VK_NULL_HANDLE) {
+		renderer.memory->GetDeviceAllocator(image.type).Pop();
 		vkDestroyImage(renderer.device, image.image, nullptr);
 		vkDestroyImageView(renderer.device, imageView, nullptr);
 		image.image = VK_NULL_HANDLE;
