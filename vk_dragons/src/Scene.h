@@ -114,7 +114,7 @@ private:
 	void CreateSampler();
 	void CreateUniformSetLayout();
 	void CreateModelTextureSetLayout();
-	void CreateSkyboxSetLayout();
+	void CreateTextureSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();

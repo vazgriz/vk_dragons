@@ -74,7 +74,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateSampler();
 	CreateUniformSetLayout();
 	CreateModelTextureSetLayout();
-	CreateSkyboxSetLayout();
+	CreateTextureSetLayout();
 	CreateUniformBuffer();
 	CreateDescriptorPool();
 	CreateUniformSet();
@@ -679,7 +679,7 @@ void Scene::CreateModelTextureSetLayout() {
 	}
 }
 
-void Scene::CreateSkyboxSetLayout() {
+void Scene::CreateTextureSetLayout() {
 	VkDescriptorSetLayoutBinding textureLayoutBinding = {};
 	textureLayoutBinding.binding = 0;
 	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
