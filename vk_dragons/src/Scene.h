@@ -121,6 +121,7 @@ private:
 	void CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet);
 	void CreateTextureSet(VkDescriptorSet& descriptorSet, VkImageView imageView);
 	void CreateLightDepthSet();
+	void WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView);
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
