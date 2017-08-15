@@ -5,7 +5,7 @@
 layout(location = 0) in vec3 v;
 
 // Output: UV coordinates
-layout(location = 0) vec2 uv;
+layout(location = 0) out vec2 uv;
 
 void main(){	
 	// We directly output the position.
