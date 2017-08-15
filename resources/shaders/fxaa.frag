@@ -7,8 +7,9 @@ layout(location = 0) in vec2 uv;
 // Uniforms: the texture, inverse of the screen size, FXAA flag.
 layout(location = 0) uniform sampler2D screenTexture;
 
-//Specialization constant. If this isn't set by the application, the default value is (1, 1)
-layout(constant_id = 0) const vec2 inverseScreenSize = vec2(1.0);
+//Specialization constants. If these aren't set by the application, the default value is (1, 1)
+layout(constant_id = 0) const float inverseScreenSizeX = 1.0;
+layout(constant_id = 1) const float inverseScreenSizeY = 1.0;
 
 // Settings for FXAA.
 #define EDGE_THRESHOLD_MIN 0.0312
@@ -74,7 +75,7 @@ void main(){
 	bool isHorizontal = (edgeHorizontal >= edgeVertical);
 	
 	// Choose the step size (one pixel) accordingly.
-	float stepLength = isHorizontal ? inverseScreenSize.y : inverseScreenSize.x;
+	float stepLength = isHorizontal ? inverseScreenSizeY : inverseScreenSizeX;
 	
 	// Select the two neighboring texels lumas in the opposite direction to the local edge.
 	float luma1 = isHorizontal ? lumaDown : lumaLeft;
@@ -108,7 +109,7 @@ void main(){
 	}
 	
 	// Compute offset (for each iteration step) in the right direction.
-	vec2 offset = isHorizontal ? vec2(inverseScreenSize.x,0.0) : vec2(0.0,inverseScreenSize.y);
+	vec2 offset = isHorizontal ? vec2(inverseScreenSizeX,0.0) : vec2(0.0,inverseScreenSizeY);
 	// Compute UVs to explore on each side of the edge, orthogonally. The QUALITY allows us to step faster.
 	vec2 uv1 = currentUv - offset * QUALITY(0);
 	vec2 uv2 = currentUv + offset * QUALITY(0);
