@@ -27,10 +27,16 @@ void Texture::DestroyStaging() {
 	}
 }
 
-void Texture::Init(const std::string& filename) {
+void Texture::Init(const std::string& filename, bool gammaSpace) {
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
-	format = VK_FORMAT_R8G8B8A8_UNORM;
+
+	if (gammaSpace) {
+		format = VK_FORMAT_R8G8B8A8_SRGB;
+	}
+	else {
+		format = VK_FORMAT_R8G8B8A8_UNORM;
+	}
 
 	image = CreateImage(renderer,
 		format,
@@ -41,7 +47,7 @@ void Texture::Init(const std::string& filename) {
 	imageView = CreateImageView(renderer.device, image.image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
 }
 
-void Texture::InitCubemap(const std::string& filenameRoot) {
+void Texture::InitCubemap(const std::string& filenameRoot, bool gammaSpace) {
 	//to create a cubemap, there must 6 layers in an image
 	//the layers correspond to +X, -X, +Y, -Y, +Z, -Z
 	//Vulkan uses Y-down convention, so +Y corresponds to down
@@ -56,7 +62,12 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 
 	LoadImages(filenames);
 	CalulateMipChain();
-	format = VK_FORMAT_R8G8B8A8_UNORM;
+
+	if (gammaSpace) {
+		format = VK_FORMAT_R8G8B8A8_SRGB;
+	} else {
+		format = VK_FORMAT_R8G8B8A8_UNORM;
+	}
 
 	image = CreateImage(renderer,
 		format,

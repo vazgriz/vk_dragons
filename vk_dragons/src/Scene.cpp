@@ -44,20 +44,20 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane.GetTransform().SetScale(glm::vec3(2.0f));
 	plane.GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
-	dragonColor.Init("resources/dragon_texture_color.png");
+	dragonColor.Init("resources/dragon_texture_color.png", true);
 	dragonNormal.Init("resources/dragon_texture_normal.png");
 	dragonEffects.Init("resources/dragon_texture_ao_specular_reflection.png");
 
-	suzanneColor.Init("resources/suzanne_texture_color.png");
+	suzanneColor.Init("resources/suzanne_texture_color.png", true);
 	suzanneNormal.Init("resources/suzanne_texture_normal.png");
 	suzanneEffects.Init("resources/suzanne_texture_ao_specular_reflection.png");
 
-	planeColor.Init("resources/plane_texture_color.png");
+	planeColor.Init("resources/plane_texture_color.png", true);
 	planeNormal.Init("resources/plane_texture_normal.png");
 	planeEffects.Init("resources/plane_texture_depthmap.png");
 
-	skyboxColor.InitCubemap("resources/cubemap/cubemap");
-	skyboxSmallColor.InitCubemap("resources/cubemap/cubemap_diff");
+	skyboxColor.InitCubemap("resources/cubemap/cubemap", true);
+	skyboxSmallColor.InitCubemap("resources/cubemap/cubemap_diff", true);
 
 	UploadResources();
 

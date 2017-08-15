@@ -10,8 +10,8 @@ public:
 	Texture(Renderer& renderer);
 	~Texture();
 
-	void Init(const std::string& filename);
-	void InitCubemap(const std::string& filenameRoot);
+	void Init(const std::string& filename, bool gammaSpace = false);
+	void InitCubemap(const std::string& filenameRoot, bool gammaSpace = false);
 	void Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
 	void Cleanup();
 	void UploadData(VkCommandBuffer commandBuffer);
