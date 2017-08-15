@@ -139,6 +139,7 @@ private:
 	VkPipeline skyboxPipeline;
 	VkPipeline lightPipeline;
 	VkPipeline boxBlurPipeline;
+	VkPipeline fxaaPipeline;
 	VkPipeline finalPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
@@ -151,6 +152,7 @@ private:
 	void CreateLightPipeline();
 	void CreateScreenQuadPipelineLayout();
 	void CreateBoxBlurPipeline();
+	void CreateFXAAPipeline();
 	void CreateFinalPipeline();
 };
 
