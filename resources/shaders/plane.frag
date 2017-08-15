@@ -13,19 +13,18 @@ layout(location = 9) in vec3 IntangentSpaceLight;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
-    mat4 camProjection;
-    mat4 camView;
-    mat4 rotationOnlyView;
-    mat4 camViewInverse;
-    mat4 lightProjection;
-    mat4 lightView;
+	mat4 camProjection;
+	mat4 camView;
+	mat4 rotationOnlyView;
+	mat4 camViewInverse;
+	mat4 lightProjection;
+	mat4 lightView;
 	vec4 lightPosition;
 	vec4 lightIa;
 	vec4 lightId;
 	vec4 lightIs;
 	float lightShininess;
 } uniforms;
-
 
 layout(set = 1, binding = 0) uniform sampler2D textureColor;
 layout(set = 1, binding = 1) uniform sampler2D textureNormal;
@@ -45,7 +44,6 @@ layout(location = 0) out vec4 fragColor;
 float random(vec4 p){
 	return fract(sin(dot(p, vec4(12.9898,78.233,45.164,94.673))) * 43758.5453);
 }
-
 
 // Compute the light shading.
 
@@ -89,12 +87,12 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 float shadow(vec3 lightSpacePosition){
 	float probabilityMax = 1.0;
 	if (lightSpacePosition.z < 1.0
-        && lightSpacePosition.x >= 0.0 && lightSpacePosition.x <= 1.0
-        && lightSpacePosition.y >= 0.0 && lightSpacePosition.y <= 1.0){
-        
+		&& lightSpacePosition.x >= 0.0 && lightSpacePosition.x <= 1.0
+		&& lightSpacePosition.y >= 0.0 && lightSpacePosition.y <= 1.0){
+		
 		// Read first and second moment from shadow map.
 		vec2 moments = texture(shadowMap, lightSpacePosition.xy).rg;
-        
+		
 		// Initial probability of light.
 		float probability = float(lightSpacePosition.z <= moments.x);
 		// Compute variance.
@@ -110,7 +108,6 @@ float shadow(vec3 lightSpacePosition){
 	}
 	return probabilityMax;
 }
-
 
 // Compute the new UV coordinates for the parallax mapping effect.
 
@@ -150,8 +147,7 @@ vec2 parallax(vec2 uv, vec3 vTangentDir){
 	return mix(newUV,previousNewUV,currentLocalDepth / (currentLocalDepth - previousLocalDepth));
 }
 
-float parallaxShadow(vec2 uv, vec3 lTangentDir){
-	
+float parallaxShadow(vec2 uv, vec3 lTangentDir){	
 	float shadowMultiplier = 0.0;
 	// Query the depth at the current shifted UV.
 	float initialDepth = texture(textureEffects,uv).z;
@@ -198,10 +194,8 @@ float parallaxShadow(vec2 uv, vec3 lTangentDir){
 	return 1.0 - shadowMultiplier;
 }
 
-
-void main(){
-	
-	// Combien view direction in tangent space.
+void main(){	
+	// Combine view direction in tangent space.
 	vec3 vTangentDir = normalize(IntangentSpaceView - IntangentSpacePosition);
 	// Query UV offset.
 	vec2 parallaxUV = parallax(Inuv, vTangentDir);
@@ -223,6 +217,5 @@ void main(){
 	shadowMultiplicator *= shadowParallax;
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
-	fragColor = vec4(ambient * uniforms.lightIa.rgb + shadowMultiplicator * lightShading, 0.0);
-	
+	fragColor = vec4(ambient * uniforms.lightIa.rgb + shadowMultiplicator * lightShading, 0.0);	
 }

@@ -9,17 +9,17 @@ layout(location = 3) in vec3 binor;
 layout(location = 4) in vec2 uv;
 
 layout(set = 0, binding = 0) uniform Uniforms {
-    mat4 camProjection;
-    mat4 camView;
-    mat4 rotationOnlyView;
-    mat4 camViewInverse;
-    mat4 lightProjection;
-    mat4 lightView;
+	mat4 camProjection;
+	mat4 camView;
+	mat4 rotationOnlyView;
+	mat4 camViewInverse;
+	mat4 lightProjection;
+	mat4 lightView;
 } uniforms;
 
 layout(push_constant) uniform Model {
-    mat4 matrix;
-    mat3 normalMatrix;
+	mat4 matrix;
+	mat3 normalMatrix;
 } model;
 
 // Output: tangent space matrix, position in view space and uv.
@@ -44,10 +44,9 @@ void main(){
 	Outtbn = mat3(T, B, N);
 	
 	// Compute position in light space
-    vec4 lightPosition = uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0);
+	vec4 lightPosition = uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0);
 	OutlightSpacePosition.xy = 0.5 * lightPosition.xy + 0.5;
-    OutlightSpacePosition.z = lightPosition.z;
+	OutlightSpacePosition.z = lightPosition.z;
 	
-	OutmodelPosition = v;
-	
+	OutmodelPosition = v;	
 }

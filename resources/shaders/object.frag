@@ -10,12 +10,12 @@ layout(location = 6) in vec3 InmodelPosition;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
-    mat4 camProjection;
-    mat4 camView;
-    mat4 rotationOnlyView;
-    mat4 camViewInverse;
-    mat4 lightProjection;
-    mat4 lightView;
+	mat4 camProjection;
+	mat4 camView;
+	mat4 rotationOnlyView;
+	mat4 camViewInverse;
+	mat4 lightProjection;
+	mat4 lightView;
 	vec4 lightPosition;
 	vec4 lightIa;
 	vec4 lightId;
@@ -38,7 +38,6 @@ layout(location = 0) out vec4 fragColor;
 float random(vec4 p){
 	return fract(sin(dot(p, vec4(12.9898,78.233,45.164,94.673))) * 43758.5453);
 }
-
 
 void main(){
 	// Compute the normal at the fragment using the tangent space matrix and the normal read in the normal map.
@@ -88,7 +87,7 @@ void main(){
 	if (InlightSpacePosition.z < 1.0){
 		// Read first and second moment from shadow map.
 		vec2 moments = texture(shadowMap, InlightSpacePosition.xy).rg;
-        
+		
 		// Initial probability of light.
 		float probability = float(InlightSpacePosition.z <= moments.x);
 		// Compute variance.
@@ -106,6 +105,5 @@ void main(){
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
 	vec3 fColor = ambient * uniforms.lightIa.rgb + shadow * lightShading;
 	// Mix with the reflexion color.
-	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);
-	
+	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);	
 }

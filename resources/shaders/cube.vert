@@ -6,9 +6,9 @@ layout(location = 0) in vec3 v;
 
 // Uniform: the camera matrix
 layout(set = 0, binding = 0) uniform Camera {
-    mat4 projection;
-    mat4 view;
-    mat4 rotationOnlyView;
+	mat4 projection;
+	mat4 view;
+	mat4 rotationOnlyView;
 } camera;
 
 // Output: position in model space
