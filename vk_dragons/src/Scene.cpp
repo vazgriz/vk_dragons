@@ -298,7 +298,7 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipelineLayout, 0, 1, &lightDepthSet, 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &lightDepthSet, 0, nullptr);
 
 	quad.Draw(commandBuffer);
 

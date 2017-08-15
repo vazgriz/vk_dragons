@@ -126,7 +126,7 @@ private:
 	VkPipelineLayout modelPipelineLayout;
 	VkPipelineLayout skyboxPipelineLayout;
 	VkPipelineLayout lightPipelineLayout;
-	VkPipelineLayout boxBlurPipelineLayout;
+	VkPipelineLayout screenQuadPipelineLayout;
 	VkPipeline modelPipeline;
 	VkPipeline planePipeline;
 	VkPipeline skyboxPipeline;
@@ -141,7 +141,7 @@ private:
 	void CreateSkyboxPipeline();
 	void CreateLightPipelineLayout();
 	void CreateLightPipeline();
-	void CreateBoxBlurPipelineLayout();
+	void CreateScreenQuadPipelineLayout();
 	void CreateBoxBlurPipeline();
 };
 

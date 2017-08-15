@@ -8,7 +8,7 @@ void Scene::CreatePipelines() {
 	CreateSkyboxPipeline();
 	CreateLightPipelineLayout();
 	CreateLightPipeline();
-	CreateBoxBlurPipelineLayout();
+	CreateScreenQuadPipelineLayout();
 	CreateBoxBlurPipeline();
 }
 
@@ -20,7 +20,7 @@ void Scene::DestroyPipelines() {
 	vkDestroyPipeline(renderer.device, skyboxPipeline, nullptr);
 	vkDestroyPipelineLayout(renderer.device, lightPipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, lightPipeline, nullptr);
-	vkDestroyPipelineLayout(renderer.device, boxBlurPipelineLayout, nullptr);
+	vkDestroyPipelineLayout(renderer.device, screenQuadPipelineLayout, nullptr);
 	vkDestroyPipeline(renderer.device, boxBlurPipeline, nullptr);
 }
 
@@ -491,14 +491,14 @@ void Scene::CreateLightPipeline() {
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
 }
 
-void Scene::CreateBoxBlurPipelineLayout() {
+void Scene::CreateScreenQuadPipelineLayout() {
 	VkDescriptorSetLayout setLayouts[] = { textureSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
-	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &boxBlurPipelineLayout) != VK_SUCCESS) {
+	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &screenQuadPipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create pipeline layout!");
 	}
 }
@@ -590,7 +590,7 @@ void Scene::CreateBoxBlurPipeline() {
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.layout = boxBlurPipelineLayout;
+	pipelineInfo.layout = screenQuadPipelineLayout;
 	pipelineInfo.renderPass = boxBlurRenderPass;
 	pipelineInfo.subpass = 0;
 
