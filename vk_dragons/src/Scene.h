@@ -92,6 +92,8 @@ private:
 	VkRenderPass geometryRenderPass;
 	VkFramebuffer geometryFramebuffer;
 
+	VkRenderPass screenQuadRenderPass;
+
 	void UploadResources();
 	void UpdateUniform();
 
@@ -101,6 +103,7 @@ private:
 	void CreateBoxBlurFramebuffer();
 	void CreateGeometryRenderPass();
 	void CreateGeometryFramebuffer(uint32_t width, uint32_t height);
+	void CreateScreenQuadRenderPass();
 	void CreateMainRenderPass();
 	void CreateMainFramebuffers(uint32_t width, uint32_t height);
 	void AllocateCommandBuffers();
