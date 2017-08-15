@@ -732,11 +732,34 @@ void Scene::CreateFinalPipeline() {
 	vertShaderStageInfo.module = vert;
 	vertShaderStageInfo.pName = "main";
 
+	struct Gamma {
+		uint32_t enableGamma;	//glsl bool is 32 bits
+		float gamma;
+	} gamma;
+
+	gamma.enableGamma = !renderer.IsGamma();
+	gamma.gamma = 2.2;
+
+	VkSpecializationMapEntry entries[2];
+	entries[0].constantID = 0;
+	entries[0].offset = 0;
+	entries[0].size = sizeof(uint32_t);
+	entries[1].constantID = 1;
+	entries[1].offset = sizeof(uint32_t);
+	entries[1].size = sizeof(float);
+
+	VkSpecializationInfo specialization = {};
+	specialization.dataSize = sizeof(Gamma);
+	specialization.pData = &gamma;
+	specialization.mapEntryCount = 2;
+	specialization.pMapEntries = entries;
+
 	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
 	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	fragShaderStageInfo.module = frag;
 	fragShaderStageInfo.pName = "main";
+	fragShaderStageInfo.pSpecializationInfo = &specialization;
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
