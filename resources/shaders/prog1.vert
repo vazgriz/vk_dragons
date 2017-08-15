@@ -22,7 +22,7 @@ layout(push_constant) uniform Model {
 } model;
 
 // Output: UV coordinates (for interpolation)
-out vec2 uv; 
+layout(location = 0) out vec2 uv; 
 
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.
