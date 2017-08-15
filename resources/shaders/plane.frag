@@ -88,7 +88,10 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 
 float shadow(vec3 lightSpacePosition){
 	float probabilityMax = 1.0;
-	if (lightSpacePosition.z < 1.0){
+	if (lightSpacePosition.z < 1.0
+        && lightSpacePosition.x >= 0.0 && lightSpacePosition.x <= 1.0
+        && lightSpacePosition.y >= 0.0 && lightSpacePosition.y <= 1.0){
+        
 		// Read first and second moment from shadow map.
 		vec2 moments = texture(shadowMap, lightSpacePosition.xy).rg;
         
