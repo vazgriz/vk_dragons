@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // Input: UV coordinates coming from the vertex shader
-in vec2 uv; 
+layout(location = 0) in vec2 uv; 
 
 // Uniform: texture sampler
 layout(set = 1, binding = 0) uniform sampler2D texture1;

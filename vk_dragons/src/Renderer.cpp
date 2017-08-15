@@ -95,6 +95,10 @@ uint32_t Renderer::GetHeight() {
 	return height;
 }
 
+bool Renderer::IsGamma() {
+	return gamma;
+}
+
 void Renderer::recreateSwapChain() {
 	createSwapChain();
 	createImageViews();
@@ -379,16 +383,41 @@ SwapChainSupportDetails Renderer::querySwapChainSupport(VkPhysicalDevice device)
 
 VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
 	if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED) {
-		return { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+		//surface has no requirements, so just select an sRGB format
+		gamma = true;
+		return { VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
 	}
 
+	//search for sRGB formats, set gamma to true
+	VkSurfaceFormatKHR bestFormat = { VK_FORMAT_UNDEFINED };
 	for (const auto& availableFormat : availableFormats) {
-		if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+		if ((availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB || availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+			gamma = true;
 			return availableFormat;
+		}
+		else if ((availableFormat.format == VK_FORMAT_R8G8B8_SRGB || availableFormat.format == VK_FORMAT_B8G8R8_SRGB) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+			gamma = true;
+			bestFormat = availableFormat;
 		}
 	}
 
-	return availableFormats[0];
+	if (bestFormat.format != VK_FORMAT_UNDEFINED) return bestFormat;
+
+	//search for linear formats, set gamma to false
+	for (const auto& availableFormat : availableFormats) {
+		if ((availableFormat.format == VK_FORMAT_R8G8B8A8_UNORM || availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+			gamma = false;
+			return availableFormat;
+		}
+		else if ((availableFormat.format == VK_FORMAT_R8G8B8_UNORM || availableFormat.format == VK_FORMAT_B8G8R8_UNORM) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+			gamma = false;
+			bestFormat = availableFormat;
+		}
+	}
+
+	if (bestFormat.format != VK_FORMAT_UNDEFINED) return bestFormat;
+
+	throw std::runtime_error("Could not find suitable surface format");
 }
 
 VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
@@ -429,7 +458,13 @@ void Renderer::createSwapChain() {
 	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
 	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
-	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+	uint32_t imageCount;
+	if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+		imageCount = 3;
+	} else {
+		imageCount = 2;
+	}
+
 	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
 		imageCount = swapChainSupport.capabilities.maxImageCount;
 	}

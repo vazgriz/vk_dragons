@@ -8,21 +8,21 @@ layout(location = 4) in vec2 t;
 
 // Uniform: the camera matrix
 layout(set = 0, binding = 0) uniform Uniforms {
-    mat4 camProjection;
-    mat4 camView;
-    mat4 rotationOnlyView;
-    mat4 camViewInverse;
-    mat4 lightProjection;
-    mat4 lightView;
+	mat4 camProjection;
+	mat4 camView;
+	mat4 rotationOnlyView;
+	mat4 camViewInverse;
+	mat4 lightProjection;
+	mat4 lightView;
 } uniforms;
 
 layout(push_constant) uniform Model {
-    mat4 matrix;
-    mat3 normalMatrix;
+	mat4 matrix;
+	mat3 normalMatrix;
 } model;
 
 // Output: UV coordinates (for interpolation)
-out vec2 uv; 
+layout(location = 0) out vec2 uv; 
 
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.

@@ -9,8 +9,16 @@ Texture::Texture(Renderer& renderer) : renderer(renderer) {
 }
 
 Texture::~Texture() {
-	vkDestroyImage(renderer.device, image, nullptr);
-	vkDestroyImageView(renderer.device, imageView, nullptr);
+	Cleanup();
+}
+
+void Texture::Cleanup() {
+	if (image.image != VK_NULL_HANDLE) {
+		renderer.memory->GetDeviceAllocator(image.type).Pop();
+		vkDestroyImage(renderer.device, image.image, nullptr);
+		vkDestroyImageView(renderer.device, imageView, nullptr);
+		image.image = VK_NULL_HANDLE;
+	}
 }
 
 void Texture::DestroyStaging() {
@@ -19,21 +27,27 @@ void Texture::DestroyStaging() {
 	}
 }
 
-void Texture::Init(const std::string& filename) {
+void Texture::Init(const std::string& filename, bool gammaSpace) {
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();
-	format = VK_FORMAT_R8G8B8A8_UNORM;
+
+	if (gammaSpace) {
+		format = VK_FORMAT_R8G8B8A8_SRGB;
+	}
+	else {
+		format = VK_FORMAT_R8G8B8A8_UNORM;
+	}
 
 	image = CreateImage(renderer,
 		format,
 		width, height,
 		mipLevels, arrayLayers,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		0).image;
-	imageView = CreateImageView(renderer.device, image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
+		0);
+	imageView = CreateImageView(renderer.device, image.image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
 }
 
-void Texture::InitCubemap(const std::string& filenameRoot) {
+void Texture::InitCubemap(const std::string& filenameRoot, bool gammaSpace) {
 	//to create a cubemap, there must 6 layers in an image
 	//the layers correspond to +X, -X, +Y, -Y, +Z, -Z
 	//Vulkan uses Y-down convention, so +Y corresponds to down
@@ -48,15 +62,20 @@ void Texture::InitCubemap(const std::string& filenameRoot) {
 
 	LoadImages(filenames);
 	CalulateMipChain();
-	format = VK_FORMAT_R8G8B8A8_UNORM;
+
+	if (gammaSpace) {
+		format = VK_FORMAT_R8G8B8A8_SRGB;
+	} else {
+		format = VK_FORMAT_R8G8B8A8_UNORM;
+	}
 
 	image = CreateImage(renderer,
 		format,
 		width, height,
 		mipLevels, arrayLayers,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT).image;
-	imageView = CreateImageView(renderer.device, image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, arrayLayers);
+		VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+	imageView = CreateImageView(renderer.device, image.image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_CUBE, mipLevels, arrayLayers);
 }
 
 void Texture::Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage) {
@@ -70,8 +89,8 @@ void Texture::Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsag
 		format,
 		width, height,
 		mipLevels, arrayLayers,
-		usage, 0).image;
-	imageView = CreateImageView(renderer.device, image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
+		usage, 0);
+	imageView = CreateImageView(renderer.device, image.image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
 }
 
 void Texture::LoadImages(std::vector<std::string>& filenames) {
@@ -100,7 +119,7 @@ uint32_t Texture::GetHeight() {
 }
 
 void Texture::UploadData(VkCommandBuffer commandBuffer) {
-	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
+	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
 
 	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
@@ -123,12 +142,12 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 			1
 		};
 
-		vkCmdCopyBufferToImage(commandBuffer, stagingBuffers[i].buffer, image, VK_IMAGE_LAYOUT_GENERAL, 1, &copy);
+		vkCmdCopyBufferToImage(commandBuffer, stagingBuffers[i].buffer, image.image, VK_IMAGE_LAYOUT_GENERAL, 1, &copy);
 	}
 
 	GenerateMipChain(commandBuffer);
 
-	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels, arrayLayers);
+	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mipLevels, arrayLayers);
 }
 
 void Texture::CalulateMipChain() {
@@ -173,8 +192,8 @@ void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
 			blit.dstOffsets[1] = { dstW, dstH, 1 };
 
 			vkCmdBlitImage(commandBuffer,
-				image, VK_IMAGE_LAYOUT_GENERAL,
-				image, VK_IMAGE_LAYOUT_GENERAL,
+				image.image, VK_IMAGE_LAYOUT_GENERAL,
+				image.image, VK_IMAGE_LAYOUT_GENERAL,
 				1, &blit,
 				VK_FILTER_LINEAR
 			);

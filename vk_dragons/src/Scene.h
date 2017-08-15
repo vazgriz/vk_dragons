@@ -65,6 +65,8 @@ private:
 	Texture boxBlur;
 
 	DepthBuffer depth;
+	Texture geometryTarget;
+	Texture fxaaTarget;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -81,6 +83,8 @@ private:
 	VkDescriptorSet planeTextureSet;
 	VkDescriptorSet skyboxTextureSet;
 	VkDescriptorSet lightDepthSet;
+	VkDescriptorSet geometrySet;
+	VkDescriptorSet fxaaSet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
@@ -88,30 +92,44 @@ private:
 	VkRenderPass boxBlurRenderPass;
 	VkFramebuffer boxBlurFramebuffer;
 
+	VkRenderPass geometryRenderPass;
+	VkFramebuffer geometryFramebuffer;
+
+	VkRenderPass screenQuadRenderPass;
+	VkFramebuffer fxaaFramebuffer;
+
 	void UploadResources();
 	void UpdateUniform();
 
-	void createRenderPass();
-	void createFramebuffers();
 	void CreateLightRenderPass();
 	void CreateLightFramebuffer();
 	void CreateBoxBlurRenderPass();
 	void CreateBoxBlurFramebuffer();
+	void CreateGeometryRenderPass();
+	void CreateGeometryFramebuffer(uint32_t width, uint32_t height);
+	void CreateScreenQuadRenderPass();
+	void CreateFXAAFramebuffer(uint32_t width, uint32_t height);
+	void CreateMainRenderPass();
+	void CreateMainFramebuffers(uint32_t width, uint32_t height);
 	void AllocateCommandBuffers();
 	void RecordCommandBuffer(uint32_t imageIndex);
 	void RecordDepthPass(VkCommandBuffer commandBuffer);
 	void RecordBoxBlurPass(VkCommandBuffer commandBuffer);
+	void RecordGeometryPass(VkCommandBuffer commandBuffer);
+	void RecordFXAAPass(VkCommandBuffer commandBuffer);
 	void RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void CreateSampler();
 	void CreateUniformSetLayout();
 	void CreateModelTextureSetLayout();
-	void CreateSkyboxSetLayout();
+	void CreateTextureSetLayout();
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
 	void CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet);
-	void CreateSkyboxSet();
+	void CreateTextureSet(VkDescriptorSet& descriptorSet, VkImageView imageView);
 	void CreateLightDepthSet();
+	void AllocateTextureSet(VkDescriptorSet& descriptorSet);
+	void WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView);
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
@@ -120,12 +138,14 @@ private:
 	VkPipelineLayout modelPipelineLayout;
 	VkPipelineLayout skyboxPipelineLayout;
 	VkPipelineLayout lightPipelineLayout;
-	VkPipelineLayout boxBlurPipelineLayout;
+	VkPipelineLayout screenQuadPipelineLayout;
 	VkPipeline modelPipeline;
 	VkPipeline planePipeline;
 	VkPipeline skyboxPipeline;
 	VkPipeline lightPipeline;
 	VkPipeline boxBlurPipeline;
+	VkPipeline fxaaPipeline;
+	VkPipeline finalPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
 	void CreateModelPipelineLayout();
@@ -135,7 +155,9 @@ private:
 	void CreateSkyboxPipeline();
 	void CreateLightPipelineLayout();
 	void CreateLightPipeline();
-	void CreateBoxBlurPipelineLayout();
+	void CreateScreenQuadPipelineLayout();
 	void CreateBoxBlurPipeline();
+	void CreateFXAAPipeline();
+	void CreateFinalPipeline();
 };
 
