@@ -4,7 +4,6 @@
 #include "Texture.h"
 #include "Camera.h"
 #include "Input.h"
-#include "DepthBuffer.h"
 #include "Skybox.h"
 #include "Light.h"
 #include "ScreenQuad.h"
@@ -61,10 +60,10 @@ private:
 	Texture skyboxColor;
 	Texture skyboxSmallColor;
 
-	DepthBuffer lightDepth;
+	Texture lightDepth;
 	Texture boxBlur;
 
-	DepthBuffer depth;
+	Texture depth;
 	Texture geometryTarget;
 	Texture fxaaTarget;
 

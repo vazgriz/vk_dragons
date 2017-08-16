@@ -13,6 +13,7 @@ public:
 	void Init(const std::string& filename, bool gammaSpace = false);
 	void InitCubemap(const std::string& filenameRoot, bool gammaSpace = false);
 	void Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
+	void InitDepth(uint32_t width, uint32_t height, VkImageUsageFlags flags);
 	void Cleanup();
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
@@ -37,4 +38,6 @@ private:
 	void LoadImages(std::vector<std::string>& filenames);
 	void CalulateMipChain();
 	void GenerateMipChain(VkCommandBuffer commandBuffer);
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkFormatFeatureFlags features);
+	VkFormat findDepthFormat();
 };
