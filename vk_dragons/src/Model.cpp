@@ -20,6 +20,12 @@ void Model::DestroyStaging() {
 	vkDestroyBuffer(renderer.device, binormalsStagingBuffer.buffer, nullptr);
 	vkDestroyBuffer(renderer.device, texcoordsStagingBuffer.buffer, nullptr);
 	vkDestroyBuffer(renderer.device, indicesStagingBuffer.buffer, nullptr);
+	mesh.positions = {};
+	mesh.normals = {};
+	mesh.tangents = {};
+	mesh.binormals = {};
+	mesh.texcoords = {};
+	mesh.indices = {};
 }
 
 void Model::Init(const std::string& fileName) {
