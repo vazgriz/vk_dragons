@@ -67,10 +67,6 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	lightDepth = std::make_unique<Texture>(renderer, Depth, 512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
 	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 
-	depth = std::make_unique<Texture>(renderer);
-	geometryTarget = std::make_unique<Texture>(renderer);
-	fxaaTarget = std::make_unique<Texture>(renderer);
-
 	CreateUniformBuffer();
 	CreateUniformSet();
 	CreateLightDepthSet();
@@ -113,9 +109,9 @@ Scene::~Scene() {
 }
 
 void Scene::CleanupSwapchainResources() {
-	depth->Cleanup();
-	geometryTarget->Cleanup();
-	fxaaTarget->Cleanup();
+	depth.reset();
+	geometryTarget.reset();
+	fxaaTarget.reset();
 	for (auto& framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(renderer.device, framebuffer, nullptr);
 	}
@@ -200,9 +196,9 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 }
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
-	depth->InitDepth(width, height, 0);
-	geometryTarget->Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	fxaaTarget->Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	depth = std::make_unique<Texture>(renderer, Depth, width, height, 0);
+	geometryTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
+	fxaaTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
 	CreateMainRenderPass();
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
