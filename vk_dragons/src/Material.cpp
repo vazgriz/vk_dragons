@@ -36,6 +36,10 @@ void Material::CreateLayout() {
 	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	info.bindingCount = static_cast<uint32_t>(textures.size());
 	info.pBindings = bindings.data();
+
+	if (vkCreateDescriptorSetLayout(renderer.device, &info, nullptr, &layout) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create texture set layout!");
+	}
 }
 
 void Material::CreatePool() {
