@@ -5,9 +5,17 @@
 #include "glm/glm.hpp"
 #include "ProgramUtilities.h"
 
+enum TextureType {
+	_Image,
+	Cubemap,
+	Depth
+};
+
 class Texture {
 public:
 	Texture(Renderer& renderer);
+	Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace = false);
+	Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t height, VkImageUsageFlags usage, VkFormat format = VK_FORMAT_UNDEFINED);
 	~Texture();
 
 	void Init(const std::string& filename, bool gammaSpace = false);

@@ -8,6 +8,28 @@ Texture::Texture(Renderer& renderer) : renderer(renderer) {
 
 }
 
+Texture::Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace = false) : renderer(renderer) {
+	switch (type) {
+	case _Image:
+		Init(filename, gammaSpace);
+	case Cubemap:
+		InitCubemap(filename, gammaSpace);
+	default:
+		throw std::runtime_error("Unsupported");
+	}
+}
+
+Texture::Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t height, VkImageUsageFlags usage, VkFormat format) : renderer(renderer) {
+	switch (type) {
+	case _Image:
+		Init(width, height, format, usage);
+	case Depth:
+		InitDepth(width, height, usage);
+	default:
+		throw std::runtime_error("Unsupported");
+	}
+}
+
 Texture::~Texture() {
 	Cleanup();
 }
