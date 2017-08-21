@@ -7,21 +7,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane(renderer),
 	skybox(renderer),
 	quad(renderer),
-	dragonColor(renderer),
-	dragonNormal(renderer),
-	dragonEffects(renderer),
-	suzanneColor(renderer),
-	suzanneNormal(renderer),
-	suzanneEffects(renderer),
-	planeColor(renderer),
-	planeNormal(renderer),
-	planeEffects(renderer),
-	skyboxColor(renderer),
-	skyboxSmallColor(renderer),
 	camera(45.0f, width, height),
 	input(window, camera, *this, renderer),
-	lightDepth(renderer),
-	boxBlur(renderer),
 	depth(renderer),
 	geometryTarget(renderer),
 	fxaaTarget(renderer) {
@@ -52,33 +39,45 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	std::vector<std::shared_ptr<Texture>> textures;
 
-	dragonColor.Init("resources/dragon_texture_color.png", true);
-	dragonNormal.Init("resources/dragon_texture_normal.png");
-	dragonEffects.Init("resources/dragon_texture_ao_specular_reflection.png");
+	auto dragonColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_color.png"), true);
+	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_normal.png"));
+	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_ao_specular_reflection.png"));
+	textures.push_back(dragonColor);
+	textures.push_back(dragonNormal);
+	textures.push_back(dragonEffects);
 
-	suzanneColor.Init("resources/suzanne_texture_color.png", true);
-	suzanneNormal.Init("resources/suzanne_texture_normal.png");
-	suzanneEffects.Init("resources/suzanne_texture_ao_specular_reflection.png");
+	auto suzanneTexture = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
+	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_normal.png"));
+	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_ao_specular_reflection.png"));
+	textures.push_back(suzanneTexture);
+	textures.push_back(suzanneNormal);
+	textures.push_back(suzanneEffects);
 
-	planeColor.Init("resources/plane_texture_color.png", true);
-	planeNormal.Init("resources/plane_texture_normal.png");
-	planeEffects.Init("resources/plane_texture_depthmap.png");
+	auto planeColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_color.png"), true);
+	auto planeNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_normal.png"));
+	auto planeEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_depthmap.png"));
+	textures.push_back(planeColor);
+	textures.push_back(planeNormal);
+	textures.push_back(planeEffects);
 
-	skyboxColor.InitCubemap("resources/cubemap/cubemap", true);
-	skyboxSmallColor.InitCubemap("resources/cubemap/cubemap_diff", true);
+	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap"), true);
+	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap_diff"), true);
+	textures.push_back(skyColor);
+	textures.push_back(skySmallColor);
 
 	UploadResources(textures);
 
-	lightDepth.InitDepth(512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
-	boxBlur.Init(lightDepth.GetWidth(), lightDepth.GetHeight(), VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	lightDepth = std::make_unique<Texture>(renderer, Depth, 512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
+	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 
 	CreateUniformBuffer();
 	CreateUniformSet();
-	CreateTextureSet(dragonColor.imageView, dragonNormal.imageView, dragonEffects.imageView, dragonTextureSet);
-	CreateTextureSet(suzanneColor.imageView, suzanneNormal.imageView, suzanneEffects.imageView, suzanneTextureSet);
-	CreateTextureSet(planeColor.imageView, planeNormal.imageView, planeEffects.imageView, planeTextureSet);
-	CreateTextureSet(skyboxTextureSet, skyboxColor.imageView);
 	CreateLightDepthSet();
+
+	dragonMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
+	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneTexture, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
+	planeMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
+	skyboxMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ skyColor });
 
 	AllocateTextureSet(geometrySet);
 	AllocateTextureSet(fxaaSet);
@@ -97,7 +96,6 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
-	lightDepth.Cleanup();
 	CleanupSwapchainResources();
 	vkDestroyRenderPass(renderer.device, lightRenderPass, nullptr);
 	vkDestroyFramebuffer(renderer.device, lightFramebuffer, nullptr);
@@ -138,21 +136,6 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 	plane.UploadData(commandBuffer);
 	skybox.UploadData(commandBuffer);
 
-	dragonColor.UploadData(commandBuffer);
-	dragonNormal.UploadData(commandBuffer);
-	dragonEffects.UploadData(commandBuffer);
-
-	suzanneColor.UploadData(commandBuffer);
-	suzanneNormal.UploadData(commandBuffer);
-	suzanneEffects.UploadData(commandBuffer);
-
-	planeColor.UploadData(commandBuffer);
-	planeNormal.UploadData(commandBuffer);
-	planeEffects.UploadData(commandBuffer);
-
-	skyboxColor.UploadData(commandBuffer);
-	skyboxSmallColor.UploadData(commandBuffer);
-
 	quad.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
@@ -166,21 +149,6 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 	plane.DestroyStaging();
 	skybox.DestroyStaging();
 	quad.DestroyStaging();
-
-	dragonColor.DestroyStaging();
-	dragonNormal.DestroyStaging();
-	dragonEffects.DestroyStaging();
-
-	suzanneColor.DestroyStaging();
-	suzanneNormal.DestroyStaging();
-	suzanneEffects.DestroyStaging();
-
-	planeColor.DestroyStaging();
-	planeNormal.DestroyStaging();
-	planeEffects.DestroyStaging();
-
-	skyboxColor.DestroyStaging();
-	skyboxSmallColor.DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }
@@ -287,7 +255,7 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = lightRenderPass;
 	renderPassInfo.framebuffer = lightFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = { lightDepth.GetWidth(), lightDepth.GetHeight() };
+	renderPassInfo.renderArea.extent = { lightDepth->GetWidth(), lightDepth->GetHeight() };
 
 	VkClearValue clearColor = {};
 	clearColor.depthStencil = { 1.0f, 0 };
@@ -312,7 +280,7 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = boxBlurRenderPass;
 	renderPassInfo.framebuffer = boxBlurFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = { boxBlur.GetWidth(), boxBlur.GetHeight() };
+	renderPassInfo.renderArea.extent = { boxBlur->GetWidth(), boxBlur->GetHeight() };
 
 	VkClearValue clearColor = {};
 	clearColor.color = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -349,19 +317,19 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &dragonTextureSet, 0, nullptr);
+	dragonMat->Bind(commandBuffer, modelPipelineLayout, 1);
 	dragon.Draw(commandBuffer, modelPipelineLayout, camera);
 
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &suzanneTextureSet, 0, nullptr);
+	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 1);
 	suzanne.Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, planePipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &planeTextureSet, 0, nullptr);
+	planeMat->Bind(commandBuffer, modelPipelineLayout, 1);
 	plane.Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 1, 1, &skyboxTextureSet, 0, nullptr);
+	skyboxMat->Bind(commandBuffer, skyboxPipelineLayout, 1);
 	skybox.Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -455,12 +423,12 @@ void Scene::CreateLightRenderPass() {
 }
 
 void Scene::CreateLightFramebuffer() {
-	lightFramebuffer = CreateFramebuffer(renderer, lightRenderPass, lightDepth.GetWidth(), lightDepth.GetHeight(), std::vector<VkImageView>{ lightDepth.imageView });
+	lightFramebuffer = CreateFramebuffer(renderer, lightRenderPass, lightDepth->GetWidth(), lightDepth->GetHeight(), std::vector<VkImageView>{ lightDepth->imageView });
 }
 
 void Scene::CreateBoxBlurRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = boxBlur.format;
+	colorAttachment.format = boxBlur->format;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -501,7 +469,7 @@ void Scene::CreateBoxBlurRenderPass() {
 }
 
 void Scene::CreateBoxBlurFramebuffer() {
-	boxBlurFramebuffer = CreateFramebuffer(renderer, boxBlurRenderPass, boxBlur.GetWidth(), boxBlur.GetHeight(), std::vector<VkImageView>{ boxBlur.imageView });
+	boxBlurFramebuffer = CreateFramebuffer(renderer, boxBlurRenderPass, boxBlur->GetWidth(), boxBlur->GetHeight(), std::vector<VkImageView>{ boxBlur->imageView });
 }
 
 void Scene::CreateGeometryRenderPass() {
@@ -761,14 +729,14 @@ void Scene::CreateUniformBuffer() {
 void Scene::CreateDescriptorPool() {
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 24 }
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 8;
+	poolInfo.maxSets = 4;
 
 	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create descriptor pool!");
@@ -805,75 +773,6 @@ void Scene::CreateUniformSet() {
 	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet) {
-	VkDescriptorSetLayout layouts[] = { modelTextureSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate texture set!");
-	}
-
-	VkDescriptorImageInfo colorInfo = {};
-	colorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	colorInfo.imageView = colorView;
-	colorInfo.sampler = sampler;
-
-	VkDescriptorImageInfo normalInfo = {};
-	normalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	normalInfo.imageView = normalView;
-	normalInfo.sampler = sampler;
-
-	VkDescriptorImageInfo effectsInfo = {};
-	effectsInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	effectsInfo.imageView = effectsView;
-	effectsInfo.sampler = sampler;
-
-	VkDescriptorImageInfo skyInfo = {};
-	skyInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	skyInfo.imageView = skyboxColor.imageView;
-	skyInfo.sampler = sampler;
-
-	VkDescriptorImageInfo skySmallInfo = {};
-	skySmallInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	skySmallInfo.imageView = skyboxSmallColor.imageView;
-	skySmallInfo.sampler = sampler;
-
-	VkDescriptorImageInfo shadowInfo = {};
-	shadowInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	shadowInfo.imageView = boxBlur.imageView;
-	shadowInfo.sampler = sampler;
-
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 1;
-
-	VkWriteDescriptorSet writes[] = {
-		descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite
-	};
-
-	writes[0].pImageInfo = &colorInfo;
-	writes[0].dstBinding = 0;
-	writes[1].pImageInfo = &normalInfo;
-	writes[1].dstBinding = 1;
-	writes[2].pImageInfo = &effectsInfo;
-	writes[2].dstBinding = 2;
-	writes[3].pImageInfo = &skyInfo;
-	writes[3].dstBinding = 3;
-	writes[4].pImageInfo = &skySmallInfo;
-	writes[4].dstBinding = 4;
-	writes[5].pImageInfo = &shadowInfo;
-	writes[5].dstBinding = 5;
-
-	vkUpdateDescriptorSets(renderer.device, 6, writes, 0, nullptr);
-}
-
 void Scene::AllocateTextureSet(VkDescriptorSet& descriptorSet) {
 	VkDescriptorSetLayout layouts[] = { textureSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
@@ -905,17 +804,12 @@ void Scene::WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView
 	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void Scene::CreateTextureSet(VkDescriptorSet& descriptorSet, VkImageView imageView) {
-	AllocateTextureSet(descriptorSet);
-	WriteDescriptor(descriptorSet, imageView);
-}
-
 void Scene::CreateLightDepthSet() {
 	AllocateTextureSet(lightDepthSet);
 
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = lightDepth.imageView;
+	imageInfo.imageView = lightDepth->imageView;
 	imageInfo.sampler = sampler;
 
 	VkWriteDescriptorSet descriptorWrite = {};
