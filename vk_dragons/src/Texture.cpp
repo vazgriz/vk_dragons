@@ -8,12 +8,14 @@ Texture::Texture(Renderer& renderer) : renderer(renderer) {
 
 }
 
-Texture::Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace = false) : renderer(renderer) {
+Texture::Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace) : renderer(renderer) {
 	switch (type) {
 	case _Image:
 		Init(filename, gammaSpace);
+		break;
 	case Cubemap:
 		InitCubemap(filename, gammaSpace);
+		break;
 	default:
 		throw std::runtime_error("Unsupported");
 	}
@@ -23,8 +25,10 @@ Texture::Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t 
 	switch (type) {
 	case _Image:
 		Init(width, height, format, usage);
+		break;
 	case Depth:
 		InitDepth(width, height, usage);
+		break;
 	default:
 		throw std::runtime_error("Unsupported");
 	}
