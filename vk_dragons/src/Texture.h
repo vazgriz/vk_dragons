@@ -22,7 +22,6 @@ public:
 	void InitCubemap(const std::string& filenameRoot, bool gammaSpace = false);
 	void Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage);
 	void InitDepth(uint32_t width, uint32_t height, VkImageUsageFlags flags);
-	void Cleanup();
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 

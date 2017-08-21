@@ -35,16 +35,10 @@ Texture::Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t 
 }
 
 Texture::~Texture() {
-	Cleanup();
-}
-
-void Texture::Cleanup() {
-	if (image.image != VK_NULL_HANDLE) {
-		renderer.memory->GetDeviceAllocator(image.type).Pop();
-		vkDestroyImage(renderer.device, image.image, nullptr);
-		vkDestroyImageView(renderer.device, imageView, nullptr);
-		image.image = VK_NULL_HANDLE;
-	}
+	renderer.memory->GetDeviceAllocator(image.type).Pop();
+	vkDestroyImage(renderer.device, image.image, nullptr);
+	vkDestroyImageView(renderer.device, imageView, nullptr);
+	image.image = VK_NULL_HANDLE;
 }
 
 void Texture::DestroyStaging() {
