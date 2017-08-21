@@ -6,6 +6,7 @@ public:
 	void SetPosition(glm::vec3 position);
 	glm::mat4 GetProjection();
 	glm::mat4 GetView();
+	glm::vec4 GetPosition();
 	glm::vec4 GetIa();
 	glm::vec4 GetId();
 	glm::vec4 GetIs();
