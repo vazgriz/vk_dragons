@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include <memory>
 #include "Renderer.h"
 #include "Model.h"
 #include "Texture.h"
@@ -97,7 +99,7 @@ private:
 	VkRenderPass screenQuadRenderPass;
 	VkFramebuffer fxaaFramebuffer;
 
-	void UploadResources();
+	void UploadResources(std::vector<std::shared_ptr<Texture>>& textures);
 	void UpdateUniform();
 
 	void CreateLightRenderPass();

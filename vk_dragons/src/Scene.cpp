@@ -50,6 +50,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane.GetTransform().SetScale(glm::vec3(2.0f));
 	plane.GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
+	std::vector<std::shared_ptr<Texture>> textures;
+
 	dragonColor.Init("resources/dragon_texture_color.png", true);
 	dragonNormal.Init("resources/dragon_texture_normal.png");
 	dragonEffects.Init("resources/dragon_texture_ao_specular_reflection.png");
@@ -65,7 +67,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	skyboxColor.InitCubemap("resources/cubemap/cubemap", true);
 	skyboxSmallColor.InitCubemap("resources/cubemap/cubemap_diff", true);
 
-	UploadResources();
+	UploadResources(textures);
 
 	lightDepth.InitDepth(512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
 	boxBlur.Init(lightDepth.GetWidth(), lightDepth.GetHeight(), VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
@@ -124,8 +126,12 @@ void Scene::CleanupSwapchainResources() {
 	vkDestroyFramebuffer(renderer.device, fxaaFramebuffer, nullptr);
 }
 
-void Scene::UploadResources() {
+void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 	VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
+
+	for (auto& ptr : textures) {
+		ptr->UploadData(commandBuffer);
+	}
 
 	dragon.UploadData(commandBuffer);
 	suzanne.UploadData(commandBuffer);
@@ -150,6 +156,10 @@ void Scene::UploadResources() {
 	quad.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
+
+	for (auto& ptr : textures) {
+		ptr->DestroyStaging();
+	}
 
 	dragon.DestroyStaging();
 	suzanne.DestroyStaging();
