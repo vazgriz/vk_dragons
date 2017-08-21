@@ -56,9 +56,9 @@ private:
 	std::unique_ptr<Texture> lightDepth;
 	std::shared_ptr<Texture> boxBlur;
 
-	Texture depth;
-	Texture geometryTarget;
-	Texture fxaaTarget;
+	std::unique_ptr<Texture> depth;
+	std::unique_ptr<Texture> geometryTarget;
+	std::unique_ptr<Texture> fxaaTarget;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;

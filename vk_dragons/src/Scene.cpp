@@ -8,10 +8,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	skybox(renderer),
 	quad(renderer),
 	camera(45.0f, width, height),
-	input(window, camera, *this, renderer),
-	depth(renderer),
-	geometryTarget(renderer),
-	fxaaTarget(renderer) {
+	input(window, camera, *this, renderer) {
 
 	CreateSampler();
 	CreateDescriptorPool();
@@ -70,6 +67,10 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	lightDepth = std::make_unique<Texture>(renderer, Depth, 512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
 	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 
+	depth = std::make_unique<Texture>(renderer);
+	geometryTarget = std::make_unique<Texture>(renderer);
+	fxaaTarget = std::make_unique<Texture>(renderer);
+
 	CreateUniformBuffer();
 	CreateUniformSet();
 	CreateLightDepthSet();
@@ -112,9 +113,9 @@ Scene::~Scene() {
 }
 
 void Scene::CleanupSwapchainResources() {
-	depth.Cleanup();
-	geometryTarget.Cleanup();
-	fxaaTarget.Cleanup();
+	depth->Cleanup();
+	geometryTarget->Cleanup();
+	fxaaTarget->Cleanup();
 	for (auto& framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(renderer.device, framebuffer, nullptr);
 	}
@@ -199,16 +200,16 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 }
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
-	depth.InitDepth(width, height, 0);
-	geometryTarget.Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	fxaaTarget.Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	depth->InitDepth(width, height, 0);
+	geometryTarget->Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	fxaaTarget->Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 	CreateMainRenderPass();
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
 	CreateGeometryFramebuffer(width, height);
 	CreateFXAAFramebuffer(width, height);
-	WriteDescriptor(geometrySet, geometryTarget.imageView);
-	WriteDescriptor(fxaaSet, fxaaTarget.imageView);
+	WriteDescriptor(geometrySet, geometryTarget->imageView);
+	WriteDescriptor(fxaaSet, fxaaTarget->imageView);
 }
 
 void Scene::AllocateCommandBuffers() {
@@ -383,7 +384,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 
 void Scene::CreateLightRenderPass() {
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = depth.format;
+	depthAttachment.format = depth->format;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -474,7 +475,7 @@ void Scene::CreateBoxBlurFramebuffer() {
 
 void Scene::CreateGeometryRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = geometryTarget.format;
+	colorAttachment.format = geometryTarget->format;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -484,7 +485,7 @@ void Scene::CreateGeometryRenderPass() {
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = depth.format;
+	depthAttachment.format = depth->format;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -531,7 +532,7 @@ void Scene::CreateGeometryRenderPass() {
 }
 
 void Scene::CreateGeometryFramebuffer(uint32_t width, uint32_t height) {
-	geometryFramebuffer = CreateFramebuffer(renderer, geometryRenderPass, width, height, std::vector<VkImageView>{ geometryTarget.imageView, depth.imageView });
+	geometryFramebuffer = CreateFramebuffer(renderer, geometryRenderPass, width, height, std::vector<VkImageView>{ geometryTarget->imageView, depth->imageView });
 }
 
 void Scene::CreateScreenQuadRenderPass() {
@@ -577,7 +578,7 @@ void Scene::CreateScreenQuadRenderPass() {
 }
 
 void Scene::CreateFXAAFramebuffer(uint32_t width, uint32_t height) {
-	fxaaFramebuffer = CreateFramebuffer(renderer, screenQuadRenderPass, width, height, std::vector<VkImageView>{ fxaaTarget.imageView });
+	fxaaFramebuffer = CreateFramebuffer(renderer, screenQuadRenderPass, width, height, std::vector<VkImageView>{ fxaaTarget->imageView });
 }
 
 void Scene::CreateMainRenderPass() {
