@@ -54,6 +54,7 @@ private:
 	std::unique_ptr<Material> skyboxMat;
 
 	std::unique_ptr<Texture> lightDepth;
+	std::unique_ptr<Texture> lightColor;
 	std::shared_ptr<Texture> boxBlur;
 
 	std::unique_ptr<Texture> depth;
