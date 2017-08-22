@@ -4,6 +4,11 @@
 #include <algorithm>
 #include <iostream>
 
+const std::vector<const char*> validationLayers = {
+	"VK_LAYER_LUNARG_standard_validation",
+	//"VK_LAYER_LUNARG_api_dump"
+};
+
 Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	this->window = window;
 	this->width = width;
@@ -150,11 +155,6 @@ void Renderer::SubmitCommandBuffer(VkCommandBuffer commandBuffer) {
 
 //From https://vulkan-tutorial.com/
 void Renderer::createInstance() {
-	const std::vector<const char*> validationLayers = {
-		"VK_LAYER_LUNARG_standard_validation",
-		//"VK_LAYER_LUNARG_api_dump"
-	};
-
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Here Be Dragons";
