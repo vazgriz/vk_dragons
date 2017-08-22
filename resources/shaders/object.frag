@@ -6,7 +6,6 @@ layout(location = 0) in mat3 Intbn;
 layout(location = 3) in vec3 Inposition; 
 layout(location = 4) in vec2 Inuv;
 layout(location = 5) in vec3 InlightSpacePosition;
-layout(location = 6) in vec3 InmodelPosition;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
