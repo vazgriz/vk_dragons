@@ -298,7 +298,7 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
 	VkClearValue clearColors[2];
-	clearColors[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//clearColors[0] is ignored becaues the color attachment isn't being cleared
 	clearColors[1].depthStencil = { 1.0f, 0 };
 	renderPassInfo.clearValueCount = 2;
 	renderPassInfo.pClearValues = clearColors;
@@ -456,7 +456,7 @@ void Scene::CreateGeometryRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = geometryTarget->format;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
