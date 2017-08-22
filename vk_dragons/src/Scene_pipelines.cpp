@@ -405,7 +405,7 @@ void Scene::CreateLightPipelineLayout() {
 
 void Scene::CreateLightPipeline() {
 	VkShaderModule vert = CreateShaderModule(renderer.device, "resources/shaders/object_depth.vert.spv");
-	//This pipeline has a vertex shader, but no fragment shader. It only writes to the depth buffer.
+	VkShaderModule frag = CreateShaderModule(renderer.device, "resources/shaders/object_depth.frag.spv");
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -413,7 +413,13 @@ void Scene::CreateLightPipeline() {
 	vertShaderStageInfo.module = vert;
 	vertShaderStageInfo.pName = "main";
 
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo };
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
+	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	fragShaderStageInfo.module = frag;
+	fragShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
 	auto bindings = Model::GetDepthBindingDescriptions();
 	auto attributes = Model::GetDepthAttributeDescriptions();
@@ -464,7 +470,15 @@ void Scene::CreateLightPipeline() {
 	multisampling.sampleShadingEnable = VK_FALSE;
 	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-	//since there is no fragment shader, a ColorBlendState is not required
+	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachment.blendEnable = VK_FALSE;
+
+	VkPipelineColorBlendStateCreateInfo colorBlending = {};
+	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	colorBlending.logicOpEnable = VK_FALSE;
+	colorBlending.attachmentCount = 1;
+	colorBlending.pAttachments = &colorBlendAttachment;
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -476,12 +490,13 @@ void Scene::CreateLightPipeline() {
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 1;
+	pipelineInfo.stageCount = 2;
 	pipelineInfo.pStages = shaderStages;
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.layout = lightPipelineLayout;
@@ -493,6 +508,7 @@ void Scene::CreateLightPipeline() {
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
+	vkDestroyShaderModule(renderer.device, frag, nullptr);
 }
 
 void Scene::CreateScreenQuadPipelineLayout() {
