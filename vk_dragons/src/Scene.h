@@ -54,7 +54,8 @@ private:
 	std::unique_ptr<Material> skyboxMat;
 
 	std::unique_ptr<Texture> lightDepth;
-	std::unique_ptr<Texture> lightColor;
+	std::shared_ptr<Texture> lightColor;
+	std::unique_ptr<Material> lightMat;
 	std::shared_ptr<Texture> boxBlur;
 
 	std::unique_ptr<Texture> depth;
@@ -71,7 +72,6 @@ private:
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet uniformSet;
-	VkDescriptorSet lightDepthSet;
 	VkDescriptorSet geometrySet;
 	VkDescriptorSet fxaaSet;
 
@@ -114,7 +114,6 @@ private:
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
-	void CreateLightDepthSet();
 	void AllocateTextureSet(VkDescriptorSet& descriptorSet);
 	void WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView);
 
