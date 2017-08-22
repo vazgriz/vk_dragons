@@ -325,7 +325,6 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	plane.Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 	skyboxMat->Bind(commandBuffer, skyboxPipelineLayout, 1);
 	skybox.Draw(commandBuffer);
 
