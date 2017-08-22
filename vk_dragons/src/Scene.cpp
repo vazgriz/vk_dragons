@@ -379,7 +379,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 
 void Scene::CreateLightRenderPass() {
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = depth->format;
+	depthAttachment.format = lightDepth->format;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
