@@ -54,7 +54,7 @@ void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
 	glm::mat4 MV = camera.GetView() * transform.GetWorldMatrix();
-	glm::mat4 normal = glm::mat4(glm::transpose(glm::inverse(glm::mat3(MV))));
+	glm::mat4 normal = glm::transpose(glm::inverse(MV));
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), 3 * sizeof(glm::vec4), &normal);
 
 	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
