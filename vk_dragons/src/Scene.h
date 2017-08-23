@@ -65,8 +65,7 @@ private:
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	std::vector<VkCommandBuffer> commandBuffers;
-	VkSampler texSampler;
-	VkSampler planeSampler;
+	VkSampler sampler;
 	VkDescriptorSetLayout uniformSetLayout;
 	VkDescriptorSetLayout modelTextureSetLayout;
 	VkDescriptorSetLayout textureSetLayout;
@@ -108,8 +107,7 @@ private:
 	void RecordGeometryPass(VkCommandBuffer commandBuffer);
 	void RecordFXAAPass(VkCommandBuffer commandBuffer);
 	void RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-	void CreateTexSampler();
-	void CreatePlaneSampler();
+	void CreateSampler();
 	void CreateUniformSetLayout();
 	void CreateModelTextureSetLayout();
 	void CreateTextureSetLayout();
