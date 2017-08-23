@@ -6,10 +6,9 @@ layout(location = 0) in mat3 Intbn;
 layout(location = 3) in vec3 Inposition;
 layout(location = 4) in vec2 Inuv;
 layout(location = 5) in vec3 InlightSpacePosition;
-layout(location = 6) in vec3 InmodelPosition;
-layout(location = 7) in vec3 IntangentSpacePosition;
-layout(location = 8) in vec3 IntangentSpaceView;
-layout(location = 9) in vec3 IntangentSpaceLight;
+layout(location = 6) in vec3 IntangentSpacePosition;
+layout(location = 7) in vec3 IntangentSpaceView;
+layout(location = 8) in vec3 IntangentSpaceLight;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
@@ -55,7 +54,7 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 	
 	// Compute the direction from the point to the light
 	// light.position.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(lightPosition - uniforms.lightPosition.w * Inposition);
+	vec3 d = normalize(vec3(uniforms.camView * vec4(uniforms.lightPosition.xyz - uniforms.lightPosition.w * Inposition, 1.0)));
 	
 	vec3 diffuseColor = texture(textureColor, uv).rgb;
 	

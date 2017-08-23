@@ -28,6 +28,10 @@ glm::mat4 Light::GetView() {
 	return view;
 }
 
+glm::vec4 Light::GetPosition() {
+	return glm::vec4(position, 0.0);
+}
+
 glm::vec4 Light::GetIa() {
 	return Ia;
 }

@@ -8,23 +8,44 @@ Texture::Texture(Renderer& renderer) : renderer(renderer) {
 
 }
 
-Texture::~Texture() {
-	Cleanup();
+Texture::Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace) : renderer(renderer) {
+	switch (type) {
+	case _Image:
+		Init(filename, gammaSpace);
+		break;
+	case Cubemap:
+		InitCubemap(filename, gammaSpace);
+		break;
+	default:
+		throw std::runtime_error("Unsupported");
+	}
 }
 
-void Texture::Cleanup() {
-	if (image.image != VK_NULL_HANDLE) {
-		renderer.memory->GetDeviceAllocator(image.type).Pop();
-		vkDestroyImage(renderer.device, image.image, nullptr);
-		vkDestroyImageView(renderer.device, imageView, nullptr);
-		image.image = VK_NULL_HANDLE;
+Texture::Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t height, VkImageUsageFlags usage, VkFormat format) : renderer(renderer) {
+	switch (type) {
+	case _Image:
+		Init(width, height, format, usage);
+		break;
+	case Depth:
+		InitDepth(width, height, usage);
+		break;
+	default:
+		throw std::runtime_error("Unsupported");
 	}
+}
+
+Texture::~Texture() {
+	renderer.memory->GetDeviceAllocator(image.type).Pop();
+	vkDestroyImage(renderer.device, image.image, nullptr);
+	vkDestroyImageView(renderer.device, imageView, nullptr);
+	image.image = VK_NULL_HANDLE;
 }
 
 void Texture::DestroyStaging() {
 	for (auto& stagingBuffer : stagingBuffers) {
 		vkDestroyBuffer(renderer.device, stagingBuffer.buffer, nullptr);
 	}
+	data = {};
 }
 
 void Texture::Init(const std::string& filename, bool gammaSpace) {
@@ -91,6 +112,20 @@ void Texture::Init(uint32_t width, uint32_t height, VkFormat format, VkImageUsag
 		mipLevels, arrayLayers,
 		usage, 0);
 	imageView = CreateImageView(renderer.device, image.image, format, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_VIEW_TYPE_2D, mipLevels, arrayLayers);
+}
+
+void Texture::InitDepth(uint32_t width, uint32_t height, VkImageUsageFlags flags) {
+	this->width = width;
+	this->height = height;
+
+	format = findDepthFormat();
+	image = CreateImage(renderer,
+		format, width, height,
+		1, 1,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | flags, 0);
+	imageView = CreateImageView(renderer.device, image.image,
+		format, VK_IMAGE_ASPECT_DEPTH_BIT,
+		VK_IMAGE_VIEW_TYPE_2D, 1, 1);
 }
 
 void Texture::LoadImages(std::vector<std::string>& filenames) {
@@ -197,6 +232,30 @@ void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
 				1, &blit,
 				VK_FILTER_LINEAR
 			);
+
+			Transition(commandBuffer, format, image.image,
+				VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
+				mipLevels, arrayLayers);
 		}
 	}
+}
+
+VkFormat Texture::findSupportedFormat(const std::vector<VkFormat>& candidates, VkFormatFeatureFlags features) {
+	for (VkFormat format : candidates) {
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(renderer.physicalDevice, format, &props);
+
+		if ((props.optimalTilingFeatures & features) == features) {
+			return format;
+		}
+	}
+
+	throw std::runtime_error("Failed to find supported format!");
+}
+
+VkFormat Texture::findDepthFormat() {
+	return findSupportedFormat(
+	{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+	);
 }

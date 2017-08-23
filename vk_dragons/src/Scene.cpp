@@ -7,24 +7,14 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane(renderer),
 	skybox(renderer),
 	quad(renderer),
-	dragonColor(renderer),
-	dragonNormal(renderer),
-	dragonEffects(renderer),
-	suzanneColor(renderer),
-	suzanneNormal(renderer),
-	suzanneEffects(renderer),
-	planeColor(renderer),
-	planeNormal(renderer),
-	planeEffects(renderer),
-	skyboxColor(renderer),
-	skyboxSmallColor(renderer),
 	camera(45.0f, width, height),
-	input(window, camera, *this, renderer),
-	lightDepth(renderer),
-	boxBlur(renderer),
-	depth(renderer),
-	geometryTarget(renderer),
-	fxaaTarget(renderer) {
+	input(window, camera, *this, renderer) {
+
+	CreateSampler();
+	CreateDescriptorPool();
+	CreateTextureSetLayout();
+	CreateUniformSetLayout();
+	CreateModelTextureSetLayout();
 
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
@@ -44,39 +34,48 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane.GetTransform().SetScale(glm::vec3(2.0f));
 	plane.GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
-	dragonColor.Init("resources/dragon_texture_color.png", true);
-	dragonNormal.Init("resources/dragon_texture_normal.png");
-	dragonEffects.Init("resources/dragon_texture_ao_specular_reflection.png");
+	std::vector<std::shared_ptr<Texture>> textures;
 
-	suzanneColor.Init("resources/suzanne_texture_color.png", true);
-	suzanneNormal.Init("resources/suzanne_texture_normal.png");
-	suzanneEffects.Init("resources/suzanne_texture_ao_specular_reflection.png");
+	auto dragonColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_color.png"), true);
+	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_normal.png"));
+	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_ao_specular_reflection.png"));
+	textures.push_back(dragonColor);
+	textures.push_back(dragonNormal);
+	textures.push_back(dragonEffects);
 
-	planeColor.Init("resources/plane_texture_color.png", true);
-	planeNormal.Init("resources/plane_texture_normal.png");
-	planeEffects.Init("resources/plane_texture_depthmap.png");
+	auto suzanneTexture = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
+	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_normal.png"));
+	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_ao_specular_reflection.png"));
+	textures.push_back(suzanneTexture);
+	textures.push_back(suzanneNormal);
+	textures.push_back(suzanneEffects);
 
-	skyboxColor.InitCubemap("resources/cubemap/cubemap", true);
-	skyboxSmallColor.InitCubemap("resources/cubemap/cubemap_diff", true);
+	auto planeColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_color.png"), true);
+	auto planeNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_normal.png"));
+	auto planeEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_depthmap.png"));
+	textures.push_back(planeColor);
+	textures.push_back(planeNormal);
+	textures.push_back(planeEffects);
 
-	UploadResources();
+	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap"), true);
+	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap_diff"), true);
+	textures.push_back(skyColor);
+	textures.push_back(skySmallColor);
 
-	lightDepth.Init(512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
-	boxBlur.Init(lightDepth.GetWidth(), lightDepth.GetHeight(), VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	UploadResources(textures);
 
-	CreateSampler();
-	CreateDescriptorPool();
-	CreateTextureSetLayout();
-	CreateUniformSetLayout();
-	CreateModelTextureSetLayout();
+	lightDepth = std::make_unique<Texture>(renderer, Depth, 512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
+	lightColor = std::make_unique<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
+	lightMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ lightColor });
+	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 
 	CreateUniformBuffer();
 	CreateUniformSet();
-	CreateTextureSet(dragonColor.imageView, dragonNormal.imageView, dragonEffects.imageView, dragonTextureSet);
-	CreateTextureSet(suzanneColor.imageView, suzanneNormal.imageView, suzanneEffects.imageView, suzanneTextureSet);
-	CreateTextureSet(planeColor.imageView, planeNormal.imageView, planeEffects.imageView, planeTextureSet);
-	CreateTextureSet(skyboxTextureSet, skyboxColor.imageView);
-	CreateLightDepthSet();
+
+	dragonMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
+	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneTexture, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
+	planeMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
+	skyboxMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ skyColor });
 
 	AllocateTextureSet(geometrySet);
 	AllocateTextureSet(fxaaSet);
@@ -95,7 +94,6 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 Scene::~Scene() {
 	vkDeviceWaitIdle(renderer.device);
-	lightDepth.Cleanup();
 	CleanupSwapchainResources();
 	vkDestroyRenderPass(renderer.device, lightRenderPass, nullptr);
 	vkDestroyFramebuffer(renderer.device, lightFramebuffer, nullptr);
@@ -112,9 +110,9 @@ Scene::~Scene() {
 }
 
 void Scene::CleanupSwapchainResources() {
-	depth.Cleanup();
-	geometryTarget.Cleanup();
-	fxaaTarget.Cleanup();
+	depth.reset();
+	geometryTarget.reset();
+	fxaaTarget.reset();
 	for (auto& framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(renderer.device, framebuffer, nullptr);
 	}
@@ -124,53 +122,31 @@ void Scene::CleanupSwapchainResources() {
 	vkDestroyFramebuffer(renderer.device, fxaaFramebuffer, nullptr);
 }
 
-void Scene::UploadResources() {
+void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 	VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
+
+	for (auto& ptr : textures) {
+		ptr->UploadData(commandBuffer);
+	}
 
 	dragon.UploadData(commandBuffer);
 	suzanne.UploadData(commandBuffer);
 	plane.UploadData(commandBuffer);
 	skybox.UploadData(commandBuffer);
 
-	dragonColor.UploadData(commandBuffer);
-	dragonNormal.UploadData(commandBuffer);
-	dragonEffects.UploadData(commandBuffer);
-
-	suzanneColor.UploadData(commandBuffer);
-	suzanneNormal.UploadData(commandBuffer);
-	suzanneEffects.UploadData(commandBuffer);
-
-	planeColor.UploadData(commandBuffer);
-	planeNormal.UploadData(commandBuffer);
-	planeEffects.UploadData(commandBuffer);
-
-	skyboxColor.UploadData(commandBuffer);
-	skyboxSmallColor.UploadData(commandBuffer);
-
 	quad.UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
+
+	for (auto& ptr : textures) {
+		ptr->DestroyStaging();
+	}
 
 	dragon.DestroyStaging();
 	suzanne.DestroyStaging();
 	plane.DestroyStaging();
 	skybox.DestroyStaging();
 	quad.DestroyStaging();
-
-	dragonColor.DestroyStaging();
-	dragonNormal.DestroyStaging();
-	dragonEffects.DestroyStaging();
-
-	suzanneColor.DestroyStaging();
-	suzanneNormal.DestroyStaging();
-	suzanneEffects.DestroyStaging();
-
-	planeColor.DestroyStaging();
-	planeNormal.DestroyStaging();
-	planeEffects.DestroyStaging();
-
-	skyboxColor.DestroyStaging();
-	skyboxSmallColor.DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }
@@ -184,6 +160,7 @@ void Scene::UpdateUniform() {
 	uniform->camViewInverse = glm::inverse(camera.GetView());
 	uniform->lightProjection = light.GetProjection();
 	uniform->lightView = light.GetView();
+	uniform->lightPosition = light.GetPosition();
 	uniform->lightIa = light.GetIa();
 	uniform->lightId = light.GetId();
 	uniform->lightIs = light.GetIs();
@@ -220,16 +197,16 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 }
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
-	depth.Init(width, height, 0);
-	geometryTarget.Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-	fxaaTarget.Init(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	depth = std::make_unique<Texture>(renderer, Depth, width, height, 0);
+	geometryTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
+	fxaaTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
 	CreateMainRenderPass();
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
 	CreateGeometryFramebuffer(width, height);
 	CreateFXAAFramebuffer(width, height);
-	WriteDescriptor(geometrySet, geometryTarget.imageView);
-	WriteDescriptor(fxaaSet, fxaaTarget.imageView);
+	WriteDescriptor(geometrySet, geometryTarget->imageView);
+	WriteDescriptor(fxaaSet, fxaaTarget->imageView);
 }
 
 void Scene::AllocateCommandBuffers() {
@@ -255,7 +232,7 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
@@ -276,13 +253,14 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = lightRenderPass;
 	renderPassInfo.framebuffer = lightFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = { lightDepth.GetWidth(), lightDepth.GetHeight() };
+	renderPassInfo.renderArea.extent = { lightDepth->GetWidth(), lightDepth->GetHeight() };
 
-	VkClearValue clearColor = {};
-	clearColor.depthStencil = { 1.0f, 0 };
+	VkClearValue clearColors[2];
+	clearColors[0].color = { 1.0f, 1.0f, 1.0f, 0.0f };
+	clearColors[1].depthStencil = { 1.0f, 0 };
 
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
+	renderPassInfo.clearValueCount = 2;
+	renderPassInfo.pClearValues = clearColors;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -301,18 +279,12 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = boxBlurRenderPass;
 	renderPassInfo.framebuffer = boxBlurFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = { boxBlur.GetWidth(), boxBlur.GetHeight() };
-
-	VkClearValue clearColor = {};
-	clearColor.color = { 0.0f, 0.0f, 0.0f, 0.0f };
-
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
+	renderPassInfo.renderArea.extent = { boxBlur->GetWidth(), boxBlur->GetHeight() };
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &lightDepthSet, 0, nullptr);
+	lightMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
 	quad.Draw(commandBuffer);
 
@@ -328,7 +300,7 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
 	VkClearValue clearColors[2];
-	clearColors[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//clearColors[0] is ignored becaues the color attachment isn't being cleared
 	clearColors[1].depthStencil = { 1.0f, 0 };
 	renderPassInfo.clearValueCount = 2;
 	renderPassInfo.pClearValues = clearColors;
@@ -338,19 +310,18 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &dragonTextureSet, 0, nullptr);
+	dragonMat->Bind(commandBuffer, modelPipelineLayout, 1);
 	dragon.Draw(commandBuffer, modelPipelineLayout, camera);
 
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &suzanneTextureSet, 0, nullptr);
+	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 1);
 	suzanne.Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, planePipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 1, 1, &planeTextureSet, 0, nullptr);
+	planeMat->Bind(commandBuffer, modelPipelineLayout, 1);
 	plane.Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipelineLayout, 1, 1, &skyboxTextureSet, 0, nullptr);
+	skyboxMat->Bind(commandBuffer, skyboxPipelineLayout, 1);
 	skybox.Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -363,11 +334,6 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.framebuffer = fxaaFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
-
-	VkClearValue clearColor = {};
-	clearColor.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -387,11 +353,6 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
 
-	VkClearValue clearColor = {};
-	clearColor.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
-
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
@@ -403,99 +364,8 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 }
 
 void Scene::CreateLightRenderPass() {
-	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = depth.format;
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-
-	VkAttachmentReference depthAttachmentRef = {};
-	depthAttachmentRef.attachment = 0;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	VkRenderPassCreateInfo renderPassInfo = {};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &depthAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &lightRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
-	}
-}
-
-void Scene::CreateLightFramebuffer() {
-	lightFramebuffer = CreateFramebuffer(renderer, lightRenderPass, lightDepth.GetWidth(), lightDepth.GetHeight(), std::vector<VkImageView>{ lightDepth.imageView });
-}
-
-void Scene::CreateBoxBlurRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = boxBlur.format;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	VkAttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	VkRenderPassCreateInfo renderPassInfo = {};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &boxBlurRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
-	}
-}
-
-void Scene::CreateBoxBlurFramebuffer() {
-	boxBlurFramebuffer = CreateFramebuffer(renderer, boxBlurRenderPass, boxBlur.GetWidth(), boxBlur.GetHeight(), std::vector<VkImageView>{ boxBlur.imageView });
-}
-
-void Scene::CreateGeometryRenderPass() {
-	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = geometryTarget.format;
+	colorAttachment.format = lightColor->format;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -505,7 +375,7 @@ void Scene::CreateGeometryRenderPass() {
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = depth.format;
+	depthAttachment.format = lightDepth->format;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -528,38 +398,48 @@ void Scene::CreateGeometryRenderPass() {
 	subpass.pColorAttachments = &colorAttachmentRef;
 	subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	VkSubpassDependency fromExternal = {};
+	fromExternal.srcSubpass = VK_SUBPASS_EXTERNAL;
+	fromExternal.dstSubpass = 0;
+	fromExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.srcAccessMask = 0;
+	fromExternal.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency toExternal = {};
+	toExternal.srcSubpass = 0;
+	toExternal.dstSubpass = VK_SUBPASS_EXTERNAL;
+	toExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	toExternal.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 	VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
+	VkSubpassDependency dependencies[] = { fromExternal, toExternal };
+
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = 2;
 	renderPassInfo.pAttachments = attachments;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
+	renderPassInfo.dependencyCount = 2;
+	renderPassInfo.pDependencies = dependencies;
 
-	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &geometryRenderPass) != VK_SUCCESS) {
+	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &lightRenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create render pass!");
 	}
 }
 
-void Scene::CreateGeometryFramebuffer(uint32_t width, uint32_t height) {
-	geometryFramebuffer = CreateFramebuffer(renderer, geometryRenderPass, width, height, std::vector<VkImageView>{ geometryTarget.imageView, depth.imageView });
+void Scene::CreateLightFramebuffer() {
+	lightFramebuffer = CreateFramebuffer(renderer, lightRenderPass, lightDepth->GetWidth(), lightDepth->GetHeight(), std::vector<VkImageView>{ lightColor->imageView, lightDepth->imageView });
 }
 
-void Scene::CreateScreenQuadRenderPass() {
+void Scene::CreateBoxBlurRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+	colorAttachment.format = boxBlur->format;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;	//entire attachment will be written to, no need to clear
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -575,13 +455,23 @@ void Scene::CreateScreenQuadRenderPass() {
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	VkSubpassDependency fromExternal = {};
+	fromExternal.srcSubpass = VK_SUBPASS_EXTERNAL;
+	fromExternal.dstSubpass = 0;
+	fromExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
+	fromExternal.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency toExternal = {};
+	toExternal.srcSubpass = 0;
+	toExternal.dstSubpass = VK_SUBPASS_EXTERNAL;
+	toExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	toExternal.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency dependencies[] = { fromExternal, toExternal };
 
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -589,8 +479,136 @@ void Scene::CreateScreenQuadRenderPass() {
 	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
+	renderPassInfo.dependencyCount = 2;
+	renderPassInfo.pDependencies = dependencies;
+
+	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &boxBlurRenderPass) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create render pass!");
+	}
+}
+
+void Scene::CreateBoxBlurFramebuffer() {
+	boxBlurFramebuffer = CreateFramebuffer(renderer, boxBlurRenderPass, boxBlur->GetWidth(), boxBlur->GetHeight(), std::vector<VkImageView>{ boxBlur->imageView });
+}
+
+void Scene::CreateGeometryRenderPass() {
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = geometryTarget->format;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VkAttachmentDescription depthAttachment = {};
+	depthAttachment.format = depth->format;
+	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depthAttachmentRef = {};
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+	VkSubpassDependency fromExternal = {};
+	fromExternal.srcSubpass = VK_SUBPASS_EXTERNAL;
+	fromExternal.dstSubpass = 0;
+	fromExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
+	fromExternal.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency toExternal = {};
+	toExternal.srcSubpass = 0;
+	toExternal.dstSubpass = VK_SUBPASS_EXTERNAL;
+	toExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	toExternal.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency dependencies[] = { fromExternal, toExternal };
+
+	VkAttachmentDescription attachments[] = { colorAttachment, depthAttachment };
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 2;
+	renderPassInfo.pAttachments = attachments;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 2;
+	renderPassInfo.pDependencies = dependencies;
+
+	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &geometryRenderPass) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create render pass!");
+	}
+}
+
+void Scene::CreateGeometryFramebuffer(uint32_t width, uint32_t height) {
+	geometryFramebuffer = CreateFramebuffer(renderer, geometryRenderPass, width, height, std::vector<VkImageView>{ geometryTarget->imageView, depth->imageView });
+}
+
+void Scene::CreateScreenQuadRenderPass() {
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;	//entire attachment will be written to, no need to clear
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+
+	VkSubpassDependency fromExternal = {};
+	fromExternal.srcSubpass = VK_SUBPASS_EXTERNAL;
+	fromExternal.dstSubpass = 0;
+	fromExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
+	fromExternal.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency toExternal = {};
+	toExternal.srcSubpass = 0;
+	toExternal.dstSubpass = VK_SUBPASS_EXTERNAL;
+	toExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	toExternal.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency dependencies[] = { fromExternal, toExternal };
+
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 2;
+	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &screenQuadRenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create render pass!");
@@ -598,14 +616,14 @@ void Scene::CreateScreenQuadRenderPass() {
 }
 
 void Scene::CreateFXAAFramebuffer(uint32_t width, uint32_t height) {
-	fxaaFramebuffer = CreateFramebuffer(renderer, screenQuadRenderPass, width, height, std::vector<VkImageView>{ fxaaTarget.imageView });
+	fxaaFramebuffer = CreateFramebuffer(renderer, screenQuadRenderPass, width, height, std::vector<VkImageView>{ fxaaTarget->imageView });
 }
 
 void Scene::CreateMainRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = renderer.swapChainImageFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;	//entire attachment will be written to, no need to clear
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -621,13 +639,23 @@ void Scene::CreateMainRenderPass() {
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	VkSubpassDependency fromExternal = {};
+	fromExternal.srcSubpass = VK_SUBPASS_EXTERNAL;
+	fromExternal.dstSubpass = 0;
+	fromExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
+	fromExternal.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	fromExternal.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VkSubpassDependency toExternal = {};
+	toExternal.srcSubpass = 0;
+	toExternal.dstSubpass = VK_SUBPASS_EXTERNAL;
+	toExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	toExternal.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	toExternal.dstAccessMask = 0;	//presentation engine automatically makes writes available to it
+
+	VkSubpassDependency dependencies[] = { fromExternal, toExternal };
 
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -635,8 +663,8 @@ void Scene::CreateMainRenderPass() {
 	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
+	renderPassInfo.dependencyCount = 2;
+	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &mainRenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create render pass!");
@@ -659,15 +687,10 @@ void Scene::CreateSampler() {
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
 	samplerInfo.minFilter = VK_FILTER_LINEAR;
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
-	if (renderer.deviceFeatures.samplerAnisotropy == VK_TRUE) {
-		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = renderer.deviceProperties.limits.maxSamplerAnisotropy;
-	} else {
-		samplerInfo.maxAnisotropy = 1;
-	}
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.maxAnisotropy = 1;
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
@@ -675,7 +698,7 @@ void Scene::CreateSampler() {
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 4.0f;
+	samplerInfo.maxLod = 8.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture sampler!");
@@ -750,14 +773,14 @@ void Scene::CreateUniformBuffer() {
 void Scene::CreateDescriptorPool() {
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 24 }
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 8;
+	poolInfo.maxSets = 4;
 
 	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create descriptor pool!");
@@ -794,75 +817,6 @@ void Scene::CreateUniformSet() {
 	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void Scene::CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet) {
-	VkDescriptorSetLayout layouts[] = { modelTextureSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate texture set!");
-	}
-
-	VkDescriptorImageInfo colorInfo = {};
-	colorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	colorInfo.imageView = colorView;
-	colorInfo.sampler = sampler;
-
-	VkDescriptorImageInfo normalInfo = {};
-	normalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	normalInfo.imageView = normalView;
-	normalInfo.sampler = sampler;
-
-	VkDescriptorImageInfo effectsInfo = {};
-	effectsInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	effectsInfo.imageView = effectsView;
-	effectsInfo.sampler = sampler;
-
-	VkDescriptorImageInfo skyInfo = {};
-	skyInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	skyInfo.imageView = skyboxColor.imageView;
-	skyInfo.sampler = sampler;
-
-	VkDescriptorImageInfo skySmallInfo = {};
-	skySmallInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	skySmallInfo.imageView = skyboxSmallColor.imageView;
-	skySmallInfo.sampler = sampler;
-
-	VkDescriptorImageInfo shadowInfo = {};
-	shadowInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	shadowInfo.imageView = boxBlur.imageView;
-	shadowInfo.sampler = sampler;
-
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 1;
-
-	VkWriteDescriptorSet writes[] = {
-		descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite, descriptorWrite
-	};
-
-	writes[0].pImageInfo = &colorInfo;
-	writes[0].dstBinding = 0;
-	writes[1].pImageInfo = &normalInfo;
-	writes[1].dstBinding = 1;
-	writes[2].pImageInfo = &effectsInfo;
-	writes[2].dstBinding = 2;
-	writes[3].pImageInfo = &skyInfo;
-	writes[3].dstBinding = 3;
-	writes[4].pImageInfo = &skySmallInfo;
-	writes[4].dstBinding = 4;
-	writes[5].pImageInfo = &shadowInfo;
-	writes[5].dstBinding = 5;
-
-	vkUpdateDescriptorSets(renderer.device, 6, writes, 0, nullptr);
-}
-
 void Scene::AllocateTextureSet(VkDescriptorSet& descriptorSet) {
 	VkDescriptorSetLayout layouts[] = { textureSetLayout };
 	VkDescriptorSetAllocateInfo allocInfo = {};
@@ -885,40 +839,6 @@ void Scene::WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pImageInfo = &imageInfo;
-
-	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
-}
-
-void Scene::CreateTextureSet(VkDescriptorSet& descriptorSet, VkImageView imageView) {
-	AllocateTextureSet(descriptorSet);
-	WriteDescriptor(descriptorSet, imageView);
-}
-
-void Scene::CreateLightDepthSet() {
-	VkDescriptorSetLayout layouts[] = { textureSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &lightDepthSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate texture set!");
-	}
-
-	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = lightDepth.imageView;
-	imageInfo.sampler = sampler;
-
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = lightDepthSet;
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

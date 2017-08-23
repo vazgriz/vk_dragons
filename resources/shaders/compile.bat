@@ -3,6 +3,7 @@
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V cube.vert -o cube.vert.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V cube.frag -o cube.frag.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V object_depth.vert -o object_depth.vert.spv
+%VK_SDK_PATH%/Bin32/glslangValidator.exe -V object_depth.frag -o object_depth.frag.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V object.vert -o object.vert.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V object.frag -o object.frag.spv
 %VK_SDK_PATH%/Bin32/glslangValidator.exe -V plane.vert -o plane.vert.spv

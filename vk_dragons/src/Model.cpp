@@ -20,6 +20,12 @@ void Model::DestroyStaging() {
 	vkDestroyBuffer(renderer.device, binormalsStagingBuffer.buffer, nullptr);
 	vkDestroyBuffer(renderer.device, texcoordsStagingBuffer.buffer, nullptr);
 	vkDestroyBuffer(renderer.device, indicesStagingBuffer.buffer, nullptr);
+	mesh.positions = {};
+	mesh.normals = {};
+	mesh.tangents = {};
+	mesh.binormals = {};
+	mesh.texcoords = {};
+	mesh.indices = {};
 }
 
 void Model::Init(const std::string& fileName) {
@@ -28,6 +34,7 @@ void Model::Init(const std::string& fileName) {
 	computeTangentsAndBinormals(mesh);
 
 	CreateBuffers();
+	indexCount = static_cast<uint32_t>(mesh.indices.size());
 }
 
 void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera) {
@@ -47,10 +54,10 @@ void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
 	glm::mat4 MV = camera.GetView() * transform.GetWorldMatrix();
-	glm::mat4 normal = glm::mat4(glm::transpose(glm::inverse(glm::mat3(MV))));
+	glm::mat4 normal = glm::transpose(glm::inverse(MV));
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), 3 * sizeof(glm::vec4), &normal);
 
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 }
 
 void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
@@ -64,7 +71,7 @@ void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLa
 	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 }
 
 void Model::CreateBuffers() {

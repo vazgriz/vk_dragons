@@ -1,13 +1,15 @@
 #pragma once
+#include <vector>
+#include <memory>
 #include "Renderer.h"
 #include "Model.h"
 #include "Texture.h"
 #include "Camera.h"
 #include "Input.h"
-#include "DepthBuffer.h"
 #include "Skybox.h"
 #include "Light.h"
 #include "ScreenQuad.h"
+#include "Material.h"
 
 struct Uniform {
 	glm::mat4 camProjection;
@@ -46,27 +48,19 @@ private:
 	Skybox skybox;
 	ScreenQuad quad;
 
-	Texture dragonColor;
-	Texture dragonNormal;
-	Texture dragonEffects;
+	std::unique_ptr<Material> dragonMat;
+	std::unique_ptr<Material> suzanneMat;
+	std::unique_ptr<Material> planeMat;
+	std::unique_ptr<Material> skyboxMat;
 
-	Texture suzanneColor;
-	Texture suzanneNormal;
-	Texture suzanneEffects;
+	std::unique_ptr<Texture> lightDepth;
+	std::shared_ptr<Texture> lightColor;
+	std::unique_ptr<Material> lightMat;
+	std::shared_ptr<Texture> boxBlur;
 
-	Texture planeColor;
-	Texture planeNormal;
-	Texture planeEffects;
-
-	Texture skyboxColor;
-	Texture skyboxSmallColor;
-
-	DepthBuffer lightDepth;
-	Texture boxBlur;
-
-	DepthBuffer depth;
-	Texture geometryTarget;
-	Texture fxaaTarget;
+	std::unique_ptr<Texture> depth;
+	std::unique_ptr<Texture> geometryTarget;
+	std::unique_ptr<Texture> fxaaTarget;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -78,11 +72,6 @@ private:
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet uniformSet;
-	VkDescriptorSet dragonTextureSet;
-	VkDescriptorSet suzanneTextureSet;
-	VkDescriptorSet planeTextureSet;
-	VkDescriptorSet skyboxTextureSet;
-	VkDescriptorSet lightDepthSet;
 	VkDescriptorSet geometrySet;
 	VkDescriptorSet fxaaSet;
 
@@ -98,7 +87,7 @@ private:
 	VkRenderPass screenQuadRenderPass;
 	VkFramebuffer fxaaFramebuffer;
 
-	void UploadResources();
+	void UploadResources(std::vector<std::shared_ptr<Texture>>& textures);
 	void UpdateUniform();
 
 	void CreateLightRenderPass();
@@ -125,9 +114,6 @@ private:
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
-	void CreateTextureSet(VkImageView colorView, VkImageView normalView, VkImageView effectsView, VkDescriptorSet& descriptorSet);
-	void CreateTextureSet(VkDescriptorSet& descriptorSet, VkImageView imageView);
-	void CreateLightDepthSet();
 	void AllocateTextureSet(VkDescriptorSet& descriptorSet);
 	void WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView);
 

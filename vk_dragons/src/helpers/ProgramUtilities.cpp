@@ -244,6 +244,13 @@ void Transition(VkCommandBuffer commandBuffer, VkFormat format, VkImage image, V
 		source = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		dest = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_GENERAL && newLayout == VK_IMAGE_LAYOUT_GENERAL) {
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT;
+
+		source = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		dest = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
 	else {
 		throw std::invalid_argument("Unsupported layout transition!");
 	}

@@ -27,7 +27,6 @@ layout(location = 0) out mat3 Outtbn;
 layout(location = 3) out vec3 Outposition; 
 layout(location = 4) out vec2 Outuv;
 layout(location = 5) out vec3 OutlightSpacePosition;
-layout(location = 6) out vec3 OutmodelPosition;
 
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.
@@ -47,6 +46,4 @@ void main(){
 	vec4 lightPosition = uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0);
 	OutlightSpacePosition.xy = 0.5 * lightPosition.xy + 0.5;
 	OutlightSpacePosition.z = lightPosition.z;
-	
-	OutmodelPosition = v;	
 }

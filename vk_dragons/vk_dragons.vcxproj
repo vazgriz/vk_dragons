@@ -21,13 +21,13 @@
   <ItemGroup>
     <ClCompile Include="src\Allocator.cpp" />
     <ClCompile Include="src\Camera.cpp" />
-    <ClCompile Include="src\DepthBuffer.cpp" />
     <ClCompile Include="src\helpers\lodepng\lodepng.cpp" />
     <ClCompile Include="src\helpers\MeshUtilities.cpp" />
     <ClCompile Include="src\helpers\ProgramUtilities.cpp" />
     <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\Light.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\Memory.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
@@ -41,11 +41,11 @@
   <ItemGroup>
     <ClInclude Include="src\Allocator.h" />
     <ClInclude Include="src\Camera.h" />
-    <ClInclude Include="src\DepthBuffer.h" />
     <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\helpers\MeshUtilities.h" />
     <ClInclude Include="src\helpers\ProgramUtilities.h" />
     <ClInclude Include="src\Light.h" />
+    <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\MemorySystem.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\Renderer.h" />

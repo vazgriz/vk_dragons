@@ -6,7 +6,6 @@ layout(location = 0) in mat3 Intbn;
 layout(location = 3) in vec3 Inposition; 
 layout(location = 4) in vec2 Inuv;
 layout(location = 5) in vec3 InlightSpacePosition;
-layout(location = 6) in vec3 InmodelPosition;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
@@ -50,7 +49,7 @@ void main(){
 
 	// Compute the direction from the point to the light
 	// light.position.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(uniforms.lightPosition.xyz - uniforms.lightPosition.w * Inposition);
+	vec3 d = normalize(vec3(uniforms.camView * vec4(uniforms.lightPosition.xyz - uniforms.lightPosition.w * Inposition, 1.0)));
 
 	vec3 diffuseColor = texture(textureColor, Inuv).rgb;
 	
@@ -105,5 +104,5 @@ void main(){
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
 	vec3 fColor = ambient * uniforms.lightIa.rgb + shadow * lightShading;
 	// Mix with the reflexion color.
-	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);	
+	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);
 }
