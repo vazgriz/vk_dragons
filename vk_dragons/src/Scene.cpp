@@ -10,7 +10,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	camera(45.0f, width, height),
 	input(window, camera, *this, renderer) {
 
-	CreateSampler();
+	CreateTexSampler();
+	CreatePlaneSampler();
 	CreateDescriptorPool();
 	CreateTextureSetLayout();
 	CreateUniformSetLayout();
@@ -66,16 +67,16 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 
 	lightDepth = std::make_unique<Texture>(renderer, Depth, 512, 512, VK_IMAGE_USAGE_SAMPLED_BIT);
 	lightColor = std::make_unique<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
-	lightMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ lightColor });
+	lightMat = std::make_unique<Material>(renderer, texSampler, std::vector<std::shared_ptr<Texture>>{ lightColor });
 	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 
 	CreateUniformBuffer();
 	CreateUniformSet();
 
-	dragonMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
-	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneTexture, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
-	planeMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
-	skyboxMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ skyColor });
+	dragonMat = std::make_unique<Material>(renderer, texSampler, std::vector<std::shared_ptr<Texture>>{ dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
+	suzanneMat = std::make_unique<Material>(renderer, texSampler, std::vector<std::shared_ptr<Texture>>{ suzanneTexture, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
+	planeMat = std::make_unique<Material>(renderer, planeSampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
+	skyboxMat = std::make_unique<Material>(renderer, texSampler, std::vector<std::shared_ptr<Texture>>{ skyColor });
 
 	AllocateTextureSet(geometrySet);
 	AllocateTextureSet(fxaaSet);
@@ -105,7 +106,8 @@ Scene::~Scene() {
 	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
 	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
-	vkDestroySampler(renderer.device, sampler, nullptr);
+	vkDestroySampler(renderer.device, texSampler, nullptr);
+	vkDestroySampler(renderer.device, planeSampler, nullptr);
 	DestroyPipelines();
 }
 
@@ -633,7 +635,30 @@ void Scene::CreateMainFramebuffers(uint32_t width, uint32_t height) {
 	}
 }
 
-void Scene::CreateSampler() {
+void Scene::CreateTexSampler() {
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	samplerInfo.maxAnisotropy = 1;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = 0.0f;
+	samplerInfo.maxLod = 4.0f;
+
+	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &texSampler) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to create texture sampler!");
+	}
+}
+
+void Scene::CreatePlaneSampler() {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -656,7 +681,7 @@ void Scene::CreateSampler() {
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 4.0f;
 
-	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &planeSampler) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture sampler!");
 	}
 }
@@ -790,7 +815,7 @@ void Scene::WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo.imageView = imageView;
-	imageInfo.sampler = sampler;
+	imageInfo.sampler = texSampler;
 
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
