@@ -232,6 +232,10 @@ void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
 				1, &blit,
 				VK_FILTER_LINEAR
 			);
+
+			Transition(commandBuffer, format, image.image,
+				VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
+				mipLevels, arrayLayers);
 		}
 	}
 }
