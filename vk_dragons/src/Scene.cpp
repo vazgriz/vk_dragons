@@ -652,7 +652,7 @@ void Scene::CreateMainRenderPass() {
 	toExternal.dstSubpass = VK_SUBPASS_EXTERNAL;
 	toExternal.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	toExternal.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	toExternal.dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	toExternal.dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 	toExternal.dstAccessMask = 0;	//presentation engine automatically makes writes available to it
 
 	VkSubpassDependency dependencies[] = { fromExternal, toExternal };
