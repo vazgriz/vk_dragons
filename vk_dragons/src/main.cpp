@@ -2,6 +2,7 @@
 #include<GLFW/glfw3.h>
 #include "Scene.h"
 #include <sstream>
+#include <cmath>
 
 #define INITIAL_SIZE_WIDTH 800
 #define INITIAL_SIZE_HEIGHT 600
@@ -56,7 +57,7 @@ int main() {
 
 		if (now > nextFPS) {
 			std::stringstream stream;
-			stream << "Here Be Dragons (" << frames / 0.25 << " fps)";
+			stream << "Here Be Dragons (" << round(frames / (0.25 + (now - nextFPS))) << " fps)";
 			glfwSetWindowTitle(window, stream.str().c_str());
 			frames = 0;
 			nextFPS = now + 0.25;
