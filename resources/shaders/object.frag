@@ -104,5 +104,5 @@ void main(){
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
 	vec3 fColor = ambient * uniforms.lightIa.rgb + shadow * lightShading;
 	// Mix with the reflexion color.
-	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);	
+	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);
 }
