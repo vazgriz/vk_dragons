@@ -54,7 +54,7 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 	
 	// Compute the direction from the point to the light
 	// light.position.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(lightPosition - uniforms.lightPosition.w * Inposition);
+	vec3 d = normalize(vec3(uniforms.camView * vec4(uniforms.lightPosition.xyz - uniforms.lightPosition.w * Inposition, 1.0)));
 	
 	vec3 diffuseColor = texture(textureColor, uv).rgb;
 	
