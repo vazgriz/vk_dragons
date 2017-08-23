@@ -40,7 +40,7 @@ Renderer::~Renderer() {
 void Renderer::Acquire() {
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
-	vkWaitForFences(device, 1, &fences[imageIndex], VK_TRUE, ~0U);
+	vkWaitForFences(device, 1, &fences[imageIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 	vkResetFences(device, 1, &fences[imageIndex]);
 }
 
