@@ -700,7 +700,7 @@ void Scene::CreateTexSampler() {
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 4.0f;
+	samplerInfo.maxLod = 8.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &texSampler) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture sampler!");
@@ -728,7 +728,7 @@ void Scene::CreatePlaneSampler() {
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 4.0f;
+	samplerInfo.maxLod = 8.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &planeSampler) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture sampler!");
