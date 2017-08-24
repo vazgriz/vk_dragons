@@ -49,7 +49,7 @@ float random(vec4 p){
 
 // Compute the light shading.
 
-vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor, out vec3 ambient){
+vec3 shading(vec2 uv, float lightShininess, vec3 lightColor, out vec3 ambient){
 	// Compute the normal at the fragment using the tangent space matrix and the normal read in the normal map.
 	vec3 n = texture(textureNormal,uv).rgb;
 	n = normalize(n * 2.0 - 1.0);
@@ -207,7 +207,7 @@ void main(){
 	}
 	
 	vec3 ambient;
-	vec3 lightShading = shading(parallaxUV, lightUniforms.lightPosition.xyz, lightUniforms.lightShininess, lightUniforms.lightIs.rgb,ambient);
+	vec3 lightShading = shading(parallaxUV, lightUniforms.lightShininess, lightUniforms.lightIs.rgb,ambient);
 	
 	// Compute parallax self-shadowing factor.
 	// The light direction is computed, light.position.w == 0 if the light is directional, 1 else.
