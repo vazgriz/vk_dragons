@@ -31,33 +31,27 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane->GetTransform().SetScale(glm::vec3(2.0f));
 	plane->GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
-	std::vector<std::shared_ptr<Texture>> textures;
-
 	auto dragonColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_color.png"), true);
 	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_normal.png"));
 	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_ao_specular_reflection.png"));
-	textures.push_back(dragonColor);
-	textures.push_back(dragonNormal);
-	textures.push_back(dragonEffects);
 
 	auto suzanneColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
 	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_normal.png"));
 	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_ao_specular_reflection.png"));
-	textures.push_back(suzanneColor);
-	textures.push_back(suzanneNormal);
-	textures.push_back(suzanneEffects);
 
 	auto planeColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_color.png"), true);
 	auto planeNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_normal.png"));
 	auto planeEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_depthmap.png"));
-	textures.push_back(planeColor);
-	textures.push_back(planeNormal);
-	textures.push_back(planeEffects);
 
 	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap"), true);
 	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap_diff"), true);
-	textures.push_back(skyColor);
-	textures.push_back(skySmallColor);
+
+	std::vector<std::shared_ptr<Texture>> textures = {
+		dragonColor, dragonNormal, dragonEffects,
+		suzanneColor, suzanneNormal, suzanneEffects,
+		planeColor, planeNormal, planeEffects,
+		skyColor, skySmallColor
+	};
 
 	UploadResources(textures);
 
