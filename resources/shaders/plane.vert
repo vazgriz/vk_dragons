@@ -9,11 +9,14 @@ layout(location = 3) in vec3 binor;
 layout(location = 4) in vec2 uv;
 
 // Uniform: the light structure (position in view space)
-layout(set = 0, binding = 0) uniform Uniforms {
+layout(set = 0, binding = 0) uniform CamUniforms {
 	mat4 camProjection;
 	mat4 camView;
 	mat4 rotationOnlyView;
 	mat4 camViewInverse;
+} camUniforms;
+
+layout(set = 1, binding = 0) uniform LightUniforms {
 	mat4 lightProjection;
 	mat4 lightView;
 	vec4 lightPosition;
@@ -21,7 +24,7 @@ layout(set = 0, binding = 0) uniform Uniforms {
 	vec4 lightId;
 	vec4 lightIs;
 	float lightShininess;
-} uniforms;
+} lightUniforms;
 
 layout(push_constant) uniform Model {
 	mat4 matrix;
@@ -40,9 +43,9 @@ layout(location = 8) out vec3 OuttangentSpaceLight;
 
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.
-	gl_Position = uniforms.camProjection * uniforms.camView * model.matrix * vec4(v, 1.0);
+	gl_Position = camUniforms.camProjection * camUniforms.camView * model.matrix * vec4(v, 1.0);
 	
-	Outposition = (uniforms.camView * model.matrix * vec4(v,1.0)).xyz;
+	Outposition = (camUniforms.camView * model.matrix * vec4(v,1.0)).xyz;
 	
 	Outuv = uv;
 	
@@ -53,7 +56,7 @@ void main(){
 	Outtbn = mat3(T, B, N);
 	
 	// Compute position in light space
-	vec4 lightPosition = uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v,1.0);
+	vec4 lightPosition = lightUniforms.lightProjection * lightUniforms.lightView * model.matrix * vec4(v,1.0);
 	OutlightSpacePosition.xy = 0.5 * lightPosition.xy + 0.5;
 	OutlightSpacePosition.z = lightPosition.z;
 	
@@ -61,5 +64,5 @@ void main(){
 	
 	OuttangentSpaceView = transpose(Outtbn) * vec3(0.0);
 	
-	OuttangentSpaceLight = transpose(Outtbn) * uniforms.lightPosition.xyz;	
+	OuttangentSpaceLight = transpose(Outtbn) * lightUniforms.lightPosition.xyz;	
 }

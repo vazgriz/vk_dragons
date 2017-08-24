@@ -10,7 +10,8 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreateUniformSetLayout();
 	CreateModelTextureSetLayout();
 
-	uniform = std::make_unique<UniformBuffer>(renderer, sizeof(Uniform), uniformSetLayout);
+	camUniform = std::make_unique<UniformBuffer>(renderer, sizeof(CameraUniform), uniformSetLayout);
+	lightUniform = std::make_unique<UniformBuffer>(renderer, sizeof(LightUniform), uniformSetLayout);
 
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
@@ -141,19 +142,20 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 }
 
 void Scene::UpdateUniform() {
-	char* ptr = uniform->GetData();
-	Uniform* uniform = reinterpret_cast<Uniform*>(ptr);
-	uniform->camProjection = camera.GetProjection();
-	uniform->camView = camera.GetView();
-	uniform->camRotationOnlyView = camera.GetRotationOnlyView();
-	uniform->camViewInverse = glm::inverse(camera.GetView());
-	uniform->lightProjection = light.GetProjection();
-	uniform->lightView = light.GetView();
-	uniform->lightPosition = light.GetPosition();
-	uniform->lightIa = light.GetIa();
-	uniform->lightId = light.GetId();
-	uniform->lightIs = light.GetIs();
-	uniform->lightShininess = light.GetShininess();
+	CameraUniform* camUniform = reinterpret_cast<CameraUniform*>(this->camUniform->GetData());
+	camUniform->camProjection = camera.GetProjection();
+	camUniform->camView = camera.GetView();
+	camUniform->camRotationOnlyView = camera.GetRotationOnlyView();
+	camUniform->camViewInverse = glm::inverse(camera.GetView());
+
+	LightUniform* lightUniform = reinterpret_cast<LightUniform*>(this->lightUniform->GetData());
+	lightUniform->lightProjection = light.GetProjection();
+	lightUniform->lightView = light.GetView();
+	lightUniform->lightPosition = light.GetPosition();
+	lightUniform->lightIa = light.GetIa();
+	lightUniform->lightId = light.GetId();
+	lightUniform->lightIs = light.GetIs();
+	lightUniform->lightShininess = light.GetShininess();
 }
 
 void Scene::Update(double elapsed) {
@@ -254,7 +256,7 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
-	uniform->Bind(commandBuffer, lightPipelineLayout, 0);
+	camUniform->Bind(commandBuffer, lightPipelineLayout, 0);
 
 	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
 	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
@@ -298,7 +300,8 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
-	uniform->Bind(commandBuffer, modelPipelineLayout, 0);
+	camUniform->Bind(commandBuffer, modelPipelineLayout, 0);
+	lightUniform->Bind(commandBuffer, modelPipelineLayout, 1);
 
 	dragonMat->Bind(commandBuffer, modelPipelineLayout, 2);
 	dragon->Draw(commandBuffer, modelPipelineLayout, camera);

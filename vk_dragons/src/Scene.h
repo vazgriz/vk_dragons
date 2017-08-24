@@ -12,11 +12,14 @@
 #include "Material.h"
 #include "UniformBuffer.h"
 
-struct Uniform {
+struct CameraUniform {
 	glm::mat4 camProjection;
 	glm::mat4 camView;
 	glm::mat4 camRotationOnlyView;
 	glm::mat4 camViewInverse;
+};
+
+struct LightUniform {
 	glm::mat4 lightProjection;
 	glm::mat4 lightView;
 	glm::vec4 lightPosition;
@@ -43,7 +46,8 @@ private:
 
 	Light light;
 
-	std::unique_ptr<UniformBuffer> uniform;
+	std::unique_ptr<UniformBuffer> camUniform;
+	std::unique_ptr<UniformBuffer> lightUniform;
 
 	std::unique_ptr<Model> dragon;
 	std::unique_ptr<Model> suzanne;

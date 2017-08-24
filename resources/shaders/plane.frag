@@ -11,11 +11,14 @@ layout(location = 7) in vec3 IntangentSpaceView;
 layout(location = 8) in vec3 IntangentSpaceLight;
 
 // Uniform: the light structure (position in view space)
-layout(set = 0, binding = 0) uniform Uniforms {
+layout(set = 0, binding = 0) uniform CamUniforms {
 	mat4 camProjection;
 	mat4 camView;
 	mat4 rotationOnlyView;
 	mat4 camViewInverse;
+} camUniforms;
+
+layout(set = 1, binding = 0) uniform LightUniforms {
 	mat4 lightProjection;
 	mat4 lightView;
 	vec4 lightPosition;
@@ -23,7 +26,7 @@ layout(set = 0, binding = 0) uniform Uniforms {
 	vec4 lightId;
 	vec4 lightIs;
 	float lightShininess;
-} uniforms;
+} lightUniforms;
 
 layout(set = 2, binding = 0) uniform sampler2D textureColor;
 layout(set = 2, binding = 1) uniform sampler2D textureNormal;
@@ -54,11 +57,11 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 	
 	// Compute the direction from the point to the light
 	// light.position.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(vec3(uniforms.camView * vec4(uniforms.lightPosition.xyz - uniforms.lightPosition.w * Inposition, 1.0)));
+	vec3 d = normalize(vec3(camUniforms.camView * vec4(lightUniforms.lightPosition.xyz - lightUniforms.lightPosition.w * Inposition, 1.0)));
 	
 	vec3 diffuseColor = texture(textureColor, uv).rgb;
 	
-	vec3 worldNormal = vec3(uniforms.camViewInverse * vec4(n,0.0));
+	vec3 worldNormal = vec3(camUniforms.camViewInverse * vec4(n,0.0));
 	vec3 ambientLightColor = texture(textureCubeMapSmall,normalize(worldNormal)).rgb;
 	diffuseColor = mix(diffuseColor, diffuseColor * ambientLightColor, 0.5);
 	
@@ -204,11 +207,11 @@ void main(){
 	}
 	
 	vec3 ambient;
-	vec3 lightShading = shading(parallaxUV, uniforms.lightPosition.xyz, uniforms.lightShininess, uniforms.lightIs.rgb,ambient);
+	vec3 lightShading = shading(parallaxUV, lightUniforms.lightPosition.xyz, lightUniforms.lightShininess, lightUniforms.lightIs.rgb,ambient);
 	
 	// Compute parallax self-shadowing factor.
 	// The light direction is computed, light.position.w == 0 if the light is directional, 1 else.
-	vec3 lTangentDir = normalize(IntangentSpaceLight - uniforms.lightPosition.w * IntangentSpacePosition);
+	vec3 lTangentDir = normalize(IntangentSpaceLight - lightUniforms.lightPosition.w * IntangentSpacePosition);
 	float shadowParallax = parallaxShadow(parallaxUV, lTangentDir);
 	
 	// Shadow: combine the factor from the parallax self-shadowing with the factor from the shadow map.
@@ -216,5 +219,5 @@ void main(){
 	shadowMultiplicator *= shadowParallax;
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
-	fragColor = vec4(ambient * uniforms.lightIa.rgb + shadowMultiplicator * lightShading, 0.0);	
+	fragColor = vec4(ambient * lightUniforms.lightIa.rgb + shadowMultiplicator * lightShading, 0.0);	
 }
