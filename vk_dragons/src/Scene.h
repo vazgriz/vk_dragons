@@ -59,8 +59,12 @@ private:
 	std::shared_ptr<Texture> boxBlur;
 
 	std::unique_ptr<Texture> depth;
-	std::unique_ptr<Texture> geometryTarget;
-	std::unique_ptr<Texture> fxaaTarget;
+
+	std::shared_ptr<Texture> geometryTarget;
+	std::unique_ptr<Material> geometryMat;
+
+	std::shared_ptr<Texture> fxaaTarget;
+	std::unique_ptr<Material> fxaaMat;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -72,8 +76,6 @@ private:
 	Buffer uniformBuffer;
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSet uniformSet;
-	VkDescriptorSet geometrySet;
-	VkDescriptorSet fxaaSet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;

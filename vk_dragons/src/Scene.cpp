@@ -77,8 +77,6 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	planeMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
 	skyboxMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ skyColor });
 
-	AllocateTextureSet(geometrySet);
-	AllocateTextureSet(fxaaSet);
 	CreateScreenQuadRenderPass();
 	createSwapchainResources(width, height);
 
@@ -198,15 +196,15 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	depth = std::make_unique<Texture>(renderer, Depth, width, height, 0);
-	geometryTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
-	fxaaTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
+	geometryTarget = std::make_shared<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
+	fxaaTarget = std::make_shared<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
 	CreateMainRenderPass();
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
 	CreateGeometryFramebuffer(width, height);
 	CreateFXAAFramebuffer(width, height);
-	WriteDescriptor(geometrySet, geometryTarget->imageView);
-	WriteDescriptor(fxaaSet, fxaaTarget->imageView);
+	geometryMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ geometryTarget });
+	fxaaMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ fxaaTarget });
 }
 
 void Scene::AllocateCommandBuffers() {
@@ -338,7 +336,7 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &geometrySet, 0, nullptr);
+	geometryMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
 	quad.Draw(commandBuffer);
 
@@ -356,7 +354,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &fxaaSet, 0, nullptr);
+	fxaaMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
 	quad.Draw(commandBuffer);
 
