@@ -2,11 +2,6 @@
 
 Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	: renderer(window, width, height),
-	dragon(renderer),
-	suzanne(renderer),
-	plane(renderer),
-	skybox(renderer),
-	quad(renderer),
 	camera(45.0f, width, height),
 	input(window, camera, *this, renderer) {
 
@@ -19,20 +14,26 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
 
-	dragon.Init("resources/dragon.obj");
-	suzanne.Init("resources/suzanne.obj");
-	plane.Init("resources/plane.obj");
-	skybox.Init();
-	quad.Init();
+	dragon = std::make_unique<Model>(renderer);
+	suzanne = std::make_unique<Model>(renderer);
+	plane = std::make_unique<Model>(renderer);
+	skybox = std::make_unique<Skybox>(renderer);
+	quad = std::make_unique<ScreenQuad>(renderer);
 
-	dragon.GetTransform().SetScale(glm::vec3(0.5f));
-	dragon.GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
+	dragon->Init("resources/dragon.obj");
+	suzanne->Init("resources/suzanne.obj");
+	plane->Init("resources/plane.obj");
+	skybox->Init();
+	quad->Init();
 
-	suzanne.GetTransform().SetScale(glm::vec3(0.25f));
-	suzanne.GetTransform().SetPosition(glm::vec3(0.2f, 0, 0));
+	dragon->GetTransform().SetScale(glm::vec3(0.5f));
+	dragon->GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
 
-	plane.GetTransform().SetScale(glm::vec3(2.0f));
-	plane.GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
+	suzanne->GetTransform().SetScale(glm::vec3(0.25f));
+	suzanne->GetTransform().SetPosition(glm::vec3(0.2f, 0, 0));
+
+	plane->GetTransform().SetScale(glm::vec3(2.0f));
+	plane->GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
 	std::vector<std::shared_ptr<Texture>> textures;
 
@@ -127,12 +128,12 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 		ptr->UploadData(commandBuffer);
 	}
 
-	dragon.UploadData(commandBuffer);
-	suzanne.UploadData(commandBuffer);
-	plane.UploadData(commandBuffer);
-	skybox.UploadData(commandBuffer);
+	dragon->UploadData(commandBuffer);
+	suzanne->UploadData(commandBuffer);
+	plane->UploadData(commandBuffer);
+	skybox->UploadData(commandBuffer);
 
-	quad.UploadData(commandBuffer);
+	quad->UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
 
@@ -140,11 +141,11 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 		ptr->DestroyStaging();
 	}
 
-	dragon.DestroyStaging();
-	suzanne.DestroyStaging();
-	plane.DestroyStaging();
-	skybox.DestroyStaging();
-	quad.DestroyStaging();
+	dragon->DestroyStaging();
+	suzanne->DestroyStaging();
+	plane->DestroyStaging();
+	skybox->DestroyStaging();
+	quad->DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }
@@ -172,7 +173,7 @@ void Scene::Update(double elapsed) {
 	light.SetPosition(glm::vec3(2.0f, (1.5f + sin(0.5*time)), 2.0f));
 	UpdateUniform();
 
-	suzanne.GetTransform().SetRotation(time, glm::vec3(0, 1, 0));
+	suzanne->GetTransform().SetRotation(time, glm::vec3(0, 1, 0));
 }
 
 void Scene::Render() {
@@ -265,8 +266,8 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 
-	dragon.DrawDepth(commandBuffer, lightPipelineLayout);
-	suzanne.DrawDepth(commandBuffer, lightPipelineLayout);
+	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
+	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -284,7 +285,7 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipeline);
 	lightMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
-	quad.Draw(commandBuffer);
+	quad->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -309,18 +310,18 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
 
 	dragonMat->Bind(commandBuffer, modelPipelineLayout, 1);
-	dragon.Draw(commandBuffer, modelPipelineLayout, camera);
+	dragon->Draw(commandBuffer, modelPipelineLayout, camera);
 
 	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 1);
-	suzanne.Draw(commandBuffer, modelPipelineLayout, camera);
+	suzanne->Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, planePipeline);
 	planeMat->Bind(commandBuffer, modelPipelineLayout, 1);
-	plane.Draw(commandBuffer, modelPipelineLayout, camera);
+	plane->Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
 	skyboxMat->Bind(commandBuffer, skyboxPipelineLayout, 1);
-	skybox.Draw(commandBuffer);
+	skybox->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -338,7 +339,7 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
 	geometryMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
-	quad.Draw(commandBuffer);
+	quad->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -356,7 +357,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
 	fxaaMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
-	quad.Draw(commandBuffer);
+	quad->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
