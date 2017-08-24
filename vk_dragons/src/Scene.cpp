@@ -300,14 +300,14 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
 	uniform->Bind(commandBuffer, modelPipelineLayout, 0);
 
-	dragonMat->Bind(commandBuffer, modelPipelineLayout, 1);
+	dragonMat->Bind(commandBuffer, modelPipelineLayout, 2);
 	dragon->Draw(commandBuffer, modelPipelineLayout, camera);
 
-	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 1);
+	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 2);
 	suzanne->Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, planePipeline);
-	planeMat->Bind(commandBuffer, modelPipelineLayout, 1);
+	planeMat->Bind(commandBuffer, modelPipelineLayout, 2);
 	plane->Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
