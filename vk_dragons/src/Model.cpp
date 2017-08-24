@@ -1,7 +1,7 @@
 #include "Model.h"
 
-Model::Model(Renderer& renderer) : renderer(renderer) {
-
+Model::Model(Renderer& renderer, const std::string& fileName) : renderer(renderer) {
+	Init(fileName);
 }
 
 Model::~Model() {

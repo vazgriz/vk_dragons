@@ -6,7 +6,6 @@ class Skybox {
 public:
 	Skybox(Renderer& renderr);
 	~Skybox();
-	void Init();
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 	void Draw(VkCommandBuffer commandBuffer);
@@ -21,4 +20,6 @@ private:
 	Buffer indexBuffer;
 	Buffer vertexStagingBuffer;
 	Buffer indexStagingBuffer;
+
+	void Init();
 };

@@ -23,7 +23,7 @@ const std::vector<uint32_t> indices = {
 };
 
 Skybox::Skybox(Renderer& renderer) : renderer(renderer) {
-
+	Init();
 }
 
 Skybox::~Skybox() {

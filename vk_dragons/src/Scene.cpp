@@ -14,17 +14,11 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
 
-	dragon = std::make_unique<Model>(renderer);
-	suzanne = std::make_unique<Model>(renderer);
-	plane = std::make_unique<Model>(renderer);
+	dragon = std::make_unique<Model>(renderer, "resources/dragon.obj");
+	suzanne = std::make_unique<Model>(renderer, "resources/suzanne.obj");
+	plane = std::make_unique<Model>(renderer, "resources/plane.obj");
 	skybox = std::make_unique<Skybox>(renderer);
 	quad = std::make_unique<ScreenQuad>(renderer);
-
-	dragon->Init("resources/dragon.obj");
-	suzanne->Init("resources/suzanne.obj");
-	plane->Init("resources/plane.obj");
-	skybox->Init();
-	quad->Init();
 
 	dragon->GetTransform().SetScale(glm::vec3(0.5f));
 	dragon->GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
