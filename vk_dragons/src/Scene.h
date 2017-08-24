@@ -10,6 +10,7 @@
 #include "Light.h"
 #include "ScreenQuad.h"
 #include "Material.h"
+#include "UniformBuffer.h"
 
 struct Uniform {
 	glm::mat4 camProjection;
@@ -42,6 +43,8 @@ private:
 
 	Light light;
 
+	std::unique_ptr<UniformBuffer> uniform;
+
 	std::unique_ptr<Model> dragon;
 	std::unique_ptr<Model> suzanne;
 	std::unique_ptr<Model> plane;
@@ -73,9 +76,6 @@ private:
 	VkDescriptorSetLayout uniformSetLayout;
 	VkDescriptorSetLayout modelTextureSetLayout;
 	VkDescriptorSetLayout textureSetLayout;
-	Buffer uniformBuffer;
-	VkDescriptorPool descriptorPool;
-	VkDescriptorSet uniformSet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
@@ -113,9 +113,6 @@ private:
 	void CreateUniformSetLayout();
 	void CreateModelTextureSetLayout();
 	void CreateTextureSetLayout();
-	void CreateUniformBuffer();
-	void CreateDescriptorPool();
-	void CreateUniformSet();
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();

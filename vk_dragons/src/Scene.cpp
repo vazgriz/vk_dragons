@@ -6,10 +6,11 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	input(window, camera, *this, renderer) {
 
 	CreateSampler();
-	CreateDescriptorPool();
 	CreateTextureSetLayout();
 	CreateUniformSetLayout();
 	CreateModelTextureSetLayout();
+
+	uniform = std::make_unique<UniformBuffer>(renderer, sizeof(Uniform), uniformSetLayout);
 
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
@@ -63,10 +64,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	lightColor = std::make_unique<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 	lightMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ lightColor });
 	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
-
-	CreateUniformBuffer();
-	CreateUniformSet();
-
+	
 	dragonMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
 	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneTexture, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
 	planeMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
@@ -96,8 +94,6 @@ Scene::~Scene() {
 	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, modelTextureSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
-	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
-	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
 	vkDestroySampler(renderer.device, sampler, nullptr);
 	DestroyPipelines();
 }
@@ -145,7 +141,7 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 }
 
 void Scene::UpdateUniform() {
-	char* ptr = reinterpret_cast<char*>(renderer.memory->GetMapping(uniformBuffer.memory)) + uniformBuffer.offset;
+	char* ptr = uniform->GetData();
 	Uniform* uniform = reinterpret_cast<Uniform*>(ptr);
 	uniform->camProjection = camera.GetProjection();
 	uniform->camView = camera.GetView();
@@ -258,7 +254,7 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+	uniform->Bind(commandBuffer, lightPipelineLayout, 0);
 
 	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
 	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
@@ -302,7 +298,7 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+	uniform->Bind(commandBuffer, modelPipelineLayout, 0);
 
 	dragonMat->Bind(commandBuffer, modelPipelineLayout, 1);
 	dragon->Draw(commandBuffer, modelPipelineLayout, camera);
@@ -757,56 +753,4 @@ void Scene::CreateTextureSetLayout() {
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture set layout!");
 	}
-}
-
-void Scene::CreateUniformBuffer() {
-	VkDeviceSize size = sizeof(Uniform);
-	uniformBuffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-}
-
-void Scene::CreateDescriptorPool() {
-	VkDescriptorPoolSize poolSizes[] = {
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 }
-	};
-
-	VkDescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 2;
-	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 4;
-
-	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create descriptor pool!");
-	}
-}
-
-void Scene::CreateUniformSet() {
-	VkDescriptorSetLayout layouts[] = { uniformSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &uniformSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate uniform set!");
-	}
-
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = uniformBuffer.buffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(Uniform);
-
-	VkWriteDescriptorSet descriptorWrite;
-
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = uniformSet;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &bufferInfo;
-
-	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }
