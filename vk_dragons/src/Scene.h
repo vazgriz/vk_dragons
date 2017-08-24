@@ -116,8 +116,6 @@ private:
 	void CreateUniformBuffer();
 	void CreateDescriptorPool();
 	void CreateUniformSet();
-	void AllocateTextureSet(VkDescriptorSet& descriptorSet);
-	void WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView);
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();
