@@ -40,10 +40,10 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	textures.push_back(dragonNormal);
 	textures.push_back(dragonEffects);
 
-	auto suzanneTexture = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
+	auto suzanneColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
 	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_normal.png"));
 	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_ao_specular_reflection.png"));
-	textures.push_back(suzanneTexture);
+	textures.push_back(suzanneColor);
 	textures.push_back(suzanneNormal);
 	textures.push_back(suzanneEffects);
 
@@ -67,7 +67,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 	
 	dragonMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
-	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneTexture, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
+	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneColor, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
 	planeMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
 	skyboxMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ skyColor });
 
