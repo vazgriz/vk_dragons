@@ -37,6 +37,7 @@
     <ClCompile Include="src\Skybox.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\Transform.cpp" />
+    <ClCompile Include="src\UniformBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Allocator.h" />
@@ -54,6 +55,7 @@
     <ClInclude Include="src\Skybox.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\Transform.h" />
+    <ClInclude Include="src\UniformBuffer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

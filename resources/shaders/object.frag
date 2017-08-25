@@ -13,6 +13,9 @@ layout(set = 0, binding = 0) uniform Uniforms {
 	mat4 camView;
 	mat4 rotationOnlyView;
 	mat4 camViewInverse;
+} camUniforms;
+
+layout(set = 1, binding = 0) uniform LightUniforms {
 	mat4 lightProjection;
 	mat4 lightView;
 	vec4 lightPosition;
@@ -20,15 +23,15 @@ layout(set = 0, binding = 0) uniform Uniforms {
 	vec4 lightId;
 	vec4 lightIs;
 	float lightShininess;
-} uniforms;
+} lightUniforms;
 
 
-layout(set = 1, binding = 0) uniform sampler2D textureColor;
-layout(set = 1, binding = 1) uniform sampler2D textureNormal;
-layout(set = 1, binding = 2) uniform sampler2D textureEffects;
-layout(set = 1, binding = 3) uniform samplerCube textureCubeMap;
-layout(set = 1, binding = 4) uniform samplerCube textureCubeMapSmall;
-layout(set = 1, binding = 5) uniform sampler2D shadowMap;
+layout(set = 2, binding = 0) uniform sampler2D textureColor;
+layout(set = 2, binding = 1) uniform sampler2D textureNormal;
+layout(set = 2, binding = 2) uniform sampler2D textureEffects;
+layout(set = 2, binding = 3) uniform samplerCube textureCubeMap;
+layout(set = 2, binding = 4) uniform samplerCube textureCubeMapSmall;
+layout(set = 2, binding = 5) uniform sampler2D shadowMap;
 
 // Output: the fragment color
 layout(location = 0) out vec4 fragColor;
@@ -49,11 +52,11 @@ void main(){
 
 	// Compute the direction from the point to the light
 	// light.position.w == 0 if the light is directional, 1 else.
-	vec3 d = normalize(vec3(uniforms.camView * vec4(uniforms.lightPosition.xyz - uniforms.lightPosition.w * Inposition, 1.0)));
+	vec3 d = normalize(vec3(camUniforms.camView * vec4(lightUniforms.lightPosition.xyz - lightUniforms.lightPosition.w * Inposition, 1.0)));
 
 	vec3 diffuseColor = texture(textureColor, Inuv).rgb;
 	
-	vec3 worldNormal = vec3(uniforms.camViewInverse * vec4(n,0.0));
+	vec3 worldNormal = vec3(camUniforms.camViewInverse * vec4(n,0.0));
 	vec3 lightColor = texture(textureCubeMapSmall,normalize(worldNormal)).rgb;
 	diffuseColor = mix(diffuseColor, diffuseColor * lightColor, 0.5);
 	
@@ -69,18 +72,18 @@ void main(){
 	float specular = 0.0;
 	if(diffuse > 0.0){
 		vec3 r = reflect(-d,n);
-		specular = pow(max(dot(r,v),0.0), uniforms.lightShininess);
+		specular = pow(max(dot(r,v),0.0), lightUniforms.lightShininess);
 		specular *= effects.g;
 	}
 	
 	vec3 reflectionColor = vec3(0.0);
 	if(effects.b > 0.0){
 		vec3 rCubeMap = reflect(-v, n);
-		rCubeMap = vec3(uniforms.camViewInverse * vec4(rCubeMap,0.0));
+		rCubeMap = vec3(camUniforms.camViewInverse * vec4(rCubeMap,0.0));
 		reflectionColor = texture(textureCubeMap,rCubeMap).rgb;
 	}
 
-	vec3 lightShading = diffuse * diffuseColor + specular * uniforms.lightIs.rgb;
+	vec3 lightShading = diffuse * diffuseColor + specular * lightUniforms.lightIs.rgb;
 	
 	float shadow = 1.0;
 	if (InlightSpacePosition.z < 1.0){
@@ -102,7 +105,7 @@ void main(){
 	}
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
-	vec3 fColor = ambient * uniforms.lightIa.rgb + shadow * lightShading;
+	vec3 fColor = ambient * lightUniforms.lightIa.rgb + shadow * lightShading;
 	// Mix with the reflexion color.
 	fragColor = vec4(mix(fColor,reflectionColor,0.5*effects.b), 0.0);
 }

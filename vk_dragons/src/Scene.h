@@ -10,12 +10,16 @@
 #include "Light.h"
 #include "ScreenQuad.h"
 #include "Material.h"
+#include "UniformBuffer.h"
 
-struct Uniform {
+struct CameraUniform {
 	glm::mat4 camProjection;
 	glm::mat4 camView;
 	glm::mat4 camRotationOnlyView;
 	glm::mat4 camViewInverse;
+};
+
+struct LightUniform {
 	glm::mat4 lightProjection;
 	glm::mat4 lightView;
 	glm::vec4 lightPosition;
@@ -42,11 +46,14 @@ private:
 
 	Light light;
 
-	Model dragon;
-	Model suzanne;
-	Model plane;
-	Skybox skybox;
-	ScreenQuad quad;
+	std::unique_ptr<UniformBuffer> camUniform;
+	std::unique_ptr<UniformBuffer> lightUniform;
+
+	std::unique_ptr<Model> dragon;
+	std::unique_ptr<Model> suzanne;
+	std::unique_ptr<Model> plane;
+	std::unique_ptr<Skybox> skybox;
+	std::unique_ptr<ScreenQuad> quad;
 
 	std::unique_ptr<Material> dragonMat;
 	std::unique_ptr<Material> suzanneMat;
@@ -59,8 +66,12 @@ private:
 	std::shared_ptr<Texture> boxBlur;
 
 	std::unique_ptr<Texture> depth;
-	std::unique_ptr<Texture> geometryTarget;
-	std::unique_ptr<Texture> fxaaTarget;
+
+	std::shared_ptr<Texture> geometryTarget;
+	std::unique_ptr<Material> geometryMat;
+
+	std::shared_ptr<Texture> fxaaTarget;
+	std::unique_ptr<Material> fxaaMat;
 
 	VkRenderPass mainRenderPass;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -69,11 +80,6 @@ private:
 	VkDescriptorSetLayout uniformSetLayout;
 	VkDescriptorSetLayout modelTextureSetLayout;
 	VkDescriptorSetLayout textureSetLayout;
-	Buffer uniformBuffer;
-	VkDescriptorPool descriptorPool;
-	VkDescriptorSet uniformSet;
-	VkDescriptorSet geometrySet;
-	VkDescriptorSet fxaaSet;
 
 	VkRenderPass lightRenderPass;
 	VkFramebuffer lightFramebuffer;
@@ -111,11 +117,6 @@ private:
 	void CreateUniformSetLayout();
 	void CreateModelTextureSetLayout();
 	void CreateTextureSetLayout();
-	void CreateUniformBuffer();
-	void CreateDescriptorPool();
-	void CreateUniformSet();
-	void AllocateTextureSet(VkDescriptorSet& descriptorSet);
-	void WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView);
 
 	void createSwapchainResources(uint32_t width, uint32_t height);
 	void CleanupSwapchainResources();

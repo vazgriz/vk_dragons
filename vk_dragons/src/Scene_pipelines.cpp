@@ -29,10 +29,10 @@ void Scene::DestroyPipelines() {
 }
 
 void Scene::CreateModelPipelineLayout() {
-	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, modelTextureSetLayout };
+	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, uniformSetLayout, modelTextureSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 2;
+	pipelineLayoutInfo.setLayoutCount = 3;
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 	VkPushConstantRange pushConstantInfo;
@@ -461,7 +461,7 @@ void Scene::CreateLightPipeline() {
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 

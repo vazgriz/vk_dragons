@@ -14,7 +14,7 @@ const std::vector<uint32_t> indices = {
 };
 
 ScreenQuad::ScreenQuad(Renderer& renderer) : renderer(renderer) {
-
+	Init();
 }
 
 ScreenQuad::~ScreenQuad() {

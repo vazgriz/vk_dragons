@@ -7,7 +7,6 @@ class ScreenQuad {
 public:
 	ScreenQuad(Renderer& renderer);
 	~ScreenQuad();
-	void Init();
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 	void Draw(VkCommandBuffer commandBuffer);
@@ -22,4 +21,6 @@ private:
 	Buffer indexBuffer;
 	Buffer vertexStagingBuffer;
 	Buffer indexStagingBuffer;
+
+	void Init();
 };

@@ -2,65 +2,56 @@
 
 Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	: renderer(window, width, height),
-	dragon(renderer),
-	suzanne(renderer),
-	plane(renderer),
-	skybox(renderer),
-	quad(renderer),
 	camera(45.0f, width, height),
 	input(window, camera, *this, renderer) {
 
 	CreateSampler();
-	CreateDescriptorPool();
 	CreateTextureSetLayout();
 	CreateUniformSetLayout();
 	CreateModelTextureSetLayout();
 
+	camUniform = std::make_unique<UniformBuffer>(renderer, sizeof(CameraUniform), uniformSetLayout);
+	lightUniform = std::make_unique<UniformBuffer>(renderer, sizeof(LightUniform), uniformSetLayout);
+
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
 
-	dragon.Init("resources/dragon.obj");
-	suzanne.Init("resources/suzanne.obj");
-	plane.Init("resources/plane.obj");
-	skybox.Init();
-	quad.Init();
+	dragon = std::make_unique<Model>(renderer, "resources/dragon.obj");
+	suzanne = std::make_unique<Model>(renderer, "resources/suzanne.obj");
+	plane = std::make_unique<Model>(renderer, "resources/plane.obj");
+	skybox = std::make_unique<Skybox>(renderer);
+	quad = std::make_unique<ScreenQuad>(renderer);
 
-	dragon.GetTransform().SetScale(glm::vec3(0.5f));
-	dragon.GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
+	dragon->GetTransform().SetScale(glm::vec3(0.5f));
+	dragon->GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
 
-	suzanne.GetTransform().SetScale(glm::vec3(0.25f));
-	suzanne.GetTransform().SetPosition(glm::vec3(0.2f, 0, 0));
+	suzanne->GetTransform().SetScale(glm::vec3(0.25f));
+	suzanne->GetTransform().SetPosition(glm::vec3(0.2f, 0, 0));
 
-	plane.GetTransform().SetScale(glm::vec3(2.0f));
-	plane.GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
-
-	std::vector<std::shared_ptr<Texture>> textures;
+	plane->GetTransform().SetScale(glm::vec3(2.0f));
+	plane->GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
 	auto dragonColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_color.png"), true);
 	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_normal.png"));
 	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_ao_specular_reflection.png"));
-	textures.push_back(dragonColor);
-	textures.push_back(dragonNormal);
-	textures.push_back(dragonEffects);
 
-	auto suzanneTexture = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
+	auto suzanneColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
 	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_normal.png"));
 	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_ao_specular_reflection.png"));
-	textures.push_back(suzanneTexture);
-	textures.push_back(suzanneNormal);
-	textures.push_back(suzanneEffects);
 
 	auto planeColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_color.png"), true);
 	auto planeNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_normal.png"));
 	auto planeEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_depthmap.png"));
-	textures.push_back(planeColor);
-	textures.push_back(planeNormal);
-	textures.push_back(planeEffects);
 
 	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap"), true);
 	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap_diff"), true);
-	textures.push_back(skyColor);
-	textures.push_back(skySmallColor);
+
+	std::vector<std::shared_ptr<Texture>> textures = {
+		dragonColor, dragonNormal, dragonEffects,
+		suzanneColor, suzanneNormal, suzanneEffects,
+		planeColor, planeNormal, planeEffects,
+		skyColor, skySmallColor
+	};
 
 	UploadResources(textures);
 
@@ -68,17 +59,12 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	lightColor = std::make_unique<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
 	lightMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ lightColor });
 	boxBlur = std::make_shared<Texture>(renderer, _Image, lightDepth->GetWidth(), lightDepth->GetHeight(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_FORMAT_R16G16_SFLOAT);
-
-	CreateUniformBuffer();
-	CreateUniformSet();
-
+	
 	dragonMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
-	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneTexture, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
+	suzanneMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ suzanneColor, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
 	planeMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
 	skyboxMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ skyColor });
 
-	AllocateTextureSet(geometrySet);
-	AllocateTextureSet(fxaaSet);
 	CreateScreenQuadRenderPass();
 	createSwapchainResources(width, height);
 
@@ -103,8 +89,6 @@ Scene::~Scene() {
 	vkDestroyDescriptorSetLayout(renderer.device, uniformSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, modelTextureSetLayout, nullptr);
 	vkDestroyDescriptorSetLayout(renderer.device, textureSetLayout, nullptr);
-	vkDestroyBuffer(renderer.device, uniformBuffer.buffer, nullptr);
-	vkDestroyDescriptorPool(renderer.device, descriptorPool, nullptr);
 	vkDestroySampler(renderer.device, sampler, nullptr);
 	DestroyPipelines();
 }
@@ -129,12 +113,12 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 		ptr->UploadData(commandBuffer);
 	}
 
-	dragon.UploadData(commandBuffer);
-	suzanne.UploadData(commandBuffer);
-	plane.UploadData(commandBuffer);
-	skybox.UploadData(commandBuffer);
+	dragon->UploadData(commandBuffer);
+	suzanne->UploadData(commandBuffer);
+	plane->UploadData(commandBuffer);
+	skybox->UploadData(commandBuffer);
 
-	quad.UploadData(commandBuffer);
+	quad->UploadData(commandBuffer);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
 
@@ -142,29 +126,30 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 		ptr->DestroyStaging();
 	}
 
-	dragon.DestroyStaging();
-	suzanne.DestroyStaging();
-	plane.DestroyStaging();
-	skybox.DestroyStaging();
-	quad.DestroyStaging();
+	dragon->DestroyStaging();
+	suzanne->DestroyStaging();
+	plane->DestroyStaging();
+	skybox->DestroyStaging();
+	quad->DestroyStaging();
 
 	renderer.memory->hostAllocator->Reset();
 }
 
 void Scene::UpdateUniform() {
-	char* ptr = reinterpret_cast<char*>(renderer.memory->GetMapping(uniformBuffer.memory)) + uniformBuffer.offset;
-	Uniform* uniform = reinterpret_cast<Uniform*>(ptr);
-	uniform->camProjection = camera.GetProjection();
-	uniform->camView = camera.GetView();
-	uniform->camRotationOnlyView = camera.GetRotationOnlyView();
-	uniform->camViewInverse = glm::inverse(camera.GetView());
-	uniform->lightProjection = light.GetProjection();
-	uniform->lightView = light.GetView();
-	uniform->lightPosition = light.GetPosition();
-	uniform->lightIa = light.GetIa();
-	uniform->lightId = light.GetId();
-	uniform->lightIs = light.GetIs();
-	uniform->lightShininess = light.GetShininess();
+	CameraUniform* camUniform = reinterpret_cast<CameraUniform*>(this->camUniform->GetData());
+	camUniform->camProjection = camera.GetProjection();
+	camUniform->camView = camera.GetView();
+	camUniform->camRotationOnlyView = camera.GetRotationOnlyView();
+	camUniform->camViewInverse = glm::inverse(camera.GetView());
+
+	LightUniform* lightUniform = reinterpret_cast<LightUniform*>(this->lightUniform->GetData());
+	lightUniform->lightProjection = light.GetProjection();
+	lightUniform->lightView = light.GetView();
+	lightUniform->lightPosition = light.GetPosition();
+	lightUniform->lightIa = light.GetIa();
+	lightUniform->lightId = light.GetId();
+	lightUniform->lightIs = light.GetIs();
+	lightUniform->lightShininess = light.GetShininess();
 }
 
 void Scene::Update(double elapsed) {
@@ -174,7 +159,7 @@ void Scene::Update(double elapsed) {
 	light.SetPosition(glm::vec3(2.0f, (1.5f + sin(0.5*time)), 2.0f));
 	UpdateUniform();
 
-	suzanne.GetTransform().SetRotation(time, glm::vec3(0, 1, 0));
+	suzanne->GetTransform().SetRotation(time, glm::vec3(0, 1, 0));
 }
 
 void Scene::Render() {
@@ -198,15 +183,15 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 
 void Scene::createSwapchainResources(uint32_t width, uint32_t height) {
 	depth = std::make_unique<Texture>(renderer, Depth, width, height, 0);
-	geometryTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
-	fxaaTarget = std::make_unique<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
+	geometryTarget = std::make_shared<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
+	fxaaTarget = std::make_shared<Texture>(renderer, _Image, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM);
 	CreateMainRenderPass();
 	CreateMainFramebuffers(width, height);
 	CreateGeometryRenderPass();
 	CreateGeometryFramebuffer(width, height);
 	CreateFXAAFramebuffer(width, height);
-	WriteDescriptor(geometrySet, geometryTarget->imageView);
-	WriteDescriptor(fxaaSet, fxaaTarget->imageView);
+	geometryMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ geometryTarget });
+	fxaaMat = std::make_unique<Material>(renderer, sampler, std::vector<std::shared_ptr<Texture>>{ fxaaTarget });
 }
 
 void Scene::AllocateCommandBuffers() {
@@ -265,10 +250,11 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+	camUniform->Bind(commandBuffer, lightPipelineLayout, 0);
 
-	dragon.DrawDepth(commandBuffer, lightPipelineLayout);
-	suzanne.DrawDepth(commandBuffer, lightPipelineLayout);
+	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
+	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
+	plane->DrawDepth(commandBuffer, lightPipelineLayout);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -286,7 +272,7 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipeline);
 	lightMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
-	quad.Draw(commandBuffer);
+	quad->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -308,21 +294,22 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipelineLayout, 0, 1, &uniformSet, 0, nullptr);
+	camUniform->Bind(commandBuffer, modelPipelineLayout, 0);
+	lightUniform->Bind(commandBuffer, modelPipelineLayout, 1);
 
-	dragonMat->Bind(commandBuffer, modelPipelineLayout, 1);
-	dragon.Draw(commandBuffer, modelPipelineLayout, camera);
+	dragonMat->Bind(commandBuffer, modelPipelineLayout, 2);
+	dragon->Draw(commandBuffer, modelPipelineLayout, camera);
 
-	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 1);
-	suzanne.Draw(commandBuffer, modelPipelineLayout, camera);
+	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 2);
+	suzanne->Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, planePipeline);
-	planeMat->Bind(commandBuffer, modelPipelineLayout, 1);
-	plane.Draw(commandBuffer, modelPipelineLayout, camera);
+	planeMat->Bind(commandBuffer, modelPipelineLayout, 2);
+	plane->Draw(commandBuffer, modelPipelineLayout, camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
 	skyboxMat->Bind(commandBuffer, skyboxPipelineLayout, 1);
-	skybox.Draw(commandBuffer);
+	skybox->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -338,9 +325,9 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &geometrySet, 0, nullptr);
+	geometryMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
-	quad.Draw(commandBuffer);
+	quad->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -356,9 +343,9 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenQuadPipelineLayout, 0, 1, &fxaaSet, 0, nullptr);
+	fxaaMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
 
-	quad.Draw(commandBuffer);
+	quad->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -763,87 +750,4 @@ void Scene::CreateTextureSetLayout() {
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture set layout!");
 	}
-}
-
-void Scene::CreateUniformBuffer() {
-	VkDeviceSize size = sizeof(Uniform);
-	uniformBuffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-}
-
-void Scene::CreateDescriptorPool() {
-	VkDescriptorPoolSize poolSizes[] = {
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 }
-	};
-
-	VkDescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 2;
-	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = 4;
-
-	if (vkCreateDescriptorPool(renderer.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create descriptor pool!");
-	}
-}
-
-void Scene::CreateUniformSet() {
-	VkDescriptorSetLayout layouts[] = { uniformSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &uniformSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate uniform set!");
-	}
-
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = uniformBuffer.buffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(Uniform);
-
-	VkWriteDescriptorSet descriptorWrite;
-
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = uniformSet;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &bufferInfo;
-
-	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
-}
-
-void Scene::AllocateTextureSet(VkDescriptorSet& descriptorSet) {
-	VkDescriptorSetLayout layouts[] = { textureSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(renderer.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate texture set!");
-	}
-}
-
-void Scene::WriteDescriptor(VkDescriptorSet descriptorSet, VkImageView imageView) {
-	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = imageView;
-	imageInfo.sampler = sampler;
-
-	VkWriteDescriptorSet descriptorWrite = {};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pImageInfo = &imageInfo;
-
-	vkUpdateDescriptorSets(renderer.device, 1, &descriptorWrite, 0, nullptr);
 }

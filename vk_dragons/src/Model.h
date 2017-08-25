@@ -11,9 +11,8 @@
 
 class Model {
 public:
-	Model(Renderer& renderer);
+	Model(Renderer& renderer, const std::string& fileName);
 	~Model();
-	void Init(const std::string& fileName);
 	void UploadData(VkCommandBuffer commandBuffer);
 	void DestroyStaging();
 	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera);
@@ -45,5 +44,6 @@ private:
 
 	Transform transform;
 
+	void Init(const std::string& fileName);
 	void CreateBuffers();
 };
