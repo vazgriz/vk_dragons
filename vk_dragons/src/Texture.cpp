@@ -4,10 +4,6 @@
 #include "ProgramUtilities.h"
 #include <stdexcept>
 
-Texture::Texture(Renderer& renderer) : renderer(renderer) {
-
-}
-
 Texture::Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace) : renderer(renderer) {
 	switch (type) {
 	case _Image:
