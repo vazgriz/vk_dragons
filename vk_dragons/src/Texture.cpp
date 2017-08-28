@@ -133,6 +133,7 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 	unsigned int width, height;
 
 	for (size_t i = 0; i < filenames.size(); i++) {
+		std::cout << "Loading: " << filenames[i] << std::endl;
 		unsigned int error = lodepng::decode(data[i], width, height, filenames[i]);
 		if (error != 0) {
 			std::cerr << "Unable to load the texture at path " << filenames[i] << std::endl;
