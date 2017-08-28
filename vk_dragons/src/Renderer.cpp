@@ -283,9 +283,6 @@ void Renderer::SelectFeatures(VkPhysicalDeviceFeatures& features) {
 	if (availableFeatures.shaderCullDistance == VK_TRUE) {
 		features.shaderCullDistance = VK_TRUE;
 	}
-	if (availableFeatures.samplerAnisotropy == VK_TRUE) {
-		features.samplerAnisotropy = VK_TRUE;
-	}
 }
 
 void Renderer::createLogicalDevice() {
