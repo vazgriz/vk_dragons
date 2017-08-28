@@ -269,5 +269,4 @@ void computeTangentsAndBinormals(mesh_t & mesh){
 			mesh.tangents[tid] *= -1.0f;
  		}
 	}
-	cout << "OBJ: " << mesh.tangents.size() << " tangents and binormals computed." << endl;
 }
