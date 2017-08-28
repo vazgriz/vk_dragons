@@ -251,6 +251,7 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
 	camUniform->Bind(commandBuffer, lightPipelineLayout, 0);
+	lightUniform->Bind(commandBuffer, lightPipelineLayout, 1);
 
 	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
 	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
