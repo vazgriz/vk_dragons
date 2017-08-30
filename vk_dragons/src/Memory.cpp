@@ -17,6 +17,12 @@ void Memory::Cleanup() {
 	}
 }
 
+void Memory::Free(Allocation alloc) {
+	if (allocatorMap.count(alloc.memory) == 0) throw std::runtime_error("Could not deallocate");
+
+	allocatorMap[alloc.memory]->Free(alloc);
+}
+
 void Memory::AllocHostMemory() {
 	uint32_t type;
 	bool found = false;

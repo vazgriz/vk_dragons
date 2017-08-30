@@ -22,6 +22,8 @@ public:
 	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
 	Allocator& GetDeviceAllocator(uint32_t);
 
+	void Free(Allocation alloc);
+
 	void* GetMapping(VkDeviceMemory memory);
 
 private:
