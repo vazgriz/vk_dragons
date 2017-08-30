@@ -2,12 +2,13 @@
 #include "Renderer.h"
 #include "ProgramUtilities.h"
 #include <vector>
+#include "StagingBuffer.h"
 
 class ScreenQuad {
 public:
 	ScreenQuad(Renderer& renderer);
 	~ScreenQuad();
-	void UploadData(VkCommandBuffer commandBuffer);
+	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
 	void DestroyStaging();
 	void Draw(VkCommandBuffer commandBuffer);
 

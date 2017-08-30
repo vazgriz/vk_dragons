@@ -11,6 +11,7 @@
 #include "ScreenQuad.h"
 #include "Material.h"
 #include "UniformBuffer.h"
+#include "StagingBuffer.h"
 
 struct CameraUniform {
 	glm::mat4 camProjection;

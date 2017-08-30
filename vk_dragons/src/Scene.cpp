@@ -109,30 +109,21 @@ void Scene::CleanupSwapchainResources() {
 void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 	VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
 
+	std::vector<std::unique_ptr<StagingBuffer>> stagingBuffers;
+
 	for (auto& ptr : textures) {
-		ptr->UploadData(commandBuffer);
+		ptr->UploadData(commandBuffer, stagingBuffers);
 	}
 
-	dragon->UploadData(commandBuffer);
-	suzanne->UploadData(commandBuffer);
-	plane->UploadData(commandBuffer);
-	skybox->UploadData(commandBuffer);
-
-	quad->UploadData(commandBuffer);
+	dragon->UploadData(commandBuffer, stagingBuffers);
+	suzanne->UploadData(commandBuffer, stagingBuffers);
+	plane->UploadData(commandBuffer, stagingBuffers);
+	skybox->UploadData(commandBuffer, stagingBuffers);
+	quad->UploadData(commandBuffer, stagingBuffers);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
 
-	for (auto& ptr : textures) {
-		ptr->DestroyStaging();
-	}
-
-	dragon->DestroyStaging();
-	suzanne->DestroyStaging();
-	plane->DestroyStaging();
-	skybox->DestroyStaging();
-	quad->DestroyStaging();
-
-	renderer.memory->hostAllocator->Reset();
+	//renderer.memory->hostAllocator->Reset();
 }
 
 void Scene::UpdateUniform() {

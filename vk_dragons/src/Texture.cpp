@@ -150,13 +150,13 @@ uint32_t Texture::GetHeight() {
 	return height;
 }
 
-void Texture::UploadData(VkCommandBuffer commandBuffer) {
+void Texture::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
 	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
 
-	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
-		stagingBuffers[i] = CreateHostBuffer(renderer, data[i].size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-		char* dest = static_cast<char*>(renderer.memory->GetMapping(stagingBuffers[i].alloc.memory)) + stagingBuffers[i].alloc.offset;
+		Buffer staging = CreateHostBuffer(renderer, data[i].size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+		stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, staging));
+		char* dest = static_cast<char*>(renderer.memory->GetMapping(staging.alloc.memory)) + staging.alloc.offset;
 		memcpy(dest, data[i].data(), data[i].size());
 
 		VkBufferImageCopy copy = {};
@@ -174,7 +174,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 			1
 		};
 
-		vkCmdCopyBufferToImage(commandBuffer, stagingBuffers[i].buffer, image.image, VK_IMAGE_LAYOUT_GENERAL, 1, &copy);
+		vkCmdCopyBufferToImage(commandBuffer, staging.buffer, image.image, VK_IMAGE_LAYOUT_GENERAL, 1, &copy);
 	}
 
 	GenerateMipChain(commandBuffer);

@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "glm/glm.hpp"
 #include "ProgramUtilities.h"
+#include "StagingBuffer.h"
 
 enum TextureType {
 	_Image,
@@ -17,7 +18,7 @@ public:
 	Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t height, VkImageUsageFlags usage, VkFormat format = VK_FORMAT_UNDEFINED);
 	~Texture();
 
-	void UploadData(VkCommandBuffer commandBuffer);
+	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
 	void DestroyStaging();
 
 	uint32_t GetWidth();

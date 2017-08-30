@@ -1,12 +1,14 @@
 #pragma once
 #include "Renderer.h"
 #include "ProgramUtilities.h"
+#include <vector>
+#include "StagingBuffer.h"
 
 class Skybox {
 public:
 	Skybox(Renderer& renderr);
 	~Skybox();
-	void UploadData(VkCommandBuffer commandBuffer);
+	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
 	void DestroyStaging();
 	void Draw(VkCommandBuffer commandBuffer);
 

@@ -94,13 +94,13 @@ void Model::CreateBuffers() {
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 }
 
-void Model::UploadData(VkCommandBuffer commandBuffer) {
-	positionsStagingBuffer = CopyBuffer(renderer, commandBuffer, positionsBuffer.buffer, mesh.positions.data(), mesh.positions.size() * sizeof(glm::vec3));
-	normalsStagingBuffer = CopyBuffer(renderer, commandBuffer, normalsBuffer.buffer, mesh.normals.data(), mesh.normals.size() * sizeof(glm::vec3));
-	tangentsStagingBuffer = CopyBuffer(renderer, commandBuffer, tangentsBuffer.buffer, mesh.tangents.data(), mesh.tangents.size() * sizeof(glm::vec3));
-	binormalsStagingBuffer = CopyBuffer(renderer, commandBuffer, binormalsBuffer.buffer, mesh.binormals.data(), mesh.binormals.size() * sizeof(glm::vec3));
-	texcoordsStagingBuffer = CopyBuffer(renderer, commandBuffer, texcoordsBuffer.buffer, mesh.texcoords.data(), mesh.texcoords.size() * sizeof(glm::vec2));
-	indicesStagingBuffer = CopyBuffer(renderer, commandBuffer, indicesBuffer.buffer, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t));
+void Model::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, positionsBuffer.buffer, mesh.positions.data(), mesh.positions.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, normalsBuffer.buffer, mesh.normals.data(), mesh.normals.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, tangentsBuffer.buffer, mesh.tangents.data(), mesh.tangents.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, binormalsBuffer.buffer, mesh.binormals.data(), mesh.binormals.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, texcoordsBuffer.buffer, mesh.texcoords.data(), mesh.texcoords.size() * sizeof(glm::vec2))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, indicesBuffer.buffer, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t))));
 }
 
 std::vector<VkVertexInputBindingDescription> Model::GetBindingDescriptions() {
