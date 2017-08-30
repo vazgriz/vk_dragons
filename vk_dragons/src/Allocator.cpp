@@ -138,7 +138,7 @@ void Allocator::CombineNodes(std::list<Node>& list, std::list<Node>::iterator it
 	auto end = middle;
 	end++;
 
-	if (middle->offset + middle->size == end->offset) {
+	if (end != list.end() && middle->offset + middle->size == end->offset) {
 		middle->size += end->size;
 		list.erase(end);
 	}
