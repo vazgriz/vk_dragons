@@ -37,13 +37,6 @@ Texture::~Texture() {
 	image.image = VK_NULL_HANDLE;
 }
 
-void Texture::DestroyStaging() {
-	for (auto& stagingBuffer : stagingBuffers) {
-		vkDestroyBuffer(renderer.device, stagingBuffer.buffer, nullptr);
-	}
-	data = {};
-}
-
 void Texture::Init(const std::string& filename, bool gammaSpace) {
 	LoadImages(std::vector<std::string>{ filename });
 	CalulateMipChain();

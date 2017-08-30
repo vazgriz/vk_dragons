@@ -19,7 +19,6 @@ public:
 	~Texture();
 
 	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
-	void DestroyStaging();
 
 	uint32_t GetWidth();
 	uint32_t GetHeight();
@@ -34,7 +33,6 @@ private:
 	uint32_t height;
 	std::vector<std::vector<unsigned char>> data;
 	std::vector<glm::vec2> mipChain;
-	std::vector<Buffer> stagingBuffers;
 	uint32_t mipLevels;
 	uint32_t arrayLayers;
 
