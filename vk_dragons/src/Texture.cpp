@@ -4,11 +4,7 @@
 #include "ProgramUtilities.h"
 #include <stdexcept>
 
-Texture::Texture(Renderer& renderer) : renderer(renderer) {
-
-}
-
-Texture::Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace) : renderer(renderer) {
+Texture::Texture(Renderer& renderer, TextureType type, const std::string& filename, bool gammaSpace) : renderer(renderer) {
 	switch (type) {
 	case _Image:
 		Init(filename, gammaSpace);
@@ -35,17 +31,9 @@ Texture::Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t 
 }
 
 Texture::~Texture() {
-	renderer.memory->GetDeviceAllocator(image.type).Pop();
+	renderer.memory->GetDeviceAllocator(image.type).Free(image.alloc);
 	vkDestroyImage(renderer.device, image.image, nullptr);
 	vkDestroyImageView(renderer.device, imageView, nullptr);
-	image.image = VK_NULL_HANDLE;
-}
-
-void Texture::DestroyStaging() {
-	for (auto& stagingBuffer : stagingBuffers) {
-		vkDestroyBuffer(renderer.device, stagingBuffer.buffer, nullptr);
-	}
-	data = {};
 }
 
 void Texture::Init(const std::string& filename, bool gammaSpace) {
@@ -133,6 +121,7 @@ void Texture::LoadImages(std::vector<std::string>& filenames) {
 	unsigned int width, height;
 
 	for (size_t i = 0; i < filenames.size(); i++) {
+		std::cout << "Loading: " << filenames[i] << std::endl;
 		unsigned int error = lodepng::decode(data[i], width, height, filenames[i]);
 		if (error != 0) {
 			std::cerr << "Unable to load the texture at path " << filenames[i] << std::endl;
@@ -153,13 +142,13 @@ uint32_t Texture::GetHeight() {
 	return height;
 }
 
-void Texture::UploadData(VkCommandBuffer commandBuffer) {
+void Texture::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
 	Transition(commandBuffer, VK_FORMAT_R8G8B8A8_UNORM, image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, mipLevels, arrayLayers);
 
-	stagingBuffers.resize(data.size());
 	for (size_t i = 0; i < data.size(); i++) {
-		stagingBuffers[i] = CreateHostBuffer(renderer, data[i].size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-		char* dest = static_cast<char*>(renderer.memory->GetMapping(stagingBuffers[i].memory)) + stagingBuffers[i].offset;
+		Buffer staging = CreateHostBuffer(renderer, data[i].size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+		stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, staging));
+		char* dest = static_cast<char*>(renderer.memory->GetMapping(staging.alloc.memory)) + staging.alloc.offset;
 		memcpy(dest, data[i].data(), data[i].size());
 
 		VkBufferImageCopy copy = {};
@@ -177,7 +166,7 @@ void Texture::UploadData(VkCommandBuffer commandBuffer) {
 			1
 		};
 
-		vkCmdCopyBufferToImage(commandBuffer, stagingBuffers[i].buffer, image.image, VK_IMAGE_LAYOUT_GENERAL, 1, &copy);
+		vkCmdCopyBufferToImage(commandBuffer, staging.buffer, image.image, VK_IMAGE_LAYOUT_GENERAL, 1, &copy);
 	}
 
 	GenerateMipChain(commandBuffer);

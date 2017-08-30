@@ -16,7 +16,7 @@ void loadObj(const std::string & filename, mesh_t & mesh, LoadMode mode){
 		return;
 	}
 
-	cout << "OBJ: loading " << filename << endl;
+	cout << "Loading: " << filename << endl;
 
 	//Init the mesh.
 	mesh.indices.clear();
@@ -192,7 +192,6 @@ void loadObj(const std::string & filename, mesh_t & mesh, LoadMode mode){
 	normals_temp.clear();
 	texcoords_temp.clear();
 	faces_temp.clear();
-	cout << "OBJ: loaded. " << mesh.indices.size()/3 << " faces, " << mesh.positions.size() << " vertices, " << mesh.normals.size() << " normals, " << mesh.texcoords.size() << " texcoords." <<  endl;
 	return;
 }
 
@@ -270,5 +269,4 @@ void computeTangentsAndBinormals(mesh_t & mesh){
 			mesh.tangents[tid] *= -1.0f;
  		}
 	}
-	cout << "OBJ: " << mesh.tangents.size() << " tangents and binormals computed." << endl;
 }

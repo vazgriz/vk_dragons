@@ -17,6 +17,12 @@ void Memory::Cleanup() {
 	}
 }
 
+void Memory::Free(Allocation alloc) {
+	if (allocatorMap.count(alloc.memory) == 0) throw std::runtime_error("Could not deallocate");
+
+	allocatorMap[alloc.memory]->Free(alloc);
+}
+
 void Memory::AllocHostMemory() {
 	uint32_t type;
 	bool found = false;
@@ -44,11 +50,11 @@ void Memory::AllocHostMemory() {
 
 	if (!found) throw std::runtime_error("Could not find suitable host memory");
 
-	hostAllocator = std::make_unique<Allocator>(device, type, ALLOCATION_SIZE);
+	hostAllocator = std::make_unique<Allocator>(device, type, ALLOCATION_SIZE, allocatorMap);
 }
 
 Allocator& Memory::AllocDevice(uint32_t type) {
-	deviceAllocators.emplace_back(std::make_unique<Allocator>(device, type, ALLOCATION_SIZE));
+	deviceAllocators.emplace_back(std::make_unique<Allocator>(device, type, ALLOCATION_SIZE, allocatorMap));
 	return *deviceAllocators[deviceAllocators.size() - 1];
 }
 

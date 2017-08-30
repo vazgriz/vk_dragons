@@ -5,27 +5,10 @@ Model::Model(Renderer& renderer, const std::string& fileName) : renderer(rendere
 }
 
 Model::~Model() {
-	vkDestroyBuffer(renderer.device, positionsBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, normalsBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, tangentsBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, binormalsBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, texcoordsBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, indicesBuffer.buffer, nullptr);
-}
-
-void Model::DestroyStaging() {
-	vkDestroyBuffer(renderer.device, positionsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, normalsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, tangentsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, binormalsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, texcoordsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, indicesStagingBuffer.buffer, nullptr);
-	mesh.positions = {};
-	mesh.normals = {};
-	mesh.tangents = {};
-	mesh.binormals = {};
-	mesh.texcoords = {};
-	mesh.indices = {};
+	for (auto& buffer : buffers) {
+		vkDestroyBuffer(renderer.device, buffer.buffer, nullptr);
+		renderer.memory->Free(buffer.alloc);
+	}
 }
 
 void Model::Init(const std::string& fileName) {
@@ -38,18 +21,18 @@ void Model::Init(const std::string& fileName) {
 }
 
 void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera) {
-	VkBuffer buffers[] = {
-		positionsBuffer.buffer,
-		normalsBuffer.buffer,
-		tangentsBuffer.buffer,
-		binormalsBuffer.buffer,
-		texcoordsBuffer.buffer
+	VkBuffer vertexBuffers[] = {
+		buffers[0].buffer,	//position
+		buffers[1].buffer,	//normal
+		buffers[2].buffer,	//tangent
+		buffers[3].buffer,	//bitangent
+		buffers[4].buffer	//tex coords
 	};
 	VkDeviceSize offsets[] = {
 		0, 0, 0, 0, 0
 	};
-	vkCmdBindVertexBuffers(commandBuffer, 0, 5, buffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdBindVertexBuffers(commandBuffer, 0, 5, vertexBuffers, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, buffers[5].buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
 
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
@@ -61,46 +44,47 @@ void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 }
 
 void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
-	VkBuffer buffers[] = {
-		positionsBuffer.buffer,
+	VkBuffer vertexBuffers[] = {
+		buffers[0].buffer,	//position
 	};
 	VkDeviceSize offsets[] = {
 		0
 	};
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, indicesBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, buffers[5].buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
 	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 }
 
 void Model::CreateBuffers() {
-	positionsBuffer = CreateBuffer(renderer, mesh.positions.size() * sizeof(glm::vec3),
+	buffers.resize(6);
+	buffers[0] = CreateBuffer(renderer, mesh.positions.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	normalsBuffer = CreateBuffer(renderer, mesh.normals.size() * sizeof(glm::vec3),
+	buffers[1] = CreateBuffer(renderer, mesh.normals.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	tangentsBuffer = CreateBuffer(renderer, mesh.tangents.size() * sizeof(glm::vec3),
+	buffers[2] = CreateBuffer(renderer, mesh.tangents.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	binormalsBuffer = CreateBuffer(renderer, mesh.binormals.size() * sizeof(glm::vec3),
+	buffers[3] = CreateBuffer(renderer, mesh.binormals.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	texcoordsBuffer = CreateBuffer(renderer, mesh.texcoords.size() * sizeof(glm::vec2),
+	buffers[4] = CreateBuffer(renderer, mesh.texcoords.size() * sizeof(glm::vec2),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 
-	indicesBuffer = CreateBuffer(renderer, mesh.indices.size() * sizeof(uint32_t),
+	buffers[5] = CreateBuffer(renderer, mesh.indices.size() * sizeof(uint32_t),
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 }
 
-void Model::UploadData(VkCommandBuffer commandBuffer) {
-	positionsStagingBuffer = CopyBuffer(renderer, commandBuffer, positionsBuffer.buffer, mesh.positions.data(), mesh.positions.size() * sizeof(glm::vec3));
-	normalsStagingBuffer = CopyBuffer(renderer, commandBuffer, normalsBuffer.buffer, mesh.normals.data(), mesh.normals.size() * sizeof(glm::vec3));
-	tangentsStagingBuffer = CopyBuffer(renderer, commandBuffer, tangentsBuffer.buffer, mesh.tangents.data(), mesh.tangents.size() * sizeof(glm::vec3));
-	binormalsStagingBuffer = CopyBuffer(renderer, commandBuffer, binormalsBuffer.buffer, mesh.binormals.data(), mesh.binormals.size() * sizeof(glm::vec3));
-	texcoordsStagingBuffer = CopyBuffer(renderer, commandBuffer, texcoordsBuffer.buffer, mesh.texcoords.data(), mesh.texcoords.size() * sizeof(glm::vec2));
-	indicesStagingBuffer = CopyBuffer(renderer, commandBuffer, indicesBuffer.buffer, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t));
+void Model::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[0].buffer, mesh.positions.data(), mesh.positions.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[1].buffer, mesh.normals.data(), mesh.normals.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[2].buffer, mesh.tangents.data(), mesh.tangents.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[3].buffer, mesh.binormals.data(), mesh.binormals.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[4].buffer, mesh.texcoords.data(), mesh.texcoords.size() * sizeof(glm::vec2))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[5].buffer, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t))));
 }
 
 std::vector<VkVertexInputBindingDescription> Model::GetBindingDescriptions() {

@@ -22,6 +22,8 @@ public:
 	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
 	Allocator& GetDeviceAllocator(uint32_t);
 
+	void Free(Allocation alloc);
+
 	void* GetMapping(VkDeviceMemory memory);
 
 private:
@@ -29,6 +31,7 @@ private:
 	VkPhysicalDeviceMemoryProperties memoryProperties;
 
 	std::vector<std::unique_ptr<Allocator>> deviceAllocators;
+	std::map<VkDeviceMemory, Allocator*> allocatorMap;
 
 	void AllocHostMemory();
 	Allocator& AllocDevice(uint32_t type);

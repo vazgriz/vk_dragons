@@ -3,6 +3,9 @@
 #include <vulkan/vulkan.h>
 #include <stack>
 #include <vector>
+#include <map>
+#include <list>
+#include <iterator>
 
 struct Allocation {
 	VkDeviceMemory memory;
@@ -10,25 +13,25 @@ struct Allocation {
 	size_t size;
 };
 
-struct Page {
-	VkDeviceMemory memory;
-	size_t pointer;
-	void* mapping;
+struct Node {
+	size_t offset;
+	size_t size;
 };
 
-struct InternalAllocation {
-	size_t page;
-	size_t pointer;
+struct Page {
+	VkDeviceMemory memory;
+	std::list<Node> nodes;
+	void* mapping;
 };
 
 class Allocator {
 public:
-	Allocator(VkDevice device, uint32_t type, size_t pageSize);
+	Allocator(VkDevice device, uint32_t type, size_t pageSize, std::map<VkDeviceMemory, Allocator*>& allocatorMap);
 
 	void Cleanup();
 
-	Allocation Alloc(size_t size, size_t alignment);
-	void Pop();
+	Allocation Alloc(VkMemoryRequirements requirements);
+	void Free(Allocation alloc);
 	void Reset();
 	uint32_t GetType();
 	void* GetMapping(VkDeviceMemory memory);
@@ -39,7 +42,13 @@ private:
 	uint32_t type;
 
 	std::vector<Page> pages;
-	std::stack<InternalAllocation> stack;
+	std::map<VkDeviceMemory, size_t> pageMap;
+	std::map<VkDeviceMemory, Allocator*>& allocatorMap;
+
 	void AllocPage();
-	Allocation AttemptAlloc(size_t index, size_t size, size_t alignment);
+	Allocation AttemptAlloc(Page& page, VkMemoryRequirements requirements);
+	Allocation AttemptAlloc(Page& page, std::list<Node>::iterator iter, VkMemoryRequirements requirements);
+	void SplitNode(std::list<Node>& list, std::list<Node>::iterator iter, Allocation alloc);
+	void CombineNodes(std::list<Node>& list);
+	Page& GetPage(VkDeviceMemory memory);
 };

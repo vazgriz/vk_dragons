@@ -5,11 +5,14 @@
 layout(location = 0) in vec3 v;
 
 // Uniform: the MVP, MV and normal matrices
-layout(set = 0, binding = 0) uniform Uniforms {
+layout(set = 0, binding = 0) uniform CamUniforms {
 	mat4 camProjection;
 	mat4 camView;
 	mat4 rotationOnlyView;
 	mat4 camViewInverse;
+} camUniforms;
+
+layout(set = 1, binding = 0) uniform LightUniforms {
 	mat4 lightProjection;
 	mat4 lightView;
 	vec4 lightPosition;
@@ -17,7 +20,7 @@ layout(set = 0, binding = 0) uniform Uniforms {
 	vec4 lightId;
 	vec4 lightIs;
 	float lightShininess;
-} uniforms;
+} lightUniforms;
 
 layout(push_constant) uniform Model {
 	mat4 matrix;
@@ -25,5 +28,5 @@ layout(push_constant) uniform Model {
 
 void main(){
 	// We multiply the coordinates by the MVP matrix, and ouput the result.
-	gl_Position = uniforms.lightProjection * uniforms.lightView * model.matrix * vec4(v, 1.0);
+	gl_Position = lightUniforms.lightProjection * lightUniforms.lightView * model.matrix * vec4(v, 1.0);
 }

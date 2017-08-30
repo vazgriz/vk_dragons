@@ -10,13 +10,14 @@ UniformBuffer::UniformBuffer(Renderer& renderer, size_t size, VkDescriptorSetLay
 }
 
 UniformBuffer::~UniformBuffer() {
+	renderer.memory->hostAllocator->Free(buffer.alloc);
 	vkDestroyBuffer(renderer.device, buffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, pool, nullptr);
 }
 
 char* UniformBuffer::GetData() {
-	char* base = static_cast<char*>(renderer.memory->GetMapping(buffer.memory));
-	return base + buffer.offset;
+	char* base = static_cast<char*>(renderer.memory->GetMapping(buffer.alloc.memory));
+	return base + buffer.alloc.offset;
 }
 
 void UniformBuffer::Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t firstSet) {

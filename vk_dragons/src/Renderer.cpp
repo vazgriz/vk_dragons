@@ -283,9 +283,6 @@ void Renderer::SelectFeatures(VkPhysicalDeviceFeatures& features) {
 	if (availableFeatures.shaderCullDistance == VK_TRUE) {
 		features.shaderCullDistance = VK_TRUE;
 	}
-	if (availableFeatures.samplerAnisotropy == VK_TRUE) {
-		features.samplerAnisotropy = VK_TRUE;
-	}
 }
 
 void Renderer::createLogicalDevice() {
@@ -389,19 +386,12 @@ VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurface
 	}
 
 	//search for sRGB formats, set gamma to true
-	VkSurfaceFormatKHR bestFormat = { VK_FORMAT_UNDEFINED };
 	for (const auto& availableFormat : availableFormats) {
 		if ((availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB || availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 			gamma = true;
 			return availableFormat;
 		}
-		else if ((availableFormat.format == VK_FORMAT_R8G8B8_SRGB || availableFormat.format == VK_FORMAT_B8G8R8_SRGB) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-			gamma = true;
-			bestFormat = availableFormat;
-		}
 	}
-
-	if (bestFormat.format != VK_FORMAT_UNDEFINED) return bestFormat;
 
 	//search for linear formats, set gamma to false
 	for (const auto& availableFormat : availableFormats) {
@@ -409,13 +399,7 @@ VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurface
 			gamma = false;
 			return availableFormat;
 		}
-		else if ((availableFormat.format == VK_FORMAT_R8G8B8_UNORM || availableFormat.format == VK_FORMAT_B8G8R8_UNORM) && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-			gamma = false;
-			bestFormat = availableFormat;
-		}
 	}
-
-	if (bestFormat.format != VK_FORMAT_UNDEFINED) return bestFormat;
 
 	throw std::runtime_error("Could not find suitable surface format");
 }

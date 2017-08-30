@@ -20,11 +20,8 @@ ScreenQuad::ScreenQuad(Renderer& renderer) : renderer(renderer) {
 ScreenQuad::~ScreenQuad() {
 	vkDestroyBuffer(renderer.device, vertexBuffer.buffer, nullptr);
 	vkDestroyBuffer(renderer.device, indexBuffer.buffer, nullptr);
-}
-
-void ScreenQuad::DestroyStaging() {
-	vkDestroyBuffer(renderer.device, vertexStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, indexStagingBuffer.buffer, nullptr);
+	renderer.memory->Free(vertexBuffer.alloc);
+	renderer.memory->Free(indexBuffer.alloc);
 }
 
 void ScreenQuad::Init() {
@@ -47,9 +44,9 @@ void ScreenQuad::Draw(VkCommandBuffer commandBuffer) {
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 }
 
-void ScreenQuad::UploadData(VkCommandBuffer commandBuffer) {
-	vertexStagingBuffer = CopyBuffer(renderer, commandBuffer, vertexBuffer.buffer, positions.data(), positions.size() * sizeof(glm::vec3));
-	indexStagingBuffer = CopyBuffer(renderer, commandBuffer, indexBuffer.buffer, indices.data(), indices.size() * sizeof(uint32_t));
+void ScreenQuad::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, vertexBuffer.buffer, positions.data(), positions.size() * sizeof(glm::vec3))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, indexBuffer.buffer, indices.data(), indices.size() * sizeof(uint32_t))));
 }
 
 std::vector<VkVertexInputBindingDescription> ScreenQuad::GetBindingDescriptions() {

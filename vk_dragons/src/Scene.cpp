@@ -31,20 +31,20 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane->GetTransform().SetScale(glm::vec3(2.0f));
 	plane->GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
-	auto dragonColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_color.png"), true);
-	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_normal.png"));
-	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_ao_specular_reflection.png"));
+	auto dragonColor = std::make_shared<Texture>(renderer, _Image, "resources/dragon_texture_color.png", true);
+	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, "resources/dragon_texture_normal.png");
+	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, "resources/dragon_texture_ao_specular_reflection.png");
 
-	auto suzanneColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
-	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_normal.png"));
-	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_ao_specular_reflection.png"));
+	auto suzanneColor = std::make_shared<Texture>(renderer, _Image, "resources/suzanne_texture_color.png", true);
+	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, "resources/suzanne_texture_normal.png");
+	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, "resources/suzanne_texture_ao_specular_reflection.png");
 
-	auto planeColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_color.png"), true);
-	auto planeNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_normal.png"));
-	auto planeEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_depthmap.png"));
+	auto planeColor = std::make_shared<Texture>(renderer, _Image, "resources/plane_texture_color.png", true);
+	auto planeNormal = std::make_shared<Texture>(renderer, _Image, "resources/plane_texture_normal.png");
+	auto planeEffects = std::make_shared<Texture>(renderer, _Image, "resources/plane_texture_depthmap.png");
 
-	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap"), true);
-	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap_diff"), true);
+	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, "resources/cubemap/cubemap", true);
+	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, "resources/cubemap/cubemap_diff", true);
 
 	std::vector<std::shared_ptr<Texture>> textures = {
 		dragonColor, dragonNormal, dragonEffects,
@@ -109,30 +109,19 @@ void Scene::CleanupSwapchainResources() {
 void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 	VkCommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
 
+	std::vector<std::unique_ptr<StagingBuffer>> stagingBuffers;
+
 	for (auto& ptr : textures) {
-		ptr->UploadData(commandBuffer);
+		ptr->UploadData(commandBuffer, stagingBuffers);
 	}
 
-	dragon->UploadData(commandBuffer);
-	suzanne->UploadData(commandBuffer);
-	plane->UploadData(commandBuffer);
-	skybox->UploadData(commandBuffer);
-
-	quad->UploadData(commandBuffer);
+	dragon->UploadData(commandBuffer, stagingBuffers);
+	suzanne->UploadData(commandBuffer, stagingBuffers);
+	plane->UploadData(commandBuffer, stagingBuffers);
+	skybox->UploadData(commandBuffer, stagingBuffers);
+	quad->UploadData(commandBuffer, stagingBuffers);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
-
-	for (auto& ptr : textures) {
-		ptr->DestroyStaging();
-	}
-
-	dragon->DestroyStaging();
-	suzanne->DestroyStaging();
-	plane->DestroyStaging();
-	skybox->DestroyStaging();
-	quad->DestroyStaging();
-
-	renderer.memory->hostAllocator->Reset();
 }
 
 void Scene::UpdateUniform() {
@@ -251,6 +240,7 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
 	camUniform->Bind(commandBuffer, lightPipelineLayout, 0);
+	lightUniform->Bind(commandBuffer, lightPipelineLayout, 1);
 
 	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
 	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
@@ -710,25 +700,19 @@ void Scene::CreateUniformSetLayout() {
 }
 
 void Scene::CreateModelTextureSetLayout() {
-	VkDescriptorSetLayoutBinding textureLayoutBinding = {};
-	textureLayoutBinding.binding = 0;
-	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	textureLayoutBinding.descriptorCount = 1;
-	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//set consists of six textures that are all the same except for the binding number
-	VkDescriptorSetLayoutBinding bindings[] = {
-		textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding
-	};
+	std::vector<VkDescriptorSetLayoutBinding> bindings(6);
 
 	for (uint32_t i = 0; i < 6; i++) {
+		bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		bindings[i].descriptorCount = 1;
+		bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		bindings[i].binding = i;
 	}
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 6;
-	layoutInfo.pBindings = bindings;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &modelTextureSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture set layout!");

@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "glm/glm.hpp"
 #include "ProgramUtilities.h"
+#include "StagingBuffer.h"
 
 enum TextureType {
 	_Image,
@@ -13,13 +14,11 @@ enum TextureType {
 
 class Texture {
 public:
-	Texture(Renderer& renderer);
-	Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace = false);
+	Texture(Renderer& renderer, TextureType type, const std::string& filename, bool gammaSpace = false);
 	Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t height, VkImageUsageFlags usage, VkFormat format = VK_FORMAT_UNDEFINED);
 	~Texture();
 
-	void UploadData(VkCommandBuffer commandBuffer);
-	void DestroyStaging();
+	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
 
 	uint32_t GetWidth();
 	uint32_t GetHeight();
@@ -34,7 +33,6 @@ private:
 	uint32_t height;
 	std::vector<std::vector<unsigned char>> data;
 	std::vector<glm::vec2> mipChain;
-	std::vector<Buffer> stagingBuffers;
 	uint32_t mipLevels;
 	uint32_t arrayLayers;
 

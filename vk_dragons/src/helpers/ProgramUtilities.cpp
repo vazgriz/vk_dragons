@@ -71,11 +71,11 @@ Buffer CreateBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags us
 	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
 
 	Allocator& allocator = renderer.memory->GetDeviceAllocator(memRequirements);
-	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
+	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
-	return { alloc.memory, buffer, alloc.size, alloc.offset };
+	return { buffer, alloc };
 }
 
 Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags usage) {
@@ -95,16 +95,16 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
 
 	Allocator& allocator = *renderer.memory->hostAllocator;
-	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
+	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
-	return { alloc.memory, buffer, alloc.size, alloc.offset };
+	return { buffer, alloc };
 }
 
 Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, const void* source, size_t size) {
 	Buffer buffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	char* dest = static_cast<char*>(renderer.memory->GetMapping(buffer.memory)) + buffer.offset;
+	char* dest = static_cast<char*>(renderer.memory->GetMapping(buffer.alloc.memory)) + buffer.alloc.offset;
 	memcpy(dest, source, size);
 
 	VkBufferCopy copy = {};
@@ -159,11 +159,11 @@ Image CreateImage(Renderer& renderer, VkFormat format, uint32_t width, uint32_t 
 	vkGetImageMemoryRequirements(renderer.device, image, &memRequirements);
 
 	Allocator& allocator = renderer.memory->GetDeviceAllocator(memRequirements);
-	Allocation alloc = allocator.Alloc(memRequirements.size, memRequirements.alignment);
+	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
 
-	return { image, alloc.size, alloc.offset, allocator.GetType() };
+	return { image, alloc, allocator.GetType() };
 }
 
 VkImageView CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspect, VkImageViewType viewType, uint32_t mipLevels, uint32_t arrayLayers) {

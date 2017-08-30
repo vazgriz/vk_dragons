@@ -2,8 +2,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 Light::Light() {
-	projection = glm::ortho(-0.75f, 0.75f, -0.75f, 0.75f, -6.0f, 6.0f);
-	projection[1][1] *= -1;
+	projection = glm::ortho(-0.75f, 0.75f, -0.75f, 0.75f, 2.0f, 6.0f);
+	projection[1][1] *= -1;	//flip Y
+
+	projection[2][2] *= 0.5f;	//map Z from 0 to 1
+	projection[3][2] *= 0.25f;
+
 	Ia = glm::vec4(0.3f, 0.3f, 0.3f, 0.0f);
 	Id = glm::vec4(0.8f, 0.8f, 0.8f, 0.0f);
 	Is = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
