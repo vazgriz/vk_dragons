@@ -34,7 +34,6 @@ Texture::~Texture() {
 	renderer.memory->GetDeviceAllocator(image.type).Free(image.alloc);
 	vkDestroyImage(renderer.device, image.image, nullptr);
 	vkDestroyImageView(renderer.device, imageView, nullptr);
-	image.image = VK_NULL_HANDLE;
 }
 
 void Texture::Init(const std::string& filename, bool gammaSpace) {
