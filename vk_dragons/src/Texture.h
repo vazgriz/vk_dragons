@@ -13,7 +13,7 @@ enum TextureType {
 
 class Texture {
 public:
-	Texture(Renderer& renderer, TextureType type, std::string& filename, bool gammaSpace = false);
+	Texture(Renderer& renderer, TextureType type, const std::string& filename, bool gammaSpace = false);
 	Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t height, VkImageUsageFlags usage, VkFormat format = VK_FORMAT_UNDEFINED);
 	~Texture();
 

@@ -31,20 +31,20 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	plane->GetTransform().SetScale(glm::vec3(2.0f));
 	plane->GetTransform().SetPosition(glm::vec3(0.0f, -0.35f, -0.5f));
 
-	auto dragonColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_color.png"), true);
-	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_normal.png"));
-	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/dragon_texture_ao_specular_reflection.png"));
+	auto dragonColor = std::make_shared<Texture>(renderer, _Image, "resources/dragon_texture_color.png", true);
+	auto dragonNormal = std::make_shared<Texture>(renderer, _Image, "resources/dragon_texture_normal.png");
+	auto dragonEffects = std::make_shared<Texture>(renderer, _Image, "resources/dragon_texture_ao_specular_reflection.png");
 
-	auto suzanneColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_color.png"), true);
-	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_normal.png"));
-	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/suzanne_texture_ao_specular_reflection.png"));
+	auto suzanneColor = std::make_shared<Texture>(renderer, _Image, "resources/suzanne_texture_color.png", true);
+	auto suzanneNormal = std::make_shared<Texture>(renderer, _Image, "resources/suzanne_texture_normal.png");
+	auto suzanneEffects = std::make_shared<Texture>(renderer, _Image, "resources/suzanne_texture_ao_specular_reflection.png");
 
-	auto planeColor = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_color.png"), true);
-	auto planeNormal = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_normal.png"));
-	auto planeEffects = std::make_shared<Texture>(renderer, _Image, std::string("resources/plane_texture_depthmap.png"));
+	auto planeColor = std::make_shared<Texture>(renderer, _Image, "resources/plane_texture_color.png", true);
+	auto planeNormal = std::make_shared<Texture>(renderer, _Image, "resources/plane_texture_normal.png");
+	auto planeEffects = std::make_shared<Texture>(renderer, _Image, "resources/plane_texture_depthmap.png");
 
-	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap"), true);
-	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, std::string("resources/cubemap/cubemap_diff"), true);
+	auto skyColor = std::make_shared<Texture>(renderer, Cubemap, "resources/cubemap/cubemap", true);
+	auto skySmallColor = std::make_shared<Texture>(renderer, Cubemap, "resources/cubemap/cubemap_diff", true);
 
 	std::vector<std::shared_ptr<Texture>> textures = {
 		dragonColor, dragonNormal, dragonEffects,
