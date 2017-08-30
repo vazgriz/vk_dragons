@@ -21,7 +21,6 @@ public:
 	std::unique_ptr<Allocator> hostAllocator;
 	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
 	Allocator& GetDeviceAllocator(uint32_t);
-	Allocator& GetDeviceAllocator(VkDeviceMemory memory);
 
 	void* GetMapping(VkDeviceMemory memory);
 

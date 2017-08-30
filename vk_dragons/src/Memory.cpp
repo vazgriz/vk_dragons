@@ -97,7 +97,3 @@ Allocator& Memory::GetDeviceAllocator(uint32_t type) {
 void* Memory::GetMapping(VkDeviceMemory memory) {
 	return hostAllocator->GetMapping(memory);
 }
-
-Allocator& Memory::GetDeviceAllocator(VkDeviceMemory memory) {
-
-}
