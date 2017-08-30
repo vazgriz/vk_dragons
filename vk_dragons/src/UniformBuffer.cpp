@@ -15,8 +15,8 @@ UniformBuffer::~UniformBuffer() {
 }
 
 char* UniformBuffer::GetData() {
-	char* base = static_cast<char*>(renderer.memory->GetMapping(buffer.memory));
-	return base + buffer.offset;
+	char* base = static_cast<char*>(renderer.memory->GetMapping(buffer.alloc.memory));
+	return base + buffer.alloc.offset;
 }
 
 void UniformBuffer::Bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, uint32_t firstSet) {
