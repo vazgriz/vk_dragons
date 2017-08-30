@@ -27,7 +27,7 @@ public:
 
 	void Cleanup();
 
-	Allocation Alloc(size_t size, size_t alignment);
+	Allocation Alloc(VkMemoryRequirements requirements);
 	void Pop();
 	void Reset();
 	uint32_t GetType();
@@ -41,5 +41,5 @@ private:
 	std::vector<Page> pages;
 	std::stack<InternalAllocation> stack;
 	void AllocPage();
-	Allocation AttemptAlloc(size_t index, size_t size, size_t alignment);
+	Allocation AttemptAlloc(size_t index, VkMemoryRequirements requirements);
 };

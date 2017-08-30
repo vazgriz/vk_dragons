@@ -71,7 +71,7 @@ Buffer CreateBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags us
 	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
 
 	Allocator& allocator = renderer.memory->GetDeviceAllocator(memRequirements);
-	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
+	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
@@ -95,7 +95,7 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
 
 	Allocator& allocator = *renderer.memory->hostAllocator;
-	Allocation alloc = allocator.Alloc(size, memRequirements.alignment);
+	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
@@ -159,7 +159,7 @@ Image CreateImage(Renderer& renderer, VkFormat format, uint32_t width, uint32_t 
 	vkGetImageMemoryRequirements(renderer.device, image, &memRequirements);
 
 	Allocator& allocator = renderer.memory->GetDeviceAllocator(memRequirements);
-	Allocation alloc = allocator.Alloc(memRequirements.size, memRequirements.alignment);
+	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindImageMemory(renderer.device, image, alloc.memory, alloc.offset);
 

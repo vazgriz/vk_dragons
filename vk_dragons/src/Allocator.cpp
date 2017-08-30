@@ -12,12 +12,12 @@ void Allocator::Cleanup() {
 	}
 }
 
-Allocation Allocator::Alloc(size_t size, size_t alignment) {
-	if (size > pageSize) throw std::runtime_error("Allocation too large");
+Allocation Allocator::Alloc(VkMemoryRequirements requirements) {
+	if (requirements.size > pageSize) throw std::runtime_error("Allocation too large");
 
 	//check existing pages
 	for (size_t i = 0; i < pages.size(); i++) {
-		Allocation alloc = AttemptAlloc(i, size, alignment);
+		Allocation alloc = AttemptAlloc(i, requirements);
 		if (alloc.memory != VK_NULL_HANDLE) {
 			return alloc;
 		}
@@ -25,7 +25,7 @@ Allocation Allocator::Alloc(size_t size, size_t alignment) {
 
 	//allocate new page
 	AllocPage();
-	Allocation alloc = AttemptAlloc(pages.size() - 1, size, alignment);
+	Allocation alloc = AttemptAlloc(pages.size() - 1, requirements);
 	if (alloc.memory != VK_NULL_HANDLE) {
 		return alloc;
 	}
@@ -66,26 +66,26 @@ void Allocator::AllocPage() {
 	pages.push_back({ memory });
 }
 
-Allocation Allocator::AttemptAlloc(size_t index, size_t size, size_t alignment) {
+Allocation Allocator::AttemptAlloc(size_t index, VkMemoryRequirements requirements) {
 	Page& page = pages[index];
-	size_t unalign = page.pointer % alignment;
+	size_t unalign = page.pointer % requirements.alignment;
 	size_t align = 0;
 
 	if (unalign != 0) {
-		align = alignment - unalign;
+		align = requirements.alignment - unalign;
 	}
 
-	if (page.pointer + align + size > pageSize) return { VK_NULL_HANDLE };
+	if (page.pointer + align + requirements.size > pageSize) return { VK_NULL_HANDLE };
 
 	stack.push({ index, page.pointer });
 
 	Allocation result = {
 		page.memory,
 		page.pointer + align,
-		size
+		requirements.size
 	};
 
-	page.pointer += align + size;
+	page.pointer += align + requirements.size;
 
 	return result;
 }
