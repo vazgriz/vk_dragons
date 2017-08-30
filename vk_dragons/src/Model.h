@@ -28,12 +28,7 @@ private:
 	Renderer& renderer;
 	mesh_t mesh;
 	uint32_t indexCount;
-	Buffer positionsBuffer;
-	Buffer normalsBuffer;
-	Buffer tangentsBuffer;
-	Buffer binormalsBuffer;
-	Buffer texcoordsBuffer;
-	Buffer indicesBuffer;
+	std::vector<Buffer> buffers;
 
 	Transform transform;
 
