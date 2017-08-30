@@ -31,11 +31,6 @@ Skybox::~Skybox() {
 	vkDestroyBuffer(renderer.device, indexBuffer.buffer, nullptr);
 }
 
-void Skybox::DestroyStaging() {
-	vkDestroyBuffer(renderer.device, vertexStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, indexStagingBuffer.buffer, nullptr);
-}
-
 void Skybox::Init() {
 	vertexBuffer = CreateBuffer(renderer, positions.size() * sizeof(glm::vec3),
 		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
