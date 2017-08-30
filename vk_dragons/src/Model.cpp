@@ -13,21 +13,6 @@ Model::~Model() {
 	vkDestroyBuffer(renderer.device, indicesBuffer.buffer, nullptr);
 }
 
-void Model::DestroyStaging() {
-	vkDestroyBuffer(renderer.device, positionsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, normalsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, tangentsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, binormalsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, texcoordsStagingBuffer.buffer, nullptr);
-	vkDestroyBuffer(renderer.device, indicesStagingBuffer.buffer, nullptr);
-	mesh.positions = {};
-	mesh.normals = {};
-	mesh.tangents = {};
-	mesh.binormals = {};
-	mesh.texcoords = {};
-	mesh.indices = {};
-}
-
 void Model::Init(const std::string& fileName) {
 	loadObj(fileName, mesh, Indexed);
 	centerAndUnitMesh(mesh);
