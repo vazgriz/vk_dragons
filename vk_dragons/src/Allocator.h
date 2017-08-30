@@ -4,6 +4,8 @@
 #include <stack>
 #include <vector>
 #include <map>
+#include <list>
+#include <iterator>
 
 struct Allocation {
 	VkDeviceMemory memory;
@@ -11,15 +13,15 @@ struct Allocation {
 	size_t size;
 };
 
-struct Page {
-	VkDeviceMemory memory;
-	size_t pointer;
-	void* mapping;
+struct Node {
+	size_t offset;
+	size_t size;
 };
 
-struct InternalAllocation {
-	size_t page;
-	size_t pointer;
+struct Page {
+	VkDeviceMemory memory;
+	std::list<Node> nodes;
+	void* mapping;
 };
 
 class Allocator {
@@ -29,7 +31,7 @@ public:
 	void Cleanup();
 
 	Allocation Alloc(VkMemoryRequirements requirements);
-	void Pop();
+	void Free(Allocation alloc);
 	void Reset();
 	uint32_t GetType();
 	void* GetMapping(VkDeviceMemory memory);
@@ -40,10 +42,12 @@ private:
 	uint32_t type;
 
 	std::vector<Page> pages;
-	std::stack<InternalAllocation> stack;
 	std::map<VkDeviceMemory, size_t> pageMap;
 
 	void AllocPage();
-	Allocation AttemptAlloc(size_t index, VkMemoryRequirements requirements);
+	Allocation AttemptAlloc(Page& page, VkMemoryRequirements requirements);
+	Allocation AttemptAlloc(Page& page, std::list<Node>::iterator iter, VkMemoryRequirements requirements);
+	void SplitNode(std::list<Node>& list, std::list<Node>::iterator iter, Allocation alloc);
+	void CombineNodes(std::list<Node>& list, std::list<Node>::iterator iter);
 	Page& GetPage(VkDeviceMemory memory);
 };
