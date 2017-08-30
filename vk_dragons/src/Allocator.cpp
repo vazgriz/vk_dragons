@@ -132,16 +132,22 @@ void Allocator::SplitNode(std::list<Node>& list, std::list<Node>::iterator iter,
 }
 
 void Allocator::CombineNodes(std::list<Node>& list) {
-	for (auto iter = list.begin(); iter != list.end(); iter++) {
-		auto next = iter;
-		next++;
+	auto iter = list.begin();
 
-		if (next != list.end()) {
-			if (iter->offset + iter->size == next->offset) {
+	while (iter != list.end()){
+		while (true) {
+			auto next = iter;
+			next++;
+
+			if (next != list.end() && iter->offset + iter->size == next->offset) {
 				iter->size += next->size;
 				list.erase(next);
 			}
+			else {
+				break;
+			}
 		}
+		iter++;
 	}
 }
 
