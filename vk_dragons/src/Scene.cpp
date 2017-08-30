@@ -711,25 +711,19 @@ void Scene::CreateUniformSetLayout() {
 }
 
 void Scene::CreateModelTextureSetLayout() {
-	VkDescriptorSetLayoutBinding textureLayoutBinding = {};
-	textureLayoutBinding.binding = 0;
-	textureLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	textureLayoutBinding.descriptorCount = 1;
-	textureLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//set consists of six textures that are all the same except for the binding number
-	VkDescriptorSetLayoutBinding bindings[] = {
-		textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding, textureLayoutBinding
-	};
+	std::vector<VkDescriptorSetLayoutBinding> bindings(6);
 
 	for (uint32_t i = 0; i < 6; i++) {
+		bindings[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		bindings[i].descriptorCount = 1;
+		bindings[i].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 		bindings[i].binding = i;
 	}
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = 6;
-	layoutInfo.pBindings = bindings;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &modelTextureSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create texture set layout!");
