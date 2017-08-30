@@ -64,6 +64,7 @@ void Allocator::AllocPage() {
 	}
 
 	pages.push_back({ memory });
+	pageMap[memory] = pages.size() - 1;
 }
 
 Allocation Allocator::AttemptAlloc(size_t index, VkMemoryRequirements requirements) {
@@ -91,18 +92,21 @@ Allocation Allocator::AttemptAlloc(size_t index, VkMemoryRequirements requiremen
 }
 
 void* Allocator::GetMapping(VkDeviceMemory memory) {
-	for (auto& page : pages) {
-		if (page.memory != memory) continue;
+	Page& page = GetPage(memory);
+	if (page.mapping != nullptr) return page.mapping;
 
-		if (page.mapping != nullptr) return page.mapping;
-
-		VkResult result = vkMapMemory(device, memory, 0, pageSize, 0, &page.mapping);
-		if (result != VK_SUCCESS) {
-			throw std::runtime_error("Could not map memory");
-		}
-
-		return page.mapping;
+	VkResult result = vkMapMemory(device, memory, 0, pageSize, 0, &page.mapping);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Could not map memory");
 	}
 
-	throw std::runtime_error("Could not get mapping");
+	return page.mapping;
+}
+
+Page& Allocator::GetPage(VkDeviceMemory memory) {
+	if (pageMap.count(memory) > 0) {
+		return pages[pageMap[memory]];
+	}
+
+	throw std::runtime_error("Could not find page");
 }

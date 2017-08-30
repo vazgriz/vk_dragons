@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <stack>
 #include <vector>
+#include <map>
 
 struct Allocation {
 	VkDeviceMemory memory;
@@ -40,6 +41,9 @@ private:
 
 	std::vector<Page> pages;
 	std::stack<InternalAllocation> stack;
+	std::map<VkDeviceMemory, size_t> pageMap;
+
 	void AllocPage();
 	Allocation AttemptAlloc(size_t index, VkMemoryRequirements requirements);
+	Page& GetPage(VkDeviceMemory memory);
 };
