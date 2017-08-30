@@ -122,8 +122,6 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 	quad->UploadData(commandBuffer, stagingBuffers);
 
 	renderer.SubmitCommandBuffer(commandBuffer);
-
-	//renderer.memory->hostAllocator->Reset();
 }
 
 void Scene::UpdateUniform() {
