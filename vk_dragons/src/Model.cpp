@@ -7,6 +7,7 @@ Model::Model(Renderer& renderer, const std::string& fileName) : renderer(rendere
 Model::~Model() {
 	for (auto& buffer : buffers) {
 		vkDestroyBuffer(renderer.device, buffer.buffer, nullptr);
+		renderer.memory->Free(buffer.alloc);
 	}
 }
 

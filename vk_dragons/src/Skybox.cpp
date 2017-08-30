@@ -29,6 +29,8 @@ Skybox::Skybox(Renderer& renderer) : renderer(renderer) {
 Skybox::~Skybox() {
 	vkDestroyBuffer(renderer.device, vertexBuffer.buffer, nullptr);
 	vkDestroyBuffer(renderer.device, indexBuffer.buffer, nullptr);
+	renderer.memory->Free(vertexBuffer.alloc);
+	renderer.memory->Free(indexBuffer.alloc);
 }
 
 void Skybox::Init() {

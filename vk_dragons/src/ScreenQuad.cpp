@@ -20,6 +20,8 @@ ScreenQuad::ScreenQuad(Renderer& renderer) : renderer(renderer) {
 ScreenQuad::~ScreenQuad() {
 	vkDestroyBuffer(renderer.device, vertexBuffer.buffer, nullptr);
 	vkDestroyBuffer(renderer.device, indexBuffer.buffer, nullptr);
+	renderer.memory->Free(vertexBuffer.alloc);
+	renderer.memory->Free(indexBuffer.alloc);
 }
 
 void ScreenQuad::Init() {
