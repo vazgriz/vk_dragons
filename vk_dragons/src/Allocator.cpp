@@ -39,10 +39,11 @@ void Allocator::Free(Allocation alloc) {
 	for (auto iter = page.nodes.begin(); iter != page.nodes.end(); iter++) {
 		if (iter->offset > alloc.offset) {
 			page.nodes.insert(iter, { alloc.offset, alloc.size });
-			CombineNodes(page.nodes, iter);
 			break;
 		}
 	}
+
+	CombineNodes(page.nodes);
 }
 
 void Allocator::Reset() {
@@ -128,21 +129,17 @@ void Allocator::SplitNode(std::list<Node>& list, std::list<Node>::iterator iter,
 	}
 }
 
-void Allocator::CombineNodes(std::list<Node>& list, std::list<Node>::iterator iter) {
-	//middle was just added
-	auto begin = iter;
-	begin--;
-	auto middle = iter;
-	auto end = middle;
-	end++;
+void Allocator::CombineNodes(std::list<Node>& list) {
+	for (auto iter = list.begin(); iter != list.end(); iter++) {
+		auto next = iter;
+		next++;
 
-	if (end != list.end() && middle->offset + middle->size == end->offset) {
-		middle->size += end->size;
-		list.erase(end);
-	}
-	if (begin->offset + begin->size == middle->offset) {
-		begin->size += middle->size;
-		list.erase(middle);
+		if (next != list.end()) {
+			if (iter->offset + iter->size == next->offset) {
+				iter->size += next->size;
+				list.erase(next);
+			}
+		}
 	}
 }
 
