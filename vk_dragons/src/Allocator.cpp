@@ -1,6 +1,6 @@
 #include "Allocator.h"
 
-Allocator::Allocator(VkDevice device, uint32_t type, size_t pageSize) {
+Allocator::Allocator(VkDevice device, uint32_t type, size_t pageSize, std::map<VkDeviceMemory, Allocator*>& allocatorMap) : allocatorMap(allocatorMap) {
 	this->device = device;
 	this->pageSize = pageSize;
 	this->type = type;
@@ -9,6 +9,7 @@ Allocator::Allocator(VkDevice device, uint32_t type, size_t pageSize) {
 void Allocator::Cleanup() {
 	for (auto& page : pages) {
 		vkFreeMemory(device, page.memory, nullptr);
+		allocatorMap.erase(page.memory);
 	}
 }
 
@@ -73,6 +74,7 @@ void Allocator::AllocPage() {
 	pages.push_back({ memory });
 	pageMap[memory] = pages.size() - 1;
 	pages.back().nodes.push_back({ 0, pageSize });
+	allocatorMap[memory] = this;
 }
 
 Allocation Allocator::AttemptAlloc(Page& page, VkMemoryRequirements requirements) {

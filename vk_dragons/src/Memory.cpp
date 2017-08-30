@@ -44,11 +44,11 @@ void Memory::AllocHostMemory() {
 
 	if (!found) throw std::runtime_error("Could not find suitable host memory");
 
-	hostAllocator = std::make_unique<Allocator>(device, type, ALLOCATION_SIZE);
+	hostAllocator = std::make_unique<Allocator>(device, type, ALLOCATION_SIZE, allocatorMap);
 }
 
 Allocator& Memory::AllocDevice(uint32_t type) {
-	deviceAllocators.emplace_back(std::make_unique<Allocator>(device, type, ALLOCATION_SIZE));
+	deviceAllocators.emplace_back(std::make_unique<Allocator>(device, type, ALLOCATION_SIZE, allocatorMap));
 	return *deviceAllocators[deviceAllocators.size() - 1];
 }
 
@@ -96,4 +96,8 @@ Allocator& Memory::GetDeviceAllocator(uint32_t type) {
 
 void* Memory::GetMapping(VkDeviceMemory memory) {
 	return hostAllocator->GetMapping(memory);
+}
+
+Allocator& Memory::GetDeviceAllocator(VkDeviceMemory memory) {
+
 }

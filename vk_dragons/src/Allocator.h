@@ -26,7 +26,7 @@ struct Page {
 
 class Allocator {
 public:
-	Allocator(VkDevice device, uint32_t type, size_t pageSize);
+	Allocator(VkDevice device, uint32_t type, size_t pageSize, std::map<VkDeviceMemory, Allocator*>& allocatorMap);
 
 	void Cleanup();
 
@@ -43,6 +43,7 @@ private:
 
 	std::vector<Page> pages;
 	std::map<VkDeviceMemory, size_t> pageMap;
+	std::map<VkDeviceMemory, Allocator*>& allocatorMap;
 
 	void AllocPage();
 	Allocation AttemptAlloc(Page& page, VkMemoryRequirements requirements);
