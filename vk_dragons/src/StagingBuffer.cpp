@@ -5,6 +5,6 @@ StagingBuffer::StagingBuffer(Renderer& renderer, Buffer buffer) : renderer(rende
 }
 
 StagingBuffer::~StagingBuffer() {
-	renderer.memory->hostAllocator->Free(buffer.alloc);
+	renderer.memory->GetHostAllocator().Free(buffer.alloc);
 	vkDestroyBuffer(renderer.device, buffer.buffer, nullptr);
 }

@@ -13,7 +13,7 @@ class Memory {
 public:
 	Memory(VkPhysicalDevice physicalDevice, VkDevice device);
 
-	std::unique_ptr<Allocator> hostAllocator;
+	Allocator& GetHostAllocator();
 	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
 	Allocator& GetDeviceAllocator(uint32_t);
 
@@ -25,6 +25,7 @@ private:
 	VkDevice device;
 	VkPhysicalDeviceMemoryProperties memoryProperties;
 
+	std::unique_ptr<Allocator> hostAllocator;
 	std::vector<std::unique_ptr<Allocator>> deviceAllocators;
 	std::map<VkDeviceMemory, Allocator*> allocatorMap;
 

@@ -51,6 +51,10 @@ Allocator& Memory::AllocDevice(uint32_t type) {
 	return *deviceAllocators[deviceAllocators.size() - 1];
 }
 
+Allocator& Memory::GetHostAllocator() {
+	return *hostAllocator;
+}
+
 Allocator& Memory::GetDeviceAllocator(VkMemoryRequirements requirements) {
 	//check if an Allocator that matches the requirements has already been created
 	for (auto& ptr : deviceAllocators) {

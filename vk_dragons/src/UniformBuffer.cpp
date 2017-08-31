@@ -10,7 +10,7 @@ UniformBuffer::UniformBuffer(Renderer& renderer, size_t size, VkDescriptorSetLay
 }
 
 UniformBuffer::~UniformBuffer() {
-	renderer.memory->hostAllocator->Free(buffer.alloc);
+	renderer.memory->GetHostAllocator().Free(buffer.alloc);
 	vkDestroyBuffer(renderer.device, buffer.buffer, nullptr);
 	vkDestroyDescriptorPool(renderer.device, pool, nullptr);
 }

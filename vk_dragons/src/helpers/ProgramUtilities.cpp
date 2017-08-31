@@ -94,7 +94,7 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
 
-	Allocator& allocator = *renderer.memory->hostAllocator;
+	Allocator& allocator = renderer.memory->GetHostAllocator();
 	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
