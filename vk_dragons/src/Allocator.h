@@ -49,6 +49,7 @@ private:
 	Allocation AttemptAlloc(Page& page, VkMemoryRequirements requirements);
 	Allocation AttemptAlloc(Page& page, std::list<Node>::iterator iter, VkMemoryRequirements requirements);
 	void SplitNode(std::list<Node>& list, std::list<Node>::iterator iter, Allocation alloc);
-	void CombineNodes(std::list<Node>& list);
+	void CombineNodes(std::list<Node>& list, std::list<Node>::iterator iter);
+	void CombineNode(std::list<Node>& list, std::list<Node>::iterator iter);
 	Page& GetPage(VkDeviceMemory memory);
 };
