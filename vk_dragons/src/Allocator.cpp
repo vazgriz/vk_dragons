@@ -6,7 +6,7 @@ Allocator::Allocator(VkDevice device, uint32_t type, size_t pageSize, std::map<V
 	this->type = type;
 }
 
-void Allocator::Cleanup() {
+Allocator::~Allocator() {
 	for (auto& page : pages) {
 		vkFreeMemory(device, page.memory, nullptr);
 		allocatorMap.erase(page.memory);

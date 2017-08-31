@@ -13,8 +13,6 @@ class Memory {
 public:
 	Memory(VkPhysicalDevice physicalDevice, VkDevice device);
 
-	void Cleanup();
-
 	//stack allocators are used because this application has simple memory requirements
 	//every resource gets allocated at start up and only full screen buffers need to be allocated after that
 	//larger applications will have to use more sophisticated allocation schemes

@@ -27,8 +27,7 @@ struct Page {
 class Allocator {
 public:
 	Allocator(VkDevice device, uint32_t type, size_t pageSize, std::map<VkDeviceMemory, Allocator*>& allocatorMap);
-
-	void Cleanup();
+	~Allocator();
 
 	Allocation Alloc(VkMemoryRequirements requirements);
 	void Free(Allocation alloc);

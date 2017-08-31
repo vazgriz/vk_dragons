@@ -27,7 +27,7 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 
 Renderer::~Renderer() {
 	vkDeviceWaitIdle(device);
-	memory->Cleanup();
+	memory.reset();	//must be destroyed before instance
 	cleanupSwapChain();
 	vkDestroyCommandPool(device, commandPool, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
