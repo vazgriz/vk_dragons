@@ -63,7 +63,7 @@ void Renderer::Render(VkCommandBuffer commandBuffer) {
 	submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fences[imageIndex]) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to submit draw command buffer!");
+		throw std::runtime_error("Could not submit draw command buffer");
 	}
 }
 
@@ -182,7 +182,7 @@ void Renderer::createInstance() {
 	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
 	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create instance!");
+		throw std::runtime_error("Could not create instance");
 	}
 }
 
@@ -217,7 +217,7 @@ void Renderer::pickPhysicalDevice() {
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 	if (deviceCount == 0) {
-		throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+		throw std::runtime_error("Could not find GPUs with Vulkan support");
 	}
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -231,7 +231,7 @@ void Renderer::pickPhysicalDevice() {
 	}
 
 	if (physicalDevice == VK_NULL_HANDLE) {
-		throw std::runtime_error("Failed to find a suitable GPU!");
+		throw std::runtime_error("Could not find a suitable GPU");
 	}
 
 	deviceProperties;
@@ -312,7 +312,7 @@ void Renderer::createLogicalDevice() {
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create logical device!");
+		throw std::runtime_error("Could not create logical device");
 	}
 
 	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
@@ -321,7 +321,7 @@ void Renderer::createLogicalDevice() {
 
 void Renderer::createSurface() {
 	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create window surface!");
+		throw std::runtime_error("Could not create window surface");
 	}
 }
 
@@ -484,7 +484,7 @@ void Renderer::createSwapChain() {
 	createInfo.oldSwapchain = VK_NULL_HANDLE;
 
 	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create swap chain!");
+		throw std::runtime_error("Could not create swap chain");
 	}
 
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -515,7 +515,7 @@ void Renderer::createImageViews() {
 		createInfo.subresourceRange.layerCount = 1;
 
 		if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create image views!");
+			throw std::runtime_error("Could not create image views");
 		}
 	}
 }
@@ -529,7 +529,7 @@ void Renderer::createFences() {
 		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		if (vkCreateFence(device, &info, nullptr, &fences[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create fences!");
+			throw std::runtime_error("Could not create fences");
 		}
 	}
 }
@@ -540,7 +540,7 @@ void Renderer::createSemaphores() {
 
 	if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
 		vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create semaphores!");
+		throw std::runtime_error("Could not create semaphores");
 	}
 }
 
@@ -553,6 +553,6 @@ void Renderer::createCommandPool() {
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create command pool!");
+		throw std::runtime_error("Could not create command pool");
 	}
 }
