@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "Texture.h"
 
+//manages one descriptor pool and descriptor set for multiple textures
 class Material {
 public:
 	Material(Renderer& renderer, VkSampler sampler, std::vector<std::shared_ptr<Texture>>& textures);

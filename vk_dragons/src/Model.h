@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "StagingBuffer.h"
 
+//manages vertex and index buffers
 class Model {
 public:
 	Model(Renderer& renderer, const std::string& fileName);

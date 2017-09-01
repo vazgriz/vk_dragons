@@ -40,6 +40,8 @@ Renderer::~Renderer() {
 void Renderer::Acquire() {
 	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
+	//these fences make sure rendering is done from the last use of the same imageIndex
+	//for example, frames using imageIndex 0 wait for the last use of imageIndex 0 to finish
 	vkWaitForFences(device, 1, &fences[imageIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 	vkResetFences(device, 1, &fences[imageIndex]);
 }
@@ -405,14 +407,18 @@ VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurface
 }
 
 VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+	//FIFO_KHR is v-synced and is guaranteed to be present
 	VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
+	//if vsync is not requested, check if non v-sync modes are supported
 	if (!vsync) {
 		for (const auto& availablePresentMode : availablePresentModes) {
 			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+				//no v-sync
 				bestMode = availablePresentMode;
 			}
 			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR && bestMode == VK_PRESENT_MODE_FIFO_KHR) {
+				//triple buffering
 				bestMode = availablePresentMode;
 			}
 		}
@@ -442,6 +448,7 @@ void Renderer::createSwapChain() {
 	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
 	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
+	//if mailbox is chosen, enable triple buffering
 	uint32_t imageCount;
 	if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 		imageCount = 3;

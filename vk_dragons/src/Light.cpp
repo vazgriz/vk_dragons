@@ -3,9 +3,10 @@
 
 Light::Light() {
 	projection = glm::ortho(-0.75f, 0.75f, -0.75f, 0.75f, 2.0f, 6.0f);
-	projection[1][1] *= -1;	//flip Y
 
-	projection[2][2] *= 0.5f;	//map Z from 0 to 1
+	//no correction matrix exists for orthographic matrices, but individual elements can be changed to correct it
+	projection[1][1] *= -1;	//flip Y
+	projection[2][2] *= 0.5f;	//these lines map Z from 0 to 1
 	projection[3][2] *= 0.25f;
 
 	Ia = glm::vec4(0.3f, 0.3f, 0.3f, 0.0f);

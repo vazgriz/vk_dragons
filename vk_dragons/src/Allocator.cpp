@@ -139,6 +139,7 @@ void Allocator::CombineNodes(std::list<Node>& list, std::list<Node>::iterator it
 	CombineNode(list, middle);
 }
 
+//if node in front of iter exists, attempt to combine them
 void Allocator::CombineNode(std::list<Node>& list, std::list<Node>::iterator iter) {
 	auto prev = iter;
 	if (prev != list.begin()) {

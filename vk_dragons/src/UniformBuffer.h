@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "ProgramUtilities.h"
 
+//manages one descriptor pool and descriptor set for one uniform buffer
 class UniformBuffer {
 public:
 	UniformBuffer(Renderer& renderer, size_t size, VkDescriptorSetLayout layout);
