@@ -39,7 +39,12 @@ public:
 	void Render();
 	void Resize(uint32_t width, uint32_t height);
 
+	uint32_t GetWidth();
+	uint32_t GetHeight();
+
 private:
+	uint32_t width;
+	uint32_t height;
 	Renderer renderer;
 	Camera camera;
 	Input input;

@@ -5,6 +5,9 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	camera(45.0f, width, height),
 	input(window, camera, *this, renderer) {
 
+	this->width = width;
+	this->height = height;
+
 	CreateSampler();
 	CreateTextureSetLayout();
 	CreateUniformSetLayout();
@@ -76,6 +79,14 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreatePipelines();
 
 	AllocateCommandBuffers();
+}
+
+uint32_t Scene::GetWidth() {
+	return width;
+}
+
+uint32_t Scene::GetHeight() {
+	return height;
 }
 
 Scene::~Scene() {
@@ -160,6 +171,9 @@ void Scene::Render() {
 }
 
 void Scene::Resize(uint32_t width, uint32_t height) {
+	this->width = width;
+	this->height = height;
+
 	renderer.Resize(width, height);
 	camera.SetSize(width, height);
 	CleanupSwapchainResources();
