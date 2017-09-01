@@ -252,9 +252,23 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = width;
+	viewport.height = height;
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent = renderer.swapChainExtent;
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
 	camUniform->Bind(commandBuffer, lightPipelineLayout, 0);
 	lightUniform->Bind(commandBuffer, lightPipelineLayout, 1);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
 	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
@@ -273,8 +287,23 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = boxBlur->GetWidth();
+	viewport.height = boxBlur->GetHeight();
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent.width = boxBlur->GetWidth();
+	scissor.extent.height = boxBlur->GetHeight();
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipeline);
 	lightMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	quad->Draw(commandBuffer);
 
@@ -297,9 +326,23 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = width;
+	viewport.height = height;
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent = renderer.swapChainExtent;
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
 	camUniform->Bind(commandBuffer, modelPipelineLayout, 0);
 	lightUniform->Bind(commandBuffer, modelPipelineLayout, 1);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	dragonMat->Bind(commandBuffer, modelPipelineLayout, 2);
 	dragon->Draw(commandBuffer, modelPipelineLayout, camera);
@@ -313,6 +356,10 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
 	skyboxMat->Bind(commandBuffer, skyboxPipelineLayout, 1);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
 	skybox->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -328,8 +375,22 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = width;
+	viewport.height = height;
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent = renderer.swapChainExtent;
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
 	geometryMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	quad->Draw(commandBuffer);
 
@@ -346,8 +407,22 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = width;
+	viewport.height = height;
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent = renderer.swapChainExtent;
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
 	fxaaMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	quad->Draw(commandBuffer);
 
