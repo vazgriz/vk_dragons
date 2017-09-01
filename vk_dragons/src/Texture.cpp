@@ -173,40 +173,37 @@ void Texture::GenerateMipChain(VkCommandBuffer commandBuffer) {
 
 	//start from i == 1, blit level (i - 1) to (i)
 	for (size_t i = 1; i < mipChain.size(); i++) {
-		//blit each layer separately
-		for (size_t j = 0; j < data.size(); j++) {
-			glm::vec2 src = mipChain[i - 1];
-			glm::vec2 dst = mipChain[i];
-			int32_t srcW = static_cast<int32_t>(src.x);
-			int32_t srcH = static_cast<int32_t>(src.y);
-			int32_t dstW = static_cast<int32_t>(dst.x);
-			int32_t dstH = static_cast<int32_t>(dst.y);
+		glm::vec2 src = mipChain[i - 1];
+		glm::vec2 dst = mipChain[i];
+		int32_t srcW = static_cast<int32_t>(src.x);
+		int32_t srcH = static_cast<int32_t>(src.y);
+		int32_t dstW = static_cast<int32_t>(dst.x);
+		int32_t dstH = static_cast<int32_t>(dst.y);
 
-			VkImageBlit blit = {};
-			blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			blit.srcSubresource.baseArrayLayer = static_cast<uint32_t>(j);;
-			blit.srcSubresource.layerCount = 1;
-			blit.srcSubresource.mipLevel = static_cast<uint32_t>(i - 1);
-			blit.srcOffsets[0] = { 0, 0, 0 };
-			blit.srcOffsets[1] = { srcW, srcH, 1 };
-			blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			blit.dstSubresource.baseArrayLayer = static_cast<uint32_t>(j);
-			blit.dstSubresource.layerCount = 1;
-			blit.dstSubresource.mipLevel = static_cast<uint32_t>(i);
-			blit.dstOffsets[0] = { 0, 0, 0 };
-			blit.dstOffsets[1] = { dstW, dstH, 1 };
+		VkImageBlit blit = {};
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource.layerCount = static_cast<uint32_t>(data.size());
+		blit.srcSubresource.mipLevel = static_cast<uint32_t>(i - 1);
+		blit.srcOffsets[0] = { 0, 0, 0 };
+		blit.srcOffsets[1] = { srcW, srcH, 1 };
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource.layerCount = static_cast<uint32_t>(data.size());
+		blit.dstSubresource.mipLevel = static_cast<uint32_t>(i);
+		blit.dstOffsets[0] = { 0, 0, 0 };
+		blit.dstOffsets[1] = { dstW, dstH, 1 };
 
-			vkCmdBlitImage(commandBuffer,
-				image.image, VK_IMAGE_LAYOUT_GENERAL,
-				image.image, VK_IMAGE_LAYOUT_GENERAL,
-				1, &blit,
-				VK_FILTER_LINEAR
-			);
+		vkCmdBlitImage(commandBuffer,
+			image.image, VK_IMAGE_LAYOUT_GENERAL,
+			image.image, VK_IMAGE_LAYOUT_GENERAL,
+			1, &blit,
+			VK_FILTER_LINEAR
+		);
 
-			Transition(commandBuffer, format, image.image,
-				VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
-				mipLevels, arrayLayers);
-		}
+		Transition(commandBuffer, format, image.image,
+			VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
+			mipLevels, arrayLayers);
 	}
 }
 
