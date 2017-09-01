@@ -18,7 +18,6 @@ struct CameraUniform {
 	glm::mat4 camView;
 	glm::mat4 camRotationOnlyView;
 	glm::mat4 camViewInverse;
-	glm::vec2 inverseScreenSize;
 };
 
 struct LightUniform {
