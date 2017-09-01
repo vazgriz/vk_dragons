@@ -44,7 +44,7 @@ void Scene::CreateModelPipelineLayout() {
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &modelPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -149,7 +149,7 @@ void Scene::CreateModelPipeline() {
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &modelPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -257,7 +257,7 @@ void Scene::CreatePlanePipeline() {
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &planePipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -272,7 +272,7 @@ void Scene::CreateSkyboxPipelineLayout() {
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &skyboxPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -377,7 +377,7 @@ void Scene::CreateSkyboxPipeline() {
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &skyboxPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -400,7 +400,7 @@ void Scene::CreateLightPipelineLayout() {
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &lightPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -505,7 +505,7 @@ void Scene::CreateLightPipeline() {
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &lightPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -520,7 +520,7 @@ void Scene::CreateScreenQuadPipelineLayout() {
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &screenQuadPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -616,7 +616,7 @@ void Scene::CreateBoxBlurPipeline() {
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &boxBlurPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -732,7 +732,7 @@ void Scene::CreateFXAAPipeline() {
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &fxaaPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -854,7 +854,7 @@ void Scene::CreateFinalPipeline() {
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &finalPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
