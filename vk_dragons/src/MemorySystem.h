@@ -27,9 +27,9 @@ private:
 	VkDevice device;
 	VkPhysicalDeviceMemoryProperties memoryProperties;
 
+	std::map<VkDeviceMemory, Allocator*> allocatorMap;
 	std::unique_ptr<Allocator> hostAllocator;
 	std::vector<std::unique_ptr<Allocator>> deviceAllocators;
-	std::map<VkDeviceMemory, Allocator*> allocatorMap;
 
 	void AllocHostMemory();
 	Allocator& AllocDevice(uint32_t type);
