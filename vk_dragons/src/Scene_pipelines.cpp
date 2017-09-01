@@ -28,6 +28,15 @@ void Scene::DestroyPipelines() {
 	vkDestroyPipeline(renderer.device, finalPipeline, nullptr);
 }
 
+void Scene::RecreatePipelines() {
+	vkDestroyPipeline(renderer.device, fxaaPipeline, nullptr);
+	vkDestroyPipeline(renderer.device, finalPipeline, nullptr);
+
+	//only these pipelines depend on Renderer's state via their specialization constants
+	CreateFXAAPipeline();
+	CreateFinalPipeline();
+}
+
 void Scene::CreateModelPipelineLayout() {
 	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, uniformSetLayout, modelTextureSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};

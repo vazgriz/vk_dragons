@@ -141,6 +141,7 @@ private:
 	VkPipeline finalPipeline;
 	void CreatePipelines();
 	void DestroyPipelines();
+	void RecreatePipelines();
 	void CreateModelPipelineLayout();
 	void CreateModelPipeline();
 	void CreatePlanePipeline();

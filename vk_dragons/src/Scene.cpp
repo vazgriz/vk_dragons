@@ -179,8 +179,7 @@ void Scene::Resize(uint32_t width, uint32_t height) {
 	CleanupSwapchainResources();
 
 	createSwapchainResources(width, height);
-	DestroyPipelines();
-	CreatePipelines();
+	RecreatePipelines();
 	AllocateCommandBuffers();
 }
 
