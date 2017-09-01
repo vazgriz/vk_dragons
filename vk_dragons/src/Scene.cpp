@@ -254,13 +254,14 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	VkViewport viewport = {};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.width = static_cast<float>(width);
-	viewport.height = static_cast<float>(height);
+	viewport.width = static_cast<float>(lightDepth->GetWidth());
+	viewport.height = static_cast<float>(lightDepth->GetHeight());
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
 	VkRect2D scissor = {};
-	scissor.extent = renderer.swapChainExtent;
+	scissor.extent.width = lightDepth->GetWidth();
+	scissor.extent.height = lightDepth->GetHeight();
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
 	camUniform->Bind(commandBuffer, lightPipelineLayout, 0);
