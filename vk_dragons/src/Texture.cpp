@@ -31,7 +31,7 @@ Texture::Texture(Renderer& renderer, TextureType type, uint32_t width, uint32_t 
 }
 
 Texture::~Texture() {
-	renderer.memory->GetDeviceAllocator(image.type).Free(image.alloc);
+	renderer.memory->Free(image.alloc);
 	vkDestroyImage(renderer.device, image.image, nullptr);
 	vkDestroyImageView(renderer.device, imageView, nullptr);
 }
