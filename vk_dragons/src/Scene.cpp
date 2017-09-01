@@ -254,8 +254,8 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	VkViewport viewport = {};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.width = width;
-	viewport.height = height;
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
@@ -289,8 +289,8 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	VkViewport viewport = {};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.width = boxBlur->GetWidth();
-	viewport.height = boxBlur->GetHeight();
+	viewport.width = static_cast<float>(boxBlur->GetWidth());
+	viewport.height = static_cast<float>(boxBlur->GetHeight());
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
@@ -328,8 +328,8 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	VkViewport viewport = {};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.width = width;
-	viewport.height = height;
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
@@ -377,8 +377,8 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	VkViewport viewport = {};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.width = width;
-	viewport.height = height;
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
@@ -409,8 +409,8 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	VkViewport viewport = {};
 	viewport.x = 0;
 	viewport.y = 0;
-	viewport.width = width;
-	viewport.height = height;
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
