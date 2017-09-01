@@ -102,21 +102,6 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 	return { buffer, alloc };
 }
 
-Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer destBuffer, const void* source, size_t size) {
-	Buffer buffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	char* dest = static_cast<char*>(renderer.memory->GetMapping(buffer.alloc.memory)) + buffer.alloc.offset;
-	memcpy(dest, source, size);
-
-	VkBufferCopy copy = {};
-	copy.size = size;
-	copy.dstOffset = 0;	//these two offset values refer to the offset within each buffer, not the buffer's offset in memory
-	copy.srcOffset = 0;
-
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, destBuffer, 1, &copy);
-
-	return buffer;
-}
-
 VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename) {
 	std::vector<char> code = loadFile(filename);
 
