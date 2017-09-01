@@ -1,6 +1,8 @@
 #include "Scene.h"
 
 void Scene::CreatePipelines() {
+	fxaaPipeline = VK_NULL_HANDLE;
+	finalPipeline = VK_NULL_HANDLE;
 	CreateModelPipelineLayout();
 	CreateModelPipeline();
 	CreatePlanePipeline();
@@ -29,9 +31,6 @@ void Scene::DestroyPipelines() {
 }
 
 void Scene::RecreatePipelines() {
-	vkDestroyPipeline(renderer.device, fxaaPipeline, nullptr);
-	vkDestroyPipeline(renderer.device, finalPipeline, nullptr);
-
 	//only these pipelines depend on Renderer's state via their specialization constants
 	CreateFXAAPipeline();
 	CreateFinalPipeline();
@@ -707,6 +706,8 @@ void Scene::CreateFXAAPipeline() {
 	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 	dynamicState.pDynamicStates = dynamicStates.data();
 
+	VkPipeline oldPipeline = fxaaPipeline;
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -720,6 +721,7 @@ void Scene::CreateFXAAPipeline() {
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = screenQuadPipelineLayout;
 	pipelineInfo.renderPass = screenQuadRenderPass;
+	pipelineInfo.basePipelineHandle = oldPipeline;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &fxaaPipeline) != VK_SUCCESS) {
@@ -728,6 +730,10 @@ void Scene::CreateFXAAPipeline() {
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
 	vkDestroyShaderModule(renderer.device, frag, nullptr);
+
+	if (oldPipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(renderer.device, oldPipeline, nullptr);
+	}
 }
 
 void Scene::CreateFinalPipeline() {
@@ -826,6 +832,8 @@ void Scene::CreateFinalPipeline() {
 	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 	dynamicState.pDynamicStates = dynamicStates.data();
 
+	VkPipeline oldPipeline = finalPipeline;
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -839,6 +847,7 @@ void Scene::CreateFinalPipeline() {
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = screenQuadPipelineLayout;
 	pipelineInfo.renderPass = mainRenderPass;
+	pipelineInfo.basePipelineHandle = oldPipeline;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &finalPipeline) != VK_SUCCESS) {
@@ -847,4 +856,8 @@ void Scene::CreateFinalPipeline() {
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
 	vkDestroyShaderModule(renderer.device, frag, nullptr);
+
+	if (oldPipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(renderer.device, oldPipeline, nullptr);
+	}
 }
