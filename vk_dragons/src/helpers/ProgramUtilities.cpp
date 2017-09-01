@@ -102,7 +102,7 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 	return { buffer, alloc };
 }
 
-Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, const void* source, size_t size) {
+Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer destBuffer, const void* source, size_t size) {
 	Buffer buffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 	char* dest = static_cast<char*>(renderer.memory->GetMapping(buffer.alloc.memory)) + buffer.alloc.offset;
 	memcpy(dest, source, size);
@@ -112,7 +112,7 @@ Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer de
 	copy.dstOffset = 0;	//these two offset values refer to the offset within each buffer, not the buffer's offset in memory
 	copy.srcOffset = 0;
 
-	vkCmdCopyBuffer(commandBuffer, buffer.buffer, destBuffer, 1, &copy);
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, destBuffer, 1, &copy);
 
 	return buffer;
 }

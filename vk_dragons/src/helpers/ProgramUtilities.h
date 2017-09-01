@@ -30,7 +30,7 @@ Buffer CreateBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags us
 
 Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags usage);
 
-Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, const void* source, size_t size);
+Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer destBuffer, const void* source, size_t size);
 
 VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename);
 
