@@ -141,6 +141,7 @@ void Scene::UpdateUniform() {
 	camUniform->camView = camera.GetView();
 	camUniform->camRotationOnlyView = camera.GetRotationOnlyView();
 	camUniform->camViewInverse = glm::inverse(camera.GetView());
+	camUniform->inverseScreenSize = 1.0f / glm::vec2(width, height);
 
 	LightUniform* lightUniform = reinterpret_cast<LightUniform*>(this->lightUniform->GetData());
 	lightUniform->lightProjection = light.GetProjection();
@@ -330,6 +331,7 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
 	geometryMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
+	camUniform->Bind(commandBuffer, screenQuadPipelineLayout, 1);
 
 	quad->Draw(commandBuffer);
 
