@@ -239,7 +239,7 @@ VkFormat Texture::findSupportedFormat(const std::vector<VkFormat>& candidates, V
 		}
 	}
 
-	throw std::runtime_error("Failed to find supported format!");
+	throw std::runtime_error("Could not find supported format");
 }
 
 VkFormat Texture::findDepthFormat() {
