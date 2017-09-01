@@ -36,7 +36,7 @@ void UniformBuffer::CreatePool() {
 	info.maxSets = 1;
 
 	if (vkCreateDescriptorPool(renderer.device, &info, nullptr, &pool) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create descriptor pool!");
+		throw std::runtime_error("Could not create descriptor pool");
 	}
 }
 
@@ -48,7 +48,7 @@ void UniformBuffer::CreateSet() {
 	info.pSetLayouts = &layout;
 
 	if (vkAllocateDescriptorSets(renderer.device, &info, &set) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate uniform set!");
+		throw std::runtime_error("Could not allocate uniform set");
 	}
 
 	VkDescriptorBufferInfo bufferInfo = {};
