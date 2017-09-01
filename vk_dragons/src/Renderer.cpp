@@ -413,11 +413,11 @@ VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentMode
 	//if vsync is not requested, check if non v-sync modes are supported
 	if (!vsync) {
 		for (const auto& availablePresentMode : availablePresentModes) {
-			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR && bestMode == VK_PRESENT_MODE_FIFO_KHR) {
 				//no v-sync
 				bestMode = availablePresentMode;
 			}
-			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR && bestMode == VK_PRESENT_MODE_FIFO_KHR) {
+			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 				//triple buffering
 				bestMode = availablePresentMode;
 			}
