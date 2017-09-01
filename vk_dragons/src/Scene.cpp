@@ -195,7 +195,7 @@ void Scene::AllocateCommandBuffers() {
 	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
 	if (vkAllocateCommandBuffers(renderer.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate command buffers!");
+		throw std::runtime_error("Could not allocate command buffers");
 	}
 }
 
@@ -217,7 +217,7 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 	RecordMainPass(commandBuffer, imageIndex);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to record command buffer!");
+		throw std::runtime_error("Could not record command buffer");
 	}
 }
 
@@ -404,7 +404,7 @@ void Scene::CreateLightRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &lightRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -460,7 +460,7 @@ void Scene::CreateBoxBlurRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &boxBlurRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -532,7 +532,7 @@ void Scene::CreateGeometryRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &geometryRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -588,7 +588,7 @@ void Scene::CreateScreenQuadRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &screenQuadRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -644,7 +644,7 @@ void Scene::CreateMainRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &mainRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -678,7 +678,7 @@ void Scene::CreateSampler() {
 	samplerInfo.maxLod = 8.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create texture sampler!");
+		throw std::runtime_error("Could not create texture sampler");
 	}
 }
 
@@ -695,7 +695,7 @@ void Scene::CreateUniformSetLayout() {
 	layoutInfo.pBindings = &uboLayoutBinding;
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &uniformSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create uniform set layout!");
+		throw std::runtime_error("Could not create uniform set layout");
 	}
 }
 
@@ -715,7 +715,7 @@ void Scene::CreateModelTextureSetLayout() {
 	layoutInfo.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &modelTextureSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create texture set layout!");
+		throw std::runtime_error("Could not create texture set layout");
 	}
 }
 
@@ -732,6 +732,6 @@ void Scene::CreateTextureSetLayout() {
 	layoutInfo.pBindings = &textureLayoutBinding;
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create texture set layout!");
+		throw std::runtime_error("Could not create texture set layout");
 	}
 }
