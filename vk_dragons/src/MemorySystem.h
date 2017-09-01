@@ -13,6 +13,8 @@ class Memory {
 public:
 	Memory(VkPhysicalDevice physicalDevice, VkDevice device);
 
+	//only one host allocator, since every staging buffer can go on the same memory heap
+	//multiple device heaps since some buffers and images require different heaps
 	Allocator& GetHostAllocator();
 	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
 	Allocator& GetDeviceAllocator(uint32_t);
