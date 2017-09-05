@@ -14,6 +14,7 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 	vsync = true;
+	swapChain = VK_NULL_HANDLE;
 
 	createInstance();
 	createSurface();
@@ -29,6 +30,7 @@ Renderer::~Renderer() {
 	vkDeviceWaitIdle(device);
 	memory.reset();	//must be destroyed before instance
 	cleanupSwapChain();
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
 	vkDestroyCommandPool(device, commandPool, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
@@ -119,7 +121,6 @@ void Renderer::cleanupSwapChain() {
 	for (auto& fence : fences) {
 		vkDestroyFence(device, fence, nullptr);
 	}
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
 VkCommandBuffer Renderer::GetSingleUseCommandBuffer() {
@@ -488,10 +489,16 @@ void Renderer::createSwapChain() {
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
-	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	VkSwapchainKHR oldSwapchain = swapChain;
+	createInfo.oldSwapchain = oldSwapchain;
 
 	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
 		throw std::runtime_error("Could not create swap chain");
+	}
+
+	if (oldSwapchain != VK_NULL_HANDLE) {
+		vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
 	}
 
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
