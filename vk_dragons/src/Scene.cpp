@@ -316,7 +316,7 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = geometryRenderPass;
 	renderPassInfo.framebuffer = geometryFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	renderPassInfo.renderArea.extent = renderer.swapchainExtent;
 
 	VkClearValue clearColors[2];
 	//clearColors[0] is ignored becaues the color attachment isn't being cleared
@@ -335,7 +335,7 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	viewport.maxDepth = 1;
 
 	VkRect2D scissor = {};
-	scissor.extent = renderer.swapChainExtent;
+	scissor.extent = renderer.swapchainExtent;
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
 	camUniform->Bind(commandBuffer, modelPipelineLayout, 0);
@@ -371,7 +371,7 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = screenQuadRenderPass;
 	renderPassInfo.framebuffer = fxaaFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	renderPassInfo.renderArea.extent = renderer.swapchainExtent;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -384,7 +384,7 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	viewport.maxDepth = 1;
 
 	VkRect2D scissor = {};
-	scissor.extent = renderer.swapChainExtent;
+	scissor.extent = renderer.swapchainExtent;
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
 	geometryMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
@@ -403,7 +403,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	renderPassInfo.renderPass = mainRenderPass;
 	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	renderPassInfo.renderArea.extent = renderer.swapchainExtent;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -416,7 +416,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	viewport.maxDepth = 1;
 
 	VkRect2D scissor = {};
-	scissor.extent = renderer.swapChainExtent;
+	scissor.extent = renderer.swapchainExtent;
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
 	fxaaMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
@@ -687,7 +687,7 @@ void Scene::CreateFXAAFramebuffer(uint32_t width, uint32_t height) {
 
 void Scene::CreateMainRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = renderer.swapChainImageFormat;
+	colorAttachment.format = renderer.swapchainImageFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;	//entire attachment will be written to, no need to clear
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -738,13 +738,13 @@ void Scene::CreateMainRenderPass() {
 }
 
 void Scene::CreateMainFramebuffers(uint32_t width, uint32_t height) {
-	swapChainFramebuffers.resize(renderer.swapChainImageViews.size());
+	swapChainFramebuffers.resize(renderer.swapchainImageViews.size());
 
-	for (size_t i = 0; i < renderer.swapChainImageViews.size(); i++) {
+	for (size_t i = 0; i < renderer.swapchainImageViews.size(); i++) {
 		swapChainFramebuffers[i] = CreateFramebuffer(
 			renderer, mainRenderPass,
 			width, height,
-			std::vector<VkImageView>{ renderer.swapChainImageViews[i] });
+			std::vector<VkImageView>{ renderer.swapchainImageViews[i] });
 	}
 }
 

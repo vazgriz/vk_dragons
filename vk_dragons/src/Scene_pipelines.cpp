@@ -626,7 +626,7 @@ void Scene::CreateFXAAPipeline() {
 	vertShaderStageInfo.module = vert;
 	vertShaderStageInfo.pName = "main";
 
-	float specializationData[2] = { 1.0f / renderer.swapChainExtent.width, 1.0f / renderer.swapChainExtent.height };
+	float specializationData[2] = { 1.0f / renderer.swapchainExtent.width, 1.0f / renderer.swapchainExtent.height };
 
 	VkSpecializationMapEntry entries[2];
 	entries[0].constantID = 0;
