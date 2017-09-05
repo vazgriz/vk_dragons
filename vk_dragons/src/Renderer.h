@@ -47,11 +47,11 @@ public:
 	VkPhysicalDeviceProperties deviceProperties;
 	VkPhysicalDeviceFeatures deviceFeatures;
 	VkDevice device;
-	VkExtent2D swapChainExtent;
+	VkExtent2D swapchainExtent;
 	VkCommandPool commandPool;
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	std::vector<VkImageView> swapChainImageViews;
+	std::vector<VkImage> swapchainImages;
+	VkFormat swapchainImageFormat;
+	std::vector<VkImageView> swapchainImageViews;
 
 private:
 	GLFWwindow* window;
@@ -64,7 +64,7 @@ private:
 	VkQueue graphicsQueue;
 	VkSurfaceKHR surface;
 	VkQueue presentQueue;
-	VkSwapchainKHR swapChain;
+	VkSwapchainKHR swapchain;
 
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderFinishedSemaphore;
@@ -84,16 +84,16 @@ private:
 	void createLogicalDevice();
 	void createSurface();
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+	SwapChainSupportDetails querySwapchainSupport(VkPhysicalDevice device);
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-	void createSwapChain();
+	void createSwapchain();
 	void createImageViews();
 	void createFences();
 	void createSemaphores();
 	void createCommandPool();
-	void recreateSwapChain();
-	void cleanupSwapChain();
+	void recreateSwapchain();
+	void cleanupSwapchain();
 };
 
