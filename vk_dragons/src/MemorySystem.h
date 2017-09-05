@@ -13,12 +13,9 @@ class Memory {
 public:
 	Memory(VkPhysicalDevice physicalDevice, VkDevice device);
 
-	void Cleanup();
-
-	//stack allocators are used because this application has simple memory requirements
-	//every resource gets allocated at start up and only full screen buffers need to be allocated after that
-	//larger applications will have to use more sophisticated allocation schemes
-	std::unique_ptr<Allocator> hostAllocator;
+	//only one host allocator, since every staging buffer can go on the same memory heap
+	//multiple device heaps since some buffers and images require different heaps
+	Allocator& GetHostAllocator();
 	Allocator& GetDeviceAllocator(VkMemoryRequirements requirements);
 	Allocator& GetDeviceAllocator(uint32_t);
 
@@ -30,8 +27,9 @@ private:
 	VkDevice device;
 	VkPhysicalDeviceMemoryProperties memoryProperties;
 
-	std::vector<std::unique_ptr<Allocator>> deviceAllocators;
 	std::map<VkDeviceMemory, Allocator*> allocatorMap;
+	std::unique_ptr<Allocator> hostAllocator;
+	std::vector<std::unique_ptr<Allocator>> deviceAllocators;
 
 	void AllocHostMemory();
 	Allocator& AllocDevice(uint32_t type);

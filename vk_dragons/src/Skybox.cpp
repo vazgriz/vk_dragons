@@ -54,8 +54,11 @@ void Skybox::Draw(VkCommandBuffer commandBuffer) {
 }
 
 void Skybox::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, vertexBuffer.buffer, positions.data(), positions.size() * sizeof(glm::vec3))));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, indexBuffer.buffer, indices.data(), indices.size() * sizeof(uint32_t))));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, positions.size() * sizeof(glm::vec3), positions.data()));
+	stagingBuffers.back()->CopyToBuffer(commandBuffer, vertexBuffer.buffer);
+
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, indices.size() * sizeof(uint32_t), indices.data()));
+	stagingBuffers.back()->CopyToBuffer(commandBuffer, indexBuffer.buffer);
 }
 
 std::vector<VkVertexInputBindingDescription> Skybox::GetBindingDescriptions() {

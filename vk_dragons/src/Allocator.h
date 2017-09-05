@@ -27,8 +27,7 @@ struct Page {
 class Allocator {
 public:
 	Allocator(VkDevice device, uint32_t type, size_t pageSize, std::map<VkDeviceMemory, Allocator*>& allocatorMap);
-
-	void Cleanup();
+	~Allocator();
 
 	Allocation Alloc(VkMemoryRequirements requirements);
 	void Free(Allocation alloc);
@@ -49,6 +48,7 @@ private:
 	Allocation AttemptAlloc(Page& page, VkMemoryRequirements requirements);
 	Allocation AttemptAlloc(Page& page, std::list<Node>::iterator iter, VkMemoryRequirements requirements);
 	void SplitNode(std::list<Node>& list, std::list<Node>::iterator iter, Allocation alloc);
-	void CombineNodes(std::list<Node>& list);
+	void CombineNodes(std::list<Node>& list, std::list<Node>::iterator iter);
+	void CombineNode(std::list<Node>& list, std::list<Node>::iterator iter);
 	Page& GetPage(VkDeviceMemory memory);
 };

@@ -14,21 +14,23 @@ Renderer::Renderer(GLFWwindow* window, uint32_t width, uint32_t height) {
 	this->width = width;
 	this->height = height;
 	vsync = true;
+	swapchain = VK_NULL_HANDLE;
 
 	createInstance();
 	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
 	createCommandPool();
-	recreateSwapChain();
+	recreateSwapchain();
 	createSemaphores();
 	memory = std::make_unique<Memory>(physicalDevice, device);
 }
 
 Renderer::~Renderer() {
 	vkDeviceWaitIdle(device);
-	memory->Cleanup();
-	cleanupSwapChain();
+	memory.reset();	//must be destroyed before instance
+	cleanupSwapchain();
+	vkDestroySwapchainKHR(device, swapchain, nullptr);
 	vkDestroyCommandPool(device, commandPool, nullptr);
 	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
@@ -38,8 +40,10 @@ Renderer::~Renderer() {
 }
 
 void Renderer::Acquire() {
-	vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+	vkAcquireNextImageKHR(device, swapchain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
+	//these fences make sure rendering is done from the last use of the same imageIndex
+	//for example, frames using imageIndex 0 wait for the last use of imageIndex 0 to finish
 	vkWaitForFences(device, 1, &fences[imageIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 	vkResetFences(device, 1, &fences[imageIndex]);
 }
@@ -63,7 +67,7 @@ void Renderer::Render(VkCommandBuffer commandBuffer) {
 	submitInfo.pSignalSemaphores = &renderFinishedSemaphore;
 
 	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fences[imageIndex]) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to submit draw command buffer!");
+		throw std::runtime_error("Could not submit draw command buffer");
 	}
 }
 
@@ -73,7 +77,7 @@ void Renderer::Present() {
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = &renderFinishedSemaphore;
 	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &swapChain;
+	presentInfo.pSwapchains = &swapchain;
 	presentInfo.pImageIndices = &imageIndex;
 
 	vkQueuePresentKHR(presentQueue, &presentInfo);
@@ -84,8 +88,8 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 	this->height = height;
 
 	vkDeviceWaitIdle(device);
-	cleanupSwapChain();
-	recreateSwapChain();
+	cleanupSwapchain();
+	recreateSwapchain();
 }
 
 void Renderer::ToggleVSync() {
@@ -104,20 +108,19 @@ bool Renderer::IsGamma() {
 	return gamma;
 }
 
-void Renderer::recreateSwapChain() {
-	createSwapChain();
+void Renderer::recreateSwapchain() {
+	createSwapchain();
 	createImageViews();
 	createFences();
 }
 
-void Renderer::cleanupSwapChain() {
-	for (auto& imageView : swapChainImageViews) {
+void Renderer::cleanupSwapchain() {
+	for (auto& imageView : swapchainImageViews) {
 		vkDestroyImageView(device, imageView, nullptr);
 	}
 	for (auto& fence : fences) {
 		vkDestroyFence(device, fence, nullptr);
 	}
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
 VkCommandBuffer Renderer::GetSingleUseCommandBuffer() {
@@ -182,7 +185,7 @@ void Renderer::createInstance() {
 	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
 	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create instance!");
+		throw std::runtime_error("Could not create instance");
 	}
 }
 
@@ -217,7 +220,7 @@ void Renderer::pickPhysicalDevice() {
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
 	if (deviceCount == 0) {
-		throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+		throw std::runtime_error("Could not find GPUs with Vulkan support");
 	}
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -231,7 +234,7 @@ void Renderer::pickPhysicalDevice() {
 	}
 
 	if (physicalDevice == VK_NULL_HANDLE) {
-		throw std::runtime_error("Failed to find a suitable GPU!");
+		throw std::runtime_error("Could not find a suitable GPU");
 	}
 
 	deviceProperties;
@@ -312,7 +315,7 @@ void Renderer::createLogicalDevice() {
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create logical device!");
+		throw std::runtime_error("Could not create logical device");
 	}
 
 	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
@@ -321,7 +324,7 @@ void Renderer::createLogicalDevice() {
 
 void Renderer::createSurface() {
 	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create window surface!");
+		throw std::runtime_error("Could not create window surface");
 	}
 }
 
@@ -332,7 +335,7 @@ bool Renderer::isDeviceSuitable(VkPhysicalDevice device) {
 
 	bool swapChainAdequate = false;
 	if (extensionsSupported) {
-		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+		SwapChainSupportDetails swapChainSupport = querySwapchainSupport(device);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 
@@ -355,7 +358,7 @@ bool Renderer::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 	return requiredExtensions.empty();
 }
 
-SwapChainSupportDetails Renderer::querySwapChainSupport(VkPhysicalDevice device) {
+SwapChainSupportDetails Renderer::querySwapchainSupport(VkPhysicalDevice device) {
 	SwapChainSupportDetails details;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
@@ -405,14 +408,18 @@ VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurface
 }
 
 VkPresentModeKHR Renderer::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> availablePresentModes) {
+	//FIFO_KHR is v-synced and is guaranteed to be present
 	VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
+	//if vsync is not requested, check if non v-sync modes are supported
 	if (!vsync) {
 		for (const auto& availablePresentMode : availablePresentModes) {
-			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+			if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR && bestMode == VK_PRESENT_MODE_FIFO_KHR) {
+				//no v-sync
 				bestMode = availablePresentMode;
 			}
-			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR && bestMode == VK_PRESENT_MODE_FIFO_KHR) {
+			else if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+				//triple buffering
 				bestMode = availablePresentMode;
 			}
 		}
@@ -435,13 +442,14 @@ VkExtent2D Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabiliti
 	}
 }
 
-void Renderer::createSwapChain() {
-	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+void Renderer::createSwapchain() {
+	SwapChainSupportDetails swapChainSupport = querySwapchainSupport(physicalDevice);
 
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
 	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
+	//if mailbox is chosen, enable triple buffering
 	uint32_t imageCount;
 	if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 		imageCount = 3;
@@ -481,29 +489,35 @@ void Renderer::createSwapChain() {
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
-	createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create swap chain!");
+	VkSwapchainKHR oldSwapchain = swapchain;
+	createInfo.oldSwapchain = oldSwapchain;
+
+	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain) != VK_SUCCESS) {
+		throw std::runtime_error("Could not create swap chain");
 	}
 
-	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
-	swapChainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+	if (oldSwapchain != VK_NULL_HANDLE) {
+		vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
+	}
 
-	swapChainImageFormat = surfaceFormat.format;
-	swapChainExtent = extent;
+	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+	swapchainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+
+	swapchainImageFormat = surfaceFormat.format;
+	swapchainExtent = extent;
 }
 
 void Renderer::createImageViews() {
-	swapChainImageViews.resize(swapChainImages.size());
+	swapchainImageViews.resize(swapchainImages.size());
 
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
+	for (size_t i = 0; i < swapchainImages.size(); i++) {
 		VkImageViewCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		createInfo.image = swapChainImages[i];
+		createInfo.image = swapchainImages[i];
 		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		createInfo.format = swapChainImageFormat;
+		createInfo.format = swapchainImageFormat;
 		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -514,22 +528,22 @@ void Renderer::createImageViews() {
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
 
-		if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create image views!");
+		if (vkCreateImageView(device, &createInfo, nullptr, &swapchainImageViews[i]) != VK_SUCCESS) {
+			throw std::runtime_error("Could not create image views");
 		}
 	}
 }
 
 void Renderer::createFences() {
-	fences.resize(swapChainImages.size());
+	fences.resize(swapchainImages.size());
 
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
+	for (size_t i = 0; i < swapchainImages.size(); i++) {
 		VkFenceCreateInfo info = {};
 		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		if (vkCreateFence(device, &info, nullptr, &fences[i]) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create fences!");
+			throw std::runtime_error("Could not create fences");
 		}
 	}
 }
@@ -540,7 +554,7 @@ void Renderer::createSemaphores() {
 
 	if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
 		vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create semaphores!");
+		throw std::runtime_error("Could not create semaphores");
 	}
 }
 
@@ -553,6 +567,6 @@ void Renderer::createCommandPool() {
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create command pool!");
+		throw std::runtime_error("Could not create command pool");
 	}
 }

@@ -42,7 +42,7 @@ std::vector<char> loadFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
-		throw std::runtime_error("Failed to open file!");
+		throw std::runtime_error("Could not open file");
 	}
 
 	size_t fileSize = (size_t)file.tellg();
@@ -64,7 +64,7 @@ Buffer CreateBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlags us
 	VkBuffer buffer;
 
 	if (vkCreateBuffer(renderer.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create buffer!");
+		throw std::runtime_error("Could not create buffer");
 	}
 
 	VkMemoryRequirements memRequirements;
@@ -88,33 +88,18 @@ Buffer CreateHostBuffer(Renderer& renderer, VkDeviceSize size, VkBufferUsageFlag
 	VkBuffer buffer;
 
 	if (vkCreateBuffer(renderer.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create buffer!");
+		throw std::runtime_error("Could not create buffer");
 	}
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(renderer.device, buffer, &memRequirements);
 
-	Allocator& allocator = *renderer.memory->hostAllocator;
+	Allocator& allocator = renderer.memory->GetHostAllocator();
 	Allocation alloc = allocator.Alloc(memRequirements);
 
 	vkBindBufferMemory(renderer.device, buffer, alloc.memory, alloc.offset);
 
 	return { buffer, alloc };
-}
-
-Buffer CopyBuffer(Renderer& renderer, VkCommandBuffer commandBuffer, VkBuffer destBuffer, const void* source, size_t size) {
-	Buffer buffer = CreateHostBuffer(renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	char* dest = static_cast<char*>(renderer.memory->GetMapping(buffer.alloc.memory)) + buffer.alloc.offset;
-	memcpy(dest, source, size);
-
-	VkBufferCopy copy = {};
-	copy.size = size;
-	copy.dstOffset = 0;	//these two offset values refer to the offset within each buffer, not the buffer's offset in memory
-	copy.srcOffset = 0;
-
-	vkCmdCopyBuffer(commandBuffer, buffer.buffer, destBuffer, 1, &copy);
-
-	return buffer;
 }
 
 VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename) {
@@ -127,7 +112,7 @@ VkShaderModule CreateShaderModule(VkDevice device, const std::string& filename) 
 
 	VkShaderModule shaderModule;
 	if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create shader module!");
+		throw std::runtime_error("Could not create shader module");
 	}
 
 	return shaderModule;
@@ -152,7 +137,7 @@ Image CreateImage(Renderer& renderer, VkFormat format, uint32_t width, uint32_t 
 
 	VkImage image;
 	if (vkCreateImage(renderer.device, &info, nullptr, &image) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create image!");
+		throw std::runtime_error("Could not create image");
 	}
 
 	VkMemoryRequirements memRequirements;
@@ -184,7 +169,7 @@ VkImageView CreateImageView(VkDevice device, VkImage image, VkFormat format, VkI
 
 	VkImageView imageView;
 	if (vkCreateImageView(device, &info, nullptr, &imageView) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create image view!");
+		throw std::runtime_error("Could not create image view");
 	}
 
 	return imageView;
@@ -252,7 +237,7 @@ void Transition(VkCommandBuffer commandBuffer, VkFormat format, VkImage image, V
 		dest = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
 	else {
-		throw std::invalid_argument("Unsupported layout transition!");
+		throw std::invalid_argument("Unsupported layout transition");
 	}
 
 	vkCmdPipelineBarrier(
@@ -277,7 +262,7 @@ VkFramebuffer CreateFramebuffer(Renderer& renderer, VkRenderPass renderPass, uin
 
 	VkFramebuffer framebuffer;
 	if (vkCreateFramebuffer(renderer.device, &info, nullptr, &framebuffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create framebuffer!");
+		throw std::runtime_error("Could not create framebuffer");
 	}
 
 	return framebuffer;

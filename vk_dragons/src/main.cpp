@@ -14,6 +14,7 @@ uint32_t height;
 void OnFramebufferResized(GLFWwindow* window, int _width, int _height) {
 	if (_width == 0 || _height == 0) return;
 
+	//multiple resize events might be sent when the user resizes the window, so this flag limits calls to scene.Resize
 	resizedFlag = true;
 	width = static_cast<uint32_t>(_width);
 	height = static_cast<uint32_t>(_height);

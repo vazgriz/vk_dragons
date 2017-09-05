@@ -1,6 +1,8 @@
 #include "Scene.h"
 
 void Scene::CreatePipelines() {
+	fxaaPipeline = VK_NULL_HANDLE;
+	finalPipeline = VK_NULL_HANDLE;
 	CreateModelPipelineLayout();
 	CreateModelPipeline();
 	CreatePlanePipeline();
@@ -28,6 +30,12 @@ void Scene::DestroyPipelines() {
 	vkDestroyPipeline(renderer.device, finalPipeline, nullptr);
 }
 
+void Scene::RecreatePipelines() {
+	//only these pipelines depend on Renderer's state via their specialization constants
+	CreateFXAAPipeline();
+	CreateFinalPipeline();
+}
+
 void Scene::CreateModelPipelineLayout() {
 	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, uniformSetLayout, modelTextureSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
@@ -44,7 +52,7 @@ void Scene::CreateModelPipelineLayout() {
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &modelPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -81,24 +89,10 @@ void Scene::CreateModelPipeline() {
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)renderer.swapChainExtent.width;
-	viewport.height = (float)renderer.swapChainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = renderer.swapChainExtent;
-
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -133,6 +127,16 @@ void Scene::CreateModelPipeline() {
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = VK_FALSE;
 
+	std::vector<VkDynamicState> dynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -144,12 +148,13 @@ void Scene::CreateModelPipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDepthStencilState = &depthStencil;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = modelPipelineLayout;
 	pipelineInfo.renderPass = geometryRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &modelPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -189,24 +194,10 @@ void Scene::CreatePlanePipeline() {
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)renderer.swapChainExtent.width;
-	viewport.height = (float)renderer.swapChainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = renderer.swapChainExtent;
-
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -241,6 +232,16 @@ void Scene::CreatePlanePipeline() {
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = VK_FALSE;
 
+	std::vector<VkDynamicState> dynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -252,12 +253,13 @@ void Scene::CreatePlanePipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDepthStencilState = &depthStencil;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = modelPipelineLayout;
 	pipelineInfo.renderPass = geometryRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &planePipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -272,7 +274,7 @@ void Scene::CreateSkyboxPipelineLayout() {
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &skyboxPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -309,24 +311,10 @@ void Scene::CreateSkyboxPipeline() {
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)renderer.swapChainExtent.width;
-	viewport.height = (float)renderer.swapChainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = renderer.swapChainExtent;
-
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -361,6 +349,16 @@ void Scene::CreateSkyboxPipeline() {
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = VK_FALSE;
 
+	std::vector<VkDynamicState> dynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -372,12 +370,13 @@ void Scene::CreateSkyboxPipeline() {
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDepthStencilState = &depthStencil;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = skyboxPipelineLayout;
 	pipelineInfo.renderPass = geometryRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &skyboxPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -400,7 +399,7 @@ void Scene::CreateLightPipelineLayout() {
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &lightPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -437,24 +436,10 @@ void Scene::CreateLightPipeline() {
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)lightDepth->GetWidth();
-	viewport.height = (float)lightDepth->GetHeight();
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = { lightDepth->GetWidth(), lightDepth->GetHeight() };
-
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -489,6 +474,16 @@ void Scene::CreateLightPipeline() {
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = VK_FALSE;
 
+	std::vector<VkDynamicState> dynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -500,12 +495,13 @@ void Scene::CreateLightPipeline() {
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pDepthStencilState = &depthStencil;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = lightPipelineLayout;
 	pipelineInfo.renderPass = lightRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &lightPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -520,7 +516,7 @@ void Scene::CreateScreenQuadPipelineLayout() {
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &screenQuadPipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create pipeline layout!");
+		throw std::runtime_error("Could not create pipeline layout");
 	}
 }
 
@@ -557,24 +553,10 @@ void Scene::CreateBoxBlurPipeline() {
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)boxBlur->GetWidth();
-	viewport.height = (float)boxBlur->GetHeight();
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = { boxBlur->GetWidth() , boxBlur->GetHeight() };
-
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -601,6 +583,16 @@ void Scene::CreateBoxBlurPipeline() {
 	colorBlending.attachmentCount = 1;
 	colorBlending.pAttachments = &colorBlendAttachment;
 
+	std::vector<VkDynamicState> dynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -611,12 +603,13 @@ void Scene::CreateBoxBlurPipeline() {
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = screenQuadPipelineLayout;
 	pipelineInfo.renderPass = boxBlurRenderPass;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &boxBlurPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
@@ -633,7 +626,7 @@ void Scene::CreateFXAAPipeline() {
 	vertShaderStageInfo.module = vert;
 	vertShaderStageInfo.pName = "main";
 
-	float specializationData[2] = { 1.0f / renderer.swapChainExtent.width, 1.0f / renderer.swapChainExtent.height };
+	float specializationData[2] = { 1.0f / renderer.swapchainExtent.width, 1.0f / renderer.swapchainExtent.height };
 
 	VkSpecializationMapEntry entries[2];
 	entries[0].constantID = 0;
@@ -673,24 +666,10 @@ void Scene::CreateFXAAPipeline() {
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)renderer.swapChainExtent.width;
-	viewport.height = (float)renderer.swapChainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = renderer.swapChainExtent;
-
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -717,6 +696,18 @@ void Scene::CreateFXAAPipeline() {
 	colorBlending.attachmentCount = 1;
 	colorBlending.pAttachments = &colorBlendAttachment;
 
+	std::vector<VkDynamicState> dynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
+	VkPipeline oldPipeline = fxaaPipeline;
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -727,16 +718,22 @@ void Scene::CreateFXAAPipeline() {
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = screenQuadPipelineLayout;
 	pipelineInfo.renderPass = screenQuadRenderPass;
+	pipelineInfo.basePipelineHandle = oldPipeline;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &fxaaPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
 	vkDestroyShaderModule(renderer.device, frag, nullptr);
+
+	if (oldPipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(renderer.device, oldPipeline, nullptr);
+	}
 }
 
 void Scene::CreateFinalPipeline() {
@@ -795,24 +792,10 @@ void Scene::CreateFinalPipeline() {
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)renderer.swapChainExtent.width;
-	viewport.height = (float)renderer.swapChainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = renderer.swapChainExtent;
-
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -839,6 +822,18 @@ void Scene::CreateFinalPipeline() {
 	colorBlending.attachmentCount = 1;
 	colorBlending.pAttachments = &colorBlendAttachment;
 
+	std::vector<VkDynamicState> dynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
+	VkPipeline oldPipeline = finalPipeline;
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -849,14 +844,20 @@ void Scene::CreateFinalPipeline() {
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = screenQuadPipelineLayout;
 	pipelineInfo.renderPass = mainRenderPass;
+	pipelineInfo.basePipelineHandle = oldPipeline;
 	pipelineInfo.subpass = 0;
 
 	if (vkCreateGraphicsPipelines(renderer.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &finalPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create graphics pipeline!");
+		throw std::runtime_error("Could not create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(renderer.device, vert, nullptr);
 	vkDestroyShaderModule(renderer.device, frag, nullptr);
+
+	if (oldPipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(renderer.device, oldPipeline, nullptr);
+	}
 }

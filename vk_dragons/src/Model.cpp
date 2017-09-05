@@ -34,10 +34,13 @@ void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 	vkCmdBindVertexBuffers(commandBuffer, 0, 5, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, buffers[5].buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
 
+	//model matrix
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
+	//normal matrix
 	glm::mat4 MV = camera.GetView() * transform.GetWorldMatrix();
 	glm::mat4 normal = glm::transpose(glm::inverse(MV));
+	//shader expects mat3. mat3 in glsl has the same layout as 3 vec4's, where the W component is padding.
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), 3 * sizeof(glm::vec4), &normal);
 
 	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
@@ -52,6 +55,8 @@ void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLa
 	};
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, buffers[5].buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
+
+	//only send model matrix
 	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
 	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
@@ -79,12 +84,17 @@ void Model::CreateBuffers() {
 }
 
 void Model::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[0].buffer, mesh.positions.data(), mesh.positions.size() * sizeof(glm::vec3))));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[1].buffer, mesh.normals.data(), mesh.normals.size() * sizeof(glm::vec3))));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[2].buffer, mesh.tangents.data(), mesh.tangents.size() * sizeof(glm::vec3))));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[3].buffer, mesh.binormals.data(), mesh.binormals.size() * sizeof(glm::vec3))));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[4].buffer, mesh.texcoords.data(), mesh.texcoords.size() * sizeof(glm::vec2))));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, CopyBuffer(renderer, commandBuffer, buffers[5].buffer, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t))));
+	size_t start = stagingBuffers.size();
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.positions.size() * sizeof(glm::vec3), mesh.positions.data()));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.normals.size() * sizeof(glm::vec3), mesh.normals.data()));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.tangents.size() * sizeof(glm::vec3), mesh.tangents.data()));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.binormals.size() * sizeof(glm::vec3), mesh.binormals.data()));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.texcoords.size() * sizeof(glm::vec2), mesh.texcoords.data()));
+	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data()));
+
+	for (size_t i = 0; i < buffers.size(); i++) {
+		stagingBuffers[i + start]->CopyToBuffer(commandBuffer, buffers[i].buffer);
+	}
 }
 
 std::vector<VkVertexInputBindingDescription> Model::GetBindingDescriptions() {

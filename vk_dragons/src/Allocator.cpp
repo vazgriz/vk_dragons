@@ -6,7 +6,7 @@ Allocator::Allocator(VkDevice device, uint32_t type, size_t pageSize, std::map<V
 	this->type = type;
 }
 
-void Allocator::Cleanup() {
+Allocator::~Allocator() {
 	for (auto& page : pages) {
 		vkFreeMemory(device, page.memory, nullptr);
 		allocatorMap.erase(page.memory);
@@ -40,11 +40,10 @@ void Allocator::Free(Allocation alloc) {
 	for (auto iter = page.nodes.begin(); iter != page.nodes.end(); iter++) {
 		if (iter->offset > alloc.offset) {
 			page.nodes.insert(iter, { alloc.offset, alloc.size });
-			break;
+			CombineNodes(page.nodes, iter);
+			return;
 		}
 	}
-
-	CombineNodes(page.nodes);
 }
 
 void Allocator::Reset() {
@@ -131,23 +130,24 @@ void Allocator::SplitNode(std::list<Node>& list, std::list<Node>::iterator iter,
 	}
 }
 
-void Allocator::CombineNodes(std::list<Node>& list) {
-	auto iter = list.begin();
+void Allocator::CombineNodes(std::list<Node>& list, std::list<Node>::iterator iter) {
+	//iter was the existing node
+	//middle was just added in front of iter and is guaranteed to exist
+	auto middle = iter;
+	middle--;
+	CombineNode(list, iter);
+	CombineNode(list, middle);
+}
 
-	while (iter != list.end()){
-		while (true) {
-			auto next = iter;
-			next++;
-
-			if (next != list.end() && iter->offset + iter->size == next->offset) {
-				iter->size += next->size;
-				list.erase(next);
-			}
-			else {
-				break;
-			}
+//if node in front of iter exists, attempt to combine them
+void Allocator::CombineNode(std::list<Node>& list, std::list<Node>::iterator iter) {
+	auto prev = iter;
+	if (prev != list.begin()) {
+		prev--;
+		if (prev->offset + prev->size == iter->offset) {
+			prev->size += iter->size;
+			list.erase(iter);
 		}
-		iter++;
 	}
 }
 

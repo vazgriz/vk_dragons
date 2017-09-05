@@ -5,6 +5,9 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	camera(45.0f, width, height),
 	input(window, camera, *this, renderer) {
 
+	this->width = width;
+	this->height = height;
+
 	CreateSampler();
 	CreateTextureSetLayout();
 	CreateUniformSetLayout();
@@ -76,6 +79,14 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	CreatePipelines();
 
 	AllocateCommandBuffers();
+}
+
+uint32_t Scene::GetWidth() {
+	return width;
+}
+
+uint32_t Scene::GetHeight() {
+	return height;
 }
 
 Scene::~Scene() {
@@ -160,13 +171,15 @@ void Scene::Render() {
 }
 
 void Scene::Resize(uint32_t width, uint32_t height) {
+	this->width = width;
+	this->height = height;
+
 	renderer.Resize(width, height);
 	camera.SetSize(width, height);
 	CleanupSwapchainResources();
 
 	createSwapchainResources(width, height);
-	DestroyPipelines();
-	CreatePipelines();
+	RecreatePipelines();
 	AllocateCommandBuffers();
 }
 
@@ -195,7 +208,7 @@ void Scene::AllocateCommandBuffers() {
 	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
 	if (vkAllocateCommandBuffers(renderer.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate command buffers!");
+		throw std::runtime_error("Could not allocate command buffers");
 	}
 }
 
@@ -217,7 +230,7 @@ void Scene::RecordCommandBuffer(uint32_t imageIndex) {
 	RecordMainPass(commandBuffer, imageIndex);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to record command buffer!");
+		throw std::runtime_error("Could not record command buffer");
 	}
 }
 
@@ -238,9 +251,24 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = static_cast<float>(lightDepth->GetWidth());
+	viewport.height = static_cast<float>(lightDepth->GetHeight());
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent.width = lightDepth->GetWidth();
+	scissor.extent.height = lightDepth->GetHeight();
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline);
 	camUniform->Bind(commandBuffer, lightPipelineLayout, 0);
 	lightUniform->Bind(commandBuffer, lightPipelineLayout, 1);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
 	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
@@ -259,8 +287,23 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = static_cast<float>(boxBlur->GetWidth());
+	viewport.height = static_cast<float>(boxBlur->GetHeight());
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent.width = boxBlur->GetWidth();
+	scissor.extent.height = boxBlur->GetHeight();
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, boxBlurPipeline);
 	lightMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	quad->Draw(commandBuffer);
 
@@ -273,7 +316,7 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = geometryRenderPass;
 	renderPassInfo.framebuffer = geometryFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	renderPassInfo.renderArea.extent = renderer.swapchainExtent;
 
 	VkClearValue clearColors[2];
 	//clearColors[0] is ignored becaues the color attachment isn't being cleared
@@ -283,9 +326,23 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent = renderer.swapchainExtent;
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, modelPipeline);
 	camUniform->Bind(commandBuffer, modelPipelineLayout, 0);
 	lightUniform->Bind(commandBuffer, modelPipelineLayout, 1);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	dragonMat->Bind(commandBuffer, modelPipelineLayout, 2);
 	dragon->Draw(commandBuffer, modelPipelineLayout, camera);
@@ -299,6 +356,10 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);
 	skyboxMat->Bind(commandBuffer, skyboxPipelineLayout, 1);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
 	skybox->Draw(commandBuffer);
 
 	vkCmdEndRenderPass(commandBuffer);
@@ -310,12 +371,26 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.renderPass = screenQuadRenderPass;
 	renderPassInfo.framebuffer = fxaaFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	renderPassInfo.renderArea.extent = renderer.swapchainExtent;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent = renderer.swapchainExtent;
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fxaaPipeline);
 	geometryMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	quad->Draw(commandBuffer);
 
@@ -328,12 +403,26 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	renderPassInfo.renderPass = mainRenderPass;
 	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = renderer.swapChainExtent;
+	renderPassInfo.renderArea.extent = renderer.swapchainExtent;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport = {};
+	viewport.x = 0;
+	viewport.y = 0;
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
+	viewport.minDepth = 0;
+	viewport.maxDepth = 1;
+
+	VkRect2D scissor = {};
+	scissor.extent = renderer.swapchainExtent;
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline);
 	fxaaMat->Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	quad->Draw(commandBuffer);
 
@@ -404,7 +493,7 @@ void Scene::CreateLightRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &lightRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -460,7 +549,7 @@ void Scene::CreateBoxBlurRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &boxBlurRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -532,7 +621,7 @@ void Scene::CreateGeometryRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &geometryRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -588,7 +677,7 @@ void Scene::CreateScreenQuadRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &screenQuadRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
@@ -598,7 +687,7 @@ void Scene::CreateFXAAFramebuffer(uint32_t width, uint32_t height) {
 
 void Scene::CreateMainRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = renderer.swapChainImageFormat;
+	colorAttachment.format = renderer.swapchainImageFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;	//entire attachment will be written to, no need to clear
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -644,18 +733,18 @@ void Scene::CreateMainRenderPass() {
 	renderPassInfo.pDependencies = dependencies;
 
 	if (vkCreateRenderPass(renderer.device, &renderPassInfo, nullptr, &mainRenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create render pass!");
+		throw std::runtime_error("Could not create render pass");
 	}
 }
 
 void Scene::CreateMainFramebuffers(uint32_t width, uint32_t height) {
-	swapChainFramebuffers.resize(renderer.swapChainImageViews.size());
+	swapChainFramebuffers.resize(renderer.swapchainImageViews.size());
 
-	for (size_t i = 0; i < renderer.swapChainImageViews.size(); i++) {
+	for (size_t i = 0; i < renderer.swapchainImageViews.size(); i++) {
 		swapChainFramebuffers[i] = CreateFramebuffer(
 			renderer, mainRenderPass,
 			width, height,
-			std::vector<VkImageView>{ renderer.swapChainImageViews[i] });
+			std::vector<VkImageView>{ renderer.swapchainImageViews[i] });
 	}
 }
 
@@ -678,7 +767,7 @@ void Scene::CreateSampler() {
 	samplerInfo.maxLod = 8.0f;
 
 	if (vkCreateSampler(renderer.device, &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create texture sampler!");
+		throw std::runtime_error("Could not create texture sampler");
 	}
 }
 
@@ -695,7 +784,7 @@ void Scene::CreateUniformSetLayout() {
 	layoutInfo.pBindings = &uboLayoutBinding;
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &uniformSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create uniform set layout!");
+		throw std::runtime_error("Could not create uniform set layout");
 	}
 }
 
@@ -715,7 +804,7 @@ void Scene::CreateModelTextureSetLayout() {
 	layoutInfo.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &modelTextureSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create texture set layout!");
+		throw std::runtime_error("Could not create texture set layout");
 	}
 }
 
@@ -732,6 +821,6 @@ void Scene::CreateTextureSetLayout() {
 	layoutInfo.pBindings = &textureLayoutBinding;
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &layoutInfo, nullptr, &textureSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create texture set layout!");
+		throw std::runtime_error("Could not create texture set layout");
 	}
 }

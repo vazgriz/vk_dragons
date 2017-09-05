@@ -38,7 +38,7 @@ void Material::CreateLayout() {
 	info.pBindings = bindings.data();
 
 	if (vkCreateDescriptorSetLayout(renderer.device, &info, nullptr, &layout) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create texture set layout!");
+		throw std::runtime_error("Could not create texture set layout");
 	}
 }
 
@@ -54,7 +54,7 @@ void Material::CreatePool() {
 	info.pPoolSizes = &size;
 	
 	if (vkCreateDescriptorPool(renderer.device, &info, nullptr, &pool) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to create descriptor pool!");
+		throw std::runtime_error("Could not create descriptor pool");
 	}
 }
 
@@ -66,7 +66,7 @@ void Material::CreateSet() {
 	info.pSetLayouts = &layout;
 
 	if (vkAllocateDescriptorSets(renderer.device, &info, &set) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate texture set!");
+		throw std::runtime_error("Could not allocate texture set");
 	}
 }
 

@@ -10,13 +10,6 @@ Memory::Memory(VkPhysicalDevice physicalDevice, VkDevice device) {
 	AllocHostMemory();
 }
 
-void Memory::Cleanup() {
-	hostAllocator->Cleanup();
-	for (auto& ptr : deviceAllocators) {
-		ptr->Cleanup();
-	}
-}
-
 void Memory::Free(Allocation alloc) {
 	if (allocatorMap.count(alloc.memory) == 0) throw std::runtime_error("Could not deallocate");
 
@@ -56,6 +49,10 @@ void Memory::AllocHostMemory() {
 Allocator& Memory::AllocDevice(uint32_t type) {
 	deviceAllocators.emplace_back(std::make_unique<Allocator>(device, type, ALLOCATION_SIZE, allocatorMap));
 	return *deviceAllocators[deviceAllocators.size() - 1];
+}
+
+Allocator& Memory::GetHostAllocator() {
+	return *hostAllocator;
 }
 
 Allocator& Memory::GetDeviceAllocator(VkMemoryRequirements requirements) {
