@@ -44,22 +44,6 @@ void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 }
 
-void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
-	VkBuffer vertexBuffers[] = {
-		buffers[0].buffer,	//position
-	};
-	VkDeviceSize offsets[] = {
-		0
-	};
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, buffers[5].buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
-
-	//only send model matrix
-	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
-
-	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
-}
-
 void Model::CreateBuffers() {
 	if (mesh.positions.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.positions.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
 	if (mesh.normals.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.normals.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
