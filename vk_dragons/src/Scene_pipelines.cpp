@@ -538,8 +538,8 @@ void Scene::CreateBoxBlurPipeline() {
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	auto bindings = ScreenQuad::GetBindingDescriptions();
-	auto attributes = ScreenQuad::GetAttributeDescriptions();
+	auto bindings = quad->GetBindingDescriptions();
+	auto attributes = quad->GetAttributeDescriptions();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -651,8 +651,8 @@ void Scene::CreateFXAAPipeline() {
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	auto bindings = ScreenQuad::GetBindingDescriptions();
-	auto attributes = ScreenQuad::GetAttributeDescriptions();
+	auto bindings = quad->GetBindingDescriptions();
+	auto attributes = quad->GetAttributeDescriptions();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -777,8 +777,8 @@ void Scene::CreateFinalPipeline() {
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	auto bindings = ScreenQuad::GetBindingDescriptions();
-	auto attributes = ScreenQuad::GetAttributeDescriptions();
+	auto bindings = quad->GetBindingDescriptions();
+	auto attributes = quad->GetAttributeDescriptions();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

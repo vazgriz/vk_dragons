@@ -69,9 +69,6 @@
     <ClCompile Include="src\Light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ScreenQuad.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,9 +114,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Light.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ScreenQuad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Material.h">

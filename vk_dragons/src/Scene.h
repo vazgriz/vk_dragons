@@ -7,7 +7,6 @@
 #include "Camera.h"
 #include "Input.h"
 #include "Light.h"
-#include "ScreenQuad.h"
 #include "Material.h"
 #include "UniformBuffer.h"
 #include "StagingBuffer.h"
@@ -58,7 +57,7 @@ private:
 	std::unique_ptr<Model> suzanne;
 	std::unique_ptr<Model> plane;
 	std::unique_ptr<Model> skybox;
-	std::unique_ptr<ScreenQuad> quad;
+	std::unique_ptr<Model> quad;
 
 	std::unique_ptr<Material> dragonMat;
 	std::unique_ptr<Material> suzanneMat;

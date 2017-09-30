@@ -23,7 +23,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	suzanne = std::make_unique<Model>(renderer, "resources/suzanne.obj");
 	plane = std::make_unique<Model>(renderer, "resources/plane.obj");
 	skybox = std::make_unique<Model>(renderer, "resources/skybox.obj");
-	quad = std::make_unique<ScreenQuad>(renderer);
+	quad = std::make_unique<Model>(renderer, "resources/screenquad.obj");
 
 	dragon->GetTransform().SetScale(glm::vec3(0.5f));
 	dragon->GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
@@ -305,7 +305,7 @@ void Scene::RecordBoxBlurPass(VkCommandBuffer commandBuffer) {
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	quad->Draw(commandBuffer);
+	quad->Draw(commandBuffer, VK_NULL_HANDLE, nullptr);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -392,7 +392,7 @@ void Scene::RecordFXAAPass(VkCommandBuffer commandBuffer) {
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	quad->Draw(commandBuffer);
+	quad->Draw(commandBuffer, VK_NULL_HANDLE, nullptr);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
@@ -424,7 +424,7 @@ void Scene::RecordMainPass(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	quad->Draw(commandBuffer);
+	quad->Draw(commandBuffer, VK_NULL_HANDLE, nullptr);
 
 	vkCmdEndRenderPass(commandBuffer);
 }
