@@ -22,7 +22,7 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	dragon = std::make_unique<Model>(renderer, "resources/dragon.obj");
 	suzanne = std::make_unique<Model>(renderer, "resources/suzanne.obj");
 	plane = std::make_unique<Model>(renderer, "resources/plane.obj");
-	skybox = std::make_unique<Skybox>(renderer);
+	skybox = std::make_unique<Model>(renderer, "resources/skybox.obj");
 	quad = std::make_unique<ScreenQuad>(renderer);
 
 	dragon->GetTransform().SetScale(glm::vec3(0.5f));
@@ -360,7 +360,7 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	skybox->Draw(commandBuffer);
+	skybox->Draw(commandBuffer, VK_NULL_HANDLE, nullptr);
 
 	vkCmdEndRenderPass(commandBuffer);
 }

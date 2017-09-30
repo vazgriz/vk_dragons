@@ -296,8 +296,8 @@ void Scene::CreateSkyboxPipeline() {
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	auto bindings = Skybox::GetBindingDescriptions();
-	auto attributes = Skybox::GetAttributeDescriptions();
+	auto bindings = skybox->GetBindingDescriptions();
+	auto attributes = skybox->GetAttributeDescriptions();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
