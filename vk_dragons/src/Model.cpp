@@ -2,6 +2,10 @@
 
 Model::Model(Renderer& renderer, const std::string& fileName) : renderer(renderer) {
 	Init(fileName);
+	for (size_t i = 0; i < buffers.size() - 1; i++) {	//every element except last
+		vkBuffers.push_back(buffers[i].buffer);
+		offsets.push_back(0);
+	}
 }
 
 Model::~Model() {
@@ -57,33 +61,21 @@ void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLa
 }
 
 void Model::CreateBuffers() {
-	buffers.resize(6);
-	buffers[0] = CreateBuffer(renderer, mesh.positions.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-	buffers[1] = CreateBuffer(renderer, mesh.normals.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-	buffers[2] = CreateBuffer(renderer, mesh.tangents.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-	buffers[3] = CreateBuffer(renderer, mesh.binormals.size() * sizeof(glm::vec3),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-	buffers[4] = CreateBuffer(renderer, mesh.texcoords.size() * sizeof(glm::vec2),
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-
-	buffers[5] = CreateBuffer(renderer, mesh.indices.size() * sizeof(uint32_t),
-		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+	if (mesh.positions.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.positions.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
+	if (mesh.normals.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.normals.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
+	if (mesh.tangents.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.tangents.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
+	if (mesh.binormals.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.binormals.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
+	if (mesh.texcoords.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.texcoords.size() * sizeof(glm::vec2), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
+	buffers.push_back(CreateBuffer(renderer, mesh.indices.size() * sizeof(uint32_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
 }
 
 void Model::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers) {
 	size_t start = stagingBuffers.size();
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.positions.size() * sizeof(glm::vec3), mesh.positions.data()));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.normals.size() * sizeof(glm::vec3), mesh.normals.data()));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.tangents.size() * sizeof(glm::vec3), mesh.tangents.data()));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.binormals.size() * sizeof(glm::vec3), mesh.binormals.data()));
-	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.texcoords.size() * sizeof(glm::vec2), mesh.texcoords.data()));
+	if (mesh.positions.size() > 0) stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, buffers[0].alloc.size, mesh.positions.data()));
+	if (mesh.normals.size() > 0) stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, buffers[1].alloc.size, mesh.normals.data()));
+	if (mesh.tangents.size() > 0) stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, buffers[2].alloc.size, mesh.tangents.data()));
+	if (mesh.binormals.size() > 0) stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, buffers[3].alloc.size, mesh.binormals.data()));
+	if (mesh.texcoords.size() > 0) stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, buffers[4].alloc.size, mesh.texcoords.data()));
 	stagingBuffers.emplace_back(std::make_unique<StagingBuffer>(renderer, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data()));
 
 	for (size_t i = 0; i < buffers.size(); i++) {

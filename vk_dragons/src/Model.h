@@ -31,6 +31,9 @@ private:
 	uint32_t indexCount;
 	std::vector<Buffer> buffers;
 
+	std::vector<VkBuffer> vkBuffers;
+	std::vector<VkDeviceSize> offsets;
+
 	Transform transform;
 
 	void Init(const std::string& fileName);
