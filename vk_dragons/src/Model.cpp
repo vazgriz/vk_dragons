@@ -98,23 +98,27 @@ void Model::UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_pt
 }
 
 std::vector<VkVertexInputBindingDescription> Model::GetBindingDescriptions() {
-	return std::vector<VkVertexInputBindingDescription>({
-		{ 0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//position
-		{ 1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//normal
-		{ 2, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//tangent
-		{ 3, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },	//binormal
-		{ 4, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX },	//texcoord
-	});
+	auto bindings = std::vector<VkVertexInputBindingDescription>();
+
+	if (mesh.positions.size() > 0) bindings.push_back({ 0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX });
+	if (mesh.normals.size() > 0) bindings.push_back({ 1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX });
+	if (mesh.tangents.size() > 0) bindings.push_back({ 2, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX });
+	if (mesh.binormals.size() > 0) bindings.push_back({ 3, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX });
+	if (mesh.texcoords.size() > 0) bindings.push_back({ 4, sizeof(glm::vec2), VK_VERTEX_INPUT_RATE_VERTEX });
+
+	return bindings;
 }
 
 std::vector<VkVertexInputAttributeDescription> Model::GetAttributeDescriptions() {
-	return std::vector<VkVertexInputAttributeDescription>({
-		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//position
-		{ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//normal
-		{ 2, 2, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//tangent
-		{ 3, 3, VK_FORMAT_R32G32B32_SFLOAT, 0 },	//binormal
-		{ 4, 4, VK_FORMAT_R32G32_SFLOAT, 0 },		//texcoord
-	});
+	auto attributes = std::vector<VkVertexInputAttributeDescription>();
+
+	if (mesh.positions.size() > 0) attributes.push_back({ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 });
+	if (mesh.normals.size() > 0) attributes.push_back({ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 });
+	if (mesh.tangents.size() > 0) attributes.push_back({ 2, 2, VK_FORMAT_R32G32B32_SFLOAT, 0 });
+	if (mesh.binormals.size() > 0) attributes.push_back({ 3, 3, VK_FORMAT_R32G32B32_SFLOAT, 0 });
+	if (mesh.texcoords.size() > 0) attributes.push_back({ 4, 4, VK_FORMAT_R32G32_SFLOAT, 0 });
+
+	return attributes;
 }
 
 std::vector<VkVertexInputBindingDescription> Model::GetDepthBindingDescriptions() {

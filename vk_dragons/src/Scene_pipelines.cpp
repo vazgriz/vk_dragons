@@ -74,8 +74,8 @@ void Scene::CreateModelPipeline() {
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	auto bindings = Model::GetBindingDescriptions();
-	auto attributes = Model::GetAttributeDescriptions();
+	auto bindings = dragon->GetBindingDescriptions();
+	auto attributes = dragon->GetAttributeDescriptions();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -179,8 +179,8 @@ void Scene::CreatePlanePipeline() {
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	auto bindings = Model::GetBindingDescriptions();
-	auto attributes = Model::GetAttributeDescriptions();
+	auto bindings = plane->GetBindingDescriptions();
+	auto attributes = plane->GetAttributeDescriptions();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
