@@ -16,10 +16,9 @@ public:
 	Model(Renderer& renderer, const std::string& fileName);
 	~Model();
 	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
-	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera);
-	void DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
-	static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
-	static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
+	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera* camera);
+	std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
+	std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 	static std::vector<VkVertexInputBindingDescription> GetDepthBindingDescriptions();
 	static std::vector<VkVertexInputAttributeDescription> GetDepthAttributeDescriptions();
 
@@ -30,6 +29,9 @@ private:
 	mesh_t mesh;
 	uint32_t indexCount;
 	std::vector<Buffer> buffers;
+
+	std::vector<VkBuffer> vkBuffers;
+	std::vector<VkDeviceSize> offsets;
 
 	Transform transform;
 
