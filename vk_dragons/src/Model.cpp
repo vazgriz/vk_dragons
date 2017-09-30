@@ -20,28 +20,22 @@ void Model::Init(const std::string& fileName) {
 	indexCount = static_cast<uint32_t>(mesh.indices.size());
 }
 
-void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera) {
-	VkBuffer vertexBuffers[] = {
-		buffers[0].buffer,	//position
-		buffers[1].buffer,	//normal
-		buffers[2].buffer,	//tangent
-		buffers[3].buffer,	//bitangent
-		buffers[4].buffer	//tex coords
-	};
-	VkDeviceSize offsets[] = {
-		0, 0, 0, 0, 0
-	};
-	vkCmdBindVertexBuffers(commandBuffer, 0, 5, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(commandBuffer, buffers[5].buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
+void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera* camera) {
+	vkCmdBindVertexBuffers(commandBuffer, 0, static_cast<uint32_t>(vkBuffers.size()), vkBuffers.data(), offsets.data());
+	vkCmdBindIndexBuffer(commandBuffer, buffers.back().buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
 
-	//model matrix
-	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
+	if (pipelineLayout != VK_NULL_HANDLE) {
+		//model matrix
+		vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &transform.GetWorldMatrix());
 
-	//normal matrix
-	glm::mat4 MV = camera.GetView() * transform.GetWorldMatrix();
-	glm::mat4 normal = glm::transpose(glm::inverse(MV));
-	//shader expects mat3. mat3 in glsl has the same layout as 3 vec4's, where the W component is padding.
-	vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), 3 * sizeof(glm::vec4), &normal);
+		if (camera != nullptr) {
+			//normal matrix
+			glm::mat4 MV = camera->GetView() * transform.GetWorldMatrix();
+			glm::mat4 normal = glm::transpose(glm::inverse(MV));
+			//shader expects mat3. mat3 in glsl has the same layout as 3 vec4's, where the W component is padding.
+			vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), 3 * sizeof(glm::vec4), &normal);
+		}
+	}
 
 	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 }

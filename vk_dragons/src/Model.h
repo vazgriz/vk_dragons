@@ -16,7 +16,7 @@ public:
 	Model(Renderer& renderer, const std::string& fileName);
 	~Model();
 	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
-	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera& camera);
+	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera* camera);
 	void DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 	std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 	std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
