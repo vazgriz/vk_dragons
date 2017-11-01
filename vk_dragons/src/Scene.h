@@ -12,20 +12,20 @@
 #include "StagingBuffer.h"
 
 struct CameraUniform {
-	glm::mat4 camProjection;
-	glm::mat4 camView;
-	glm::mat4 camRotationOnlyView;
-	glm::mat4 camViewInverse;
+	glm::mat4 projection;
+	glm::mat4 view;
+	glm::mat4 rotationOnlyView;
+	glm::mat4 viewInverse;
 };
 
 struct LightUniform {
-	glm::mat4 lightProjection;
-	glm::mat4 lightView;
-	glm::vec4 lightPosition;
-	glm::vec4 lightIa;
-	glm::vec4 lightId;
-	glm::vec4 lightIs;
-	float lightShininess;
+	glm::mat4 projection;
+	glm::mat4 view;
+	glm::vec4 position;
+	glm::vec4 Ia;
+	glm::vec4 Id;
+	glm::vec4 Is;
+	float shininess;
 };
 
 class Scene {

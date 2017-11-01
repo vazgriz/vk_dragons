@@ -137,19 +137,19 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 
 void Scene::UpdateUniform() {
 	CameraUniform* camUniform = reinterpret_cast<CameraUniform*>(this->camUniform->GetData());
-	camUniform->camProjection = camera.GetProjection();
-	camUniform->camView = camera.GetView();
-	camUniform->camRotationOnlyView = camera.GetRotationOnlyView();
-	camUniform->camViewInverse = glm::inverse(camera.GetView());
+	camUniform->projection = camera.GetProjection();
+	camUniform->view = camera.GetView();
+	camUniform->rotationOnlyView = camera.GetRotationOnlyView();
+	camUniform->viewInverse = glm::inverse(camera.GetView());
 
 	LightUniform* lightUniform = reinterpret_cast<LightUniform*>(this->lightUniform->GetData());
-	lightUniform->lightProjection = light.GetProjection();
-	lightUniform->lightView = light.GetView();
-	lightUniform->lightPosition = light.GetPosition();
-	lightUniform->lightIa = light.GetIa();
-	lightUniform->lightId = light.GetId();
-	lightUniform->lightIs = light.GetIs();
-	lightUniform->lightShininess = light.GetShininess();
+	lightUniform->projection = light.GetProjection();
+	lightUniform->view = light.GetView();
+	lightUniform->position = camera.GetRotationOnlyView() * light.GetPosition();
+	lightUniform->Ia = light.GetIa();
+	lightUniform->Id = light.GetId();
+	lightUniform->Is = light.GetIs();
+	lightUniform->shininess = light.GetShininess();
 }
 
 void Scene::Update(double elapsed) {
