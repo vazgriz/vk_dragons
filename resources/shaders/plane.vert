@@ -8,17 +8,7 @@ layout(location = 2) in vec3 tang;
 layout(location = 3) in vec3 binor;
 layout(location = 4) in vec2 uv;
 
-// Uniform: the light structure (position in view space)
-layout(set = 0, binding = 0) uniform CamUniforms {
-    mat4 viewProjection;
-    mat4 projection;
-    mat4 view;
-    mat4 rotationOnlyView;
-    mat4 viewInverse;
-} camUniforms;
-
 layout(set = 1, binding = 0) uniform LightUniforms {
-    mat4 viewProjection;
     mat4 projection;
     mat4 view;
     vec4 position;

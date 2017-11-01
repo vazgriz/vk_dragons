@@ -6,7 +6,6 @@ layout(location = 0) in vec3 v;
 
 // Uniform: the camera matrix
 layout(set = 0, binding = 0) uniform CamUniforms {
-    mat4 viewProjection;
     mat4 projection;
     mat4 view;
     mat4 rotationOnlyView;

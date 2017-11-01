@@ -4,10 +4,6 @@
 // Attributes
 layout(location = 0) in vec3 v;
 
-layout(set = 1, binding = 0) uniform LightUniforms {
-    mat4 viewProjection;
-} lightUniforms;
-
 layout(set = 2, binding = 0) uniform ModelUniforms {
     mat4 mvp;
     mat4 mv;

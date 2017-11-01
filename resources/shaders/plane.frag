@@ -19,7 +19,6 @@ layout(set = 0, binding = 0) uniform CamUniforms {
 } camUniforms;
 
 layout(set = 1, binding = 0) uniform LightUniforms {
-    mat4 viewProjection;
     mat4 projection;
     mat4 view;
     vec4 position;
