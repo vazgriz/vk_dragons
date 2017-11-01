@@ -10,10 +10,6 @@ layout(set = 2, binding = 0) uniform ModelUniforms {
     mat4 lightMVP;
 } modelUniforms;
 
-layout(push_constant) uniform Model {
-    mat4 matrix;
-} model;
-
 void main(){
     // We multiply the coordinates by the MVP matrix, and ouput the result.
     gl_Position = modelUniforms.lightMVP * vec4(v, 1.0);

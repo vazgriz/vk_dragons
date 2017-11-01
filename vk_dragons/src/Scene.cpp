@@ -273,9 +273,9 @@ void Scene::RecordDepthPass(VkCommandBuffer commandBuffer) {
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	dragon->Draw(commandBuffer, lightPipelineLayout, nullptr);
-	suzanne->Draw(commandBuffer, lightPipelineLayout, nullptr);
-	plane->Draw(commandBuffer, lightPipelineLayout, nullptr);
+	dragon->DrawDepth(commandBuffer, lightPipelineLayout);
+	suzanne->DrawDepth(commandBuffer, lightPipelineLayout);
+	plane->DrawDepth(commandBuffer, lightPipelineLayout);
 
 	vkCmdEndRenderPass(commandBuffer);
 }

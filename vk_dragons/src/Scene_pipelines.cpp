@@ -390,14 +390,6 @@ void Scene::CreateLightPipelineLayout() {
 	pipelineLayoutInfo.setLayoutCount = 3;
 	pipelineLayoutInfo.pSetLayouts = layouts;
 
-	VkPushConstantRange pushConstantInfo = {};
-	pushConstantInfo.offset = 0;
-	pushConstantInfo.size = sizeof(glm::mat4);
-	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	pipelineLayoutInfo.pushConstantRangeCount = 1;
-	pipelineLayoutInfo.pPushConstantRanges = &pushConstantInfo;
-
 	if (vkCreatePipelineLayout(renderer.device, &pipelineLayoutInfo, nullptr, &lightPipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("Could not create pipeline layout");
 	}
