@@ -28,6 +28,12 @@ layout(set = 1, binding = 0) uniform LightUniforms {
     float shininess;
 } lightUniforms;
 
+layout(set = 2, binding = 0) uniform ModelUniforms {
+    mat4 mvp;
+    mat4 mv;
+    mat4 lightMVP;
+} modelUniforms;
+
 layout(push_constant) uniform Model {
     mat4 matrix;
     mat3 normalMatrix;
@@ -45,9 +51,9 @@ layout(location = 8) out vec3 OuttangentSpaceLight;
 
 void main(){
     // We multiply the coordinates by the MVP matrix, and ouput the result.
-    gl_Position = camUniforms.viewProjection * model.matrix * vec4(v, 1.0);
+    gl_Position = modelUniforms.mvp * vec4(v, 1.0);
     
-    Outposition = (camUniforms.view * model.matrix * vec4(v,1.0)).xyz;
+    Outposition = (modelUniforms.mv * vec4(v,1.0)).xyz;
     
     Outuv = uv;
     
@@ -58,7 +64,7 @@ void main(){
     Outtbn = mat3(T, B, N);
     
     // Compute position in light space
-    vec4 lightPosition = lightUniforms.viewProjection * model.matrix * vec4(v,1.0);
+    vec4 lightPosition = modelUniforms.lightMVP * vec4(v,1.0);
     OutlightSpacePosition.xy = 0.5 * lightPosition.xy + 0.5;
     OutlightSpacePosition.z = lightPosition.z;
     

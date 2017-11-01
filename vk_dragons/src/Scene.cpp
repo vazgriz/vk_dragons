@@ -19,11 +19,11 @@ Scene::Scene(GLFWwindow* window, uint32_t width, uint32_t height)
 	time = 0.0f;
 	camera.SetPosition(glm::vec3(0, 0, 1.0f));
 
-	dragon = std::make_unique<Model>(renderer, "resources/dragon.obj");
-	suzanne = std::make_unique<Model>(renderer, "resources/suzanne.obj");
-	plane = std::make_unique<Model>(renderer, "resources/plane.obj");
-	skybox = std::make_unique<Model>(renderer, "resources/skybox.obj");
-	quad = std::make_unique<Model>(renderer, "resources/screenquad.obj");
+	dragon = std::make_unique<Model>(renderer, "resources/dragon.obj", uniformSetLayout);
+	suzanne = std::make_unique<Model>(renderer, "resources/suzanne.obj", uniformSetLayout);
+	plane = std::make_unique<Model>(renderer, "resources/plane.obj", uniformSetLayout);
+	skybox = std::make_unique<Model>(renderer, "resources/skybox.obj", (VkDescriptorSetLayout)VK_NULL_HANDLE);
+	quad = std::make_unique<Model>(renderer, "resources/screenquad.obj", (VkDescriptorSetLayout)VK_NULL_HANDLE);
 
 	dragon->GetTransform().SetScale(glm::vec3(0.5f));
 	dragon->GetTransform().SetPosition(glm::vec3(-0.1f, 0.0f, -0.25f));
@@ -162,6 +162,9 @@ void Scene::Update(double elapsed) {
 	UpdateUniform();
 
 	suzanne->GetTransform().SetRotation(time, glm::vec3(0, 1, 0));
+	dragon->UpdateUniforms(camera, light);
+	suzanne->UpdateUniforms(camera, light);
+	plane->UpdateUniforms(camera, light);
 }
 
 void Scene::Render() {
@@ -346,14 +349,14 @@ void Scene::RecordGeometryPass(VkCommandBuffer commandBuffer) {
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	dragonMat->Bind(commandBuffer, modelPipelineLayout, 2);
+	dragonMat->Bind(commandBuffer, modelPipelineLayout, 3);
 	dragon->Draw(commandBuffer, modelPipelineLayout, &camera);
 
-	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 2);
+	suzanneMat->Bind(commandBuffer, modelPipelineLayout, 3);
 	suzanne->Draw(commandBuffer, modelPipelineLayout, &camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, planePipeline);
-	planeMat->Bind(commandBuffer, modelPipelineLayout, 2);
+	planeMat->Bind(commandBuffer, modelPipelineLayout, 3);
 	plane->Draw(commandBuffer, modelPipelineLayout, &camera);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline);

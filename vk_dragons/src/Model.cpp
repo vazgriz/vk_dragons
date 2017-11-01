@@ -1,6 +1,10 @@
 #include "Model.h"
 
-Model::Model(Renderer& renderer, const std::string& fileName) : renderer(renderer) {
+Model::Model(Renderer& renderer, const std::string& fileName, VkDescriptorSetLayout layout) : renderer(renderer) {
+	if (layout != VK_NULL_HANDLE) {
+		uniforms = std::make_unique<UniformBuffer>(renderer, sizeof(ModelUniforms), layout);
+	}
+
 	Init(fileName);
 	for (size_t i = 0; i < buffers.size() - 1; i++) {	//every element except last
 		vkBuffers.push_back(buffers[i].buffer);
@@ -24,7 +28,16 @@ void Model::Init(const std::string& fileName) {
 	indexCount = static_cast<uint32_t>(mesh.indices.size());
 }
 
+void Model::UpdateUniforms(Camera& camera, Light& light) {
+	ModelUniforms* modelUniforms = reinterpret_cast<ModelUniforms*>(uniforms->GetData());
+	glm::mat4& model = transform.GetWorldMatrix();
+	modelUniforms->mv = camera.GetView() * model;
+	modelUniforms->mvp = camera.GetProjection() * modelUniforms->mv;
+	modelUniforms->lightMVP = light.GetProjection() * light.GetView() * model;
+}
+
 void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera* camera) {
+	if (uniforms != nullptr) uniforms->Bind(commandBuffer, pipelineLayout, 2);
 	vkCmdBindVertexBuffers(commandBuffer, 0, static_cast<uint32_t>(vkBuffers.size()), vkBuffers.data(), offsets.data());
 	vkCmdBindIndexBuffer(commandBuffer, buffers.back().buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
 

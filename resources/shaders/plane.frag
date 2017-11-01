@@ -29,12 +29,18 @@ layout(set = 1, binding = 0) uniform LightUniforms {
     float shininess;
 } lightUniforms;
 
-layout(set = 2, binding = 0) uniform sampler2D textureColor;
-layout(set = 2, binding = 1) uniform sampler2D textureNormal;
-layout(set = 2, binding = 2) uniform sampler2D textureEffects;
-layout(set = 2, binding = 3) uniform samplerCube textureCubeMap;
-layout(set = 2, binding = 4) uniform samplerCube textureCubeMapSmall;
-layout(set = 2, binding = 5) uniform sampler2D shadowMap;
+layout(set = 2, binding = 0) uniform ModelUniforms {
+    mat4 mvp;
+    mat4 mv;
+    mat4 lightMVP;
+} modelUniforms;
+
+layout(set = 3, binding = 0) uniform sampler2D textureColor;
+layout(set = 3, binding = 1) uniform sampler2D textureNormal;
+layout(set = 3, binding = 2) uniform sampler2D textureEffects;
+layout(set = 3, binding = 3) uniform samplerCube textureCubeMap;
+layout(set = 3, binding = 4) uniform samplerCube textureCubeMapSmall;
+layout(set = 3, binding = 5) uniform sampler2D shadowMap;
 
 // Output: the fragment color
 layout(location = 0) out vec4 fragColor;

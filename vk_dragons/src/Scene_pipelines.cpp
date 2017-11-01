@@ -37,10 +37,10 @@ void Scene::RecreatePipelines() {
 }
 
 void Scene::CreateModelPipelineLayout() {
-	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, uniformSetLayout, modelTextureSetLayout };
+	VkDescriptorSetLayout setLayouts[] = { uniformSetLayout, uniformSetLayout, uniformSetLayout, modelTextureSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 3;
+	pipelineLayoutInfo.setLayoutCount = 4;
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 
 	VkPushConstantRange pushConstantInfo;
@@ -384,10 +384,10 @@ void Scene::CreateSkyboxPipeline() {
 }
 
 void Scene::CreateLightPipelineLayout() {
-	VkDescriptorSetLayout layouts[] = { uniformSetLayout, uniformSetLayout };
+	VkDescriptorSetLayout layouts[] = { uniformSetLayout, uniformSetLayout, uniformSetLayout };
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 2;
+	pipelineLayoutInfo.setLayoutCount = 3;
 	pipelineLayoutInfo.pSetLayouts = layouts;
 
 	VkPushConstantRange pushConstantInfo = {};
