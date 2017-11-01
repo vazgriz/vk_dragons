@@ -25,7 +25,6 @@ layout(set = 2, binding = 0) uniform ModelUniforms {
 } modelUniforms;
 
 layout(push_constant) uniform Model {
-    mat4 matrix;
     mat3 normalMatrix;
 } model;
 

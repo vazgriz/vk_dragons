@@ -45,7 +45,7 @@ void Scene::CreateModelPipelineLayout() {
 
 	VkPushConstantRange pushConstantInfo;
 	pushConstantInfo.offset = 0;
-	pushConstantInfo.size = sizeof(glm::mat4) + sizeof(glm::vec4) * 3;	//size of mat3 under std430 rules
+	pushConstantInfo.size = sizeof(glm::vec4) * 3;	//size of mat3 under std430 rules
 	pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
 	pipelineLayoutInfo.pushConstantRangeCount = 1;
