@@ -57,6 +57,14 @@ void Model::Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout,
 	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 }
 
+void Model::DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
+	if (uniforms != nullptr) uniforms->Bind(commandBuffer, pipelineLayout, 2);
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vkBuffers.data(), offsets.data());			//buffers[0] == positions buffer
+	vkCmdBindIndexBuffer(commandBuffer, buffers.back().buffer, 0, VK_INDEX_TYPE_UINT32);	//buffers[5] == index buffer
+
+	vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+}
+
 void Model::CreateBuffers() {
 	if (mesh.positions.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.positions.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));
 	if (mesh.normals.size() > 0) buffers.push_back(CreateBuffer(renderer, mesh.normals.size() * sizeof(glm::vec3), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT));

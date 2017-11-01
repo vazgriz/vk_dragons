@@ -26,6 +26,7 @@ public:
 	void UploadData(VkCommandBuffer commandBuffer, std::vector<std::unique_ptr<StagingBuffer>>& stagingBuffers);
 	void UpdateUniforms(Camera& camera, Light& light);
 	void Draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout, Camera* camera);
+	void DrawDepth(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 	std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
 	std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 	static std::vector<VkVertexInputBindingDescription> GetDepthBindingDescriptions();
