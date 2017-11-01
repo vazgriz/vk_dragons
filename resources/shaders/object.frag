@@ -9,10 +9,10 @@ layout(location = 5) in vec3 InlightSpacePosition;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform Uniforms {
-    mat4 camProjection;
-    mat4 camView;
+    mat4 projection;
+    mat4 view;
     mat4 rotationOnlyView;
-    mat4 camViewInverse;
+    mat4 viewInverse;
 } camUniforms;
 
 layout(set = 1, binding = 0) uniform LightUniforms {
@@ -61,7 +61,7 @@ void main(){
 
     vec3 diffuseColor = texture(textureColor, Inuv).rgb;
     
-    vec3 worldNormal = vec3(camUniforms.camViewInverse * vec4(n,0.0));
+    vec3 worldNormal = vec3(camUniforms.viewInverse * vec4(n,0.0));
     vec3 lightColor = texture(textureCubeMapSmall,normalize(worldNormal)).rgb;
     diffuseColor = mix(diffuseColor, diffuseColor * lightColor, 0.5);
     
@@ -84,7 +84,7 @@ void main(){
     vec3 reflectionColor = vec3(0.0);
     if(effects.b > 0.0){
         vec3 rCubeMap = reflect(-v, n);
-        rCubeMap = vec3(camUniforms.camViewInverse * vec4(rCubeMap,0.0));
+        rCubeMap = vec3(camUniforms.viewInverse * vec4(rCubeMap,0.0));
         reflectionColor = texture(textureCubeMap,rCubeMap).rgb;
     }
 

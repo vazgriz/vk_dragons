@@ -12,10 +12,10 @@ layout(location = 8) in vec3 IntangentSpaceLight;
 
 // Uniform: the light structure (position in view space)
 layout(set = 0, binding = 0) uniform CamUniforms {
-    mat4 camProjection;
-    mat4 camView;
+    mat4 projection;
+    mat4 view;
     mat4 rotationOnlyView;
-    mat4 camViewInverse;
+    mat4 viewInverse;
 } camUniforms;
 
 layout(set = 1, binding = 0) uniform LightUniforms {
@@ -67,7 +67,7 @@ vec3 shading(vec2 uv, float lightShininess, vec3 lightColor, out vec3 ambient){
     
     vec3 diffuseColor = texture(textureColor, uv).rgb;
     
-    vec3 worldNormal = vec3(camUniforms.camViewInverse * vec4(n,0.0));
+    vec3 worldNormal = vec3(camUniforms.viewInverse * vec4(n,0.0));
     vec3 ambientLightColor = texture(textureCubeMapSmall,normalize(worldNormal)).rgb;
     diffuseColor = mix(diffuseColor, diffuseColor * ambientLightColor, 0.5);
     
