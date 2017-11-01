@@ -137,12 +137,14 @@ void Scene::UploadResources(std::vector<std::shared_ptr<Texture>>& textures) {
 
 void Scene::UpdateUniform() {
 	CameraUniform* camUniform = reinterpret_cast<CameraUniform*>(this->camUniform->GetData());
+	camUniform->viewProjection = camera.GetProjection() * camera.GetView();
 	camUniform->projection = camera.GetProjection();
 	camUniform->view = camera.GetView();
 	camUniform->rotationOnlyView = camera.GetRotationOnlyView();
 	camUniform->viewInverse = glm::inverse(camera.GetView());
 
 	LightUniform* lightUniform = reinterpret_cast<LightUniform*>(this->lightUniform->GetData());
+	lightUniform->viewProjection = light.GetProjection() * light.GetView();
 	lightUniform->projection = light.GetProjection();
 	lightUniform->view = light.GetView();
 	lightUniform->position = camera.GetRotationOnlyView() * light.GetPosition();
