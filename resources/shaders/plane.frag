@@ -48,11 +48,6 @@ layout(location = 0) out vec4 fragColor;
 #define PARALLAX_MAX 32
 #define PARALLAX_SCALE 0.04
 
-// Returns a random float in [0,1] based on the input vec4 seed.
-float random(vec4 p){
-    return fract(sin(dot(p, vec4(12.9898,78.233,45.164,94.673))) * 43758.5453);
-}
-
 // Compute the light shading.
 
 vec3 shading(vec2 uv, float lightShininess, vec3 lightColor, out vec3 ambient){
